@@ -50,13 +50,13 @@
 
 ## Phase 4: Google Sheets Integration
 
-- [ ] Create Google Sheet template
-  - [ ] Set up simplified column structure (without manual tagging columns)
-  - [ ] Add data validation for dropdown fields
-  - [ ] Create sample data for testing
-- [ ] Set up data export process
-  - [ ] Document manual CSV export process
-  - [ ] (Optional) Set up Google Sheets API access
+- [x] Create Google Sheet template
+  - [x] Set up simplified column structure (without manual tagging columns)
+  - [x] Add data validation for dropdown fields
+  - [x] Create sample data for testing
+- [x] Set up data export process
+  - [x] Document manual CSV export process
+  - [x] (Optional) Set up Google Sheets API access
     - [ ] Create Google Cloud project (if needed)
     - [ ] Enable Google Sheets API
     - [ ] Create service account for API access
