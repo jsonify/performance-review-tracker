@@ -3,7 +3,7 @@
 ## Phase 1: Project Setup and Initial Framework
 - [x] Create project directory structure
   - [x] Create main project folder (`performance-review-tracker`)
-  - [x] Create subdirectories (`src`, `tests`, `docs`, `config`)
+  - [x] Create subdirectories (`src`, `templates`, `criteria`, `data`, `output`, `tests`)
 - [x] Set up virtual environment
   - [x] Install Python 3.9+ if not already installed
   - [x] Create virtual environment: `python -m venv venv`
@@ -12,156 +12,175 @@
   - [x] Run `git init`
   - [x] Create `.gitignore` file with appropriate entries
 - [x] Create initial `requirements.txt` with dependencies:
-  - [x] `gspread` for Google Sheets API
-  - [x] `google-auth` for authentication
-  - [x] `anthropic` for Claude API
+  - [x] `pandas` for data processing
+  - [x] `gspread` (optional, for Google Sheets API)
+  - [x] `google-auth` (optional, for authentication)
   - [x] `python-docx` for document creation
+  - [x] `markdown` for markdown processing
   - [x] `argparse` for command-line interface
-  - [x] Additional utilities as needed
 - [x] Install dependencies: `pip install -r requirements.txt`
 - [x] Create basic README.md with project overview
+- [x] Install VS Code if not already installed
+- [x] Install Roo Code extension for VS Code
 
-## Phase 2: Configuration Management
-- [ ] Create configuration system
-  - [ ] Set up `config.py` module for configuration management
-  - [ ] Implement environment variable loading for sensitive data
-  - [ ] Create sample configuration file template
-- [ ] Set up secure credential handling
-  - [ ] Implement function to load Google API credentials
-  - [ ] Implement function to load Claude API key
-  - [ ] Create credential validation functions
-- [ ] Create configuration documentation
-  - [ ] Document required environment variables
-  - [ ] Create setup instructions for API access
+## Phase 2: VS Code and Roo Code Setup
+- [ ] Configure VS Code for Python development
+  - [x] Install Python extension
+  - [ ] Configure Python interpreter
+  - [ ] Set up linting and formatting
+- [ ] Configure Roo Code extension
+  - [x] Create `.roo` directory
+  - [ ] Create custom system prompt for Analyst mode
+  - [ ] Test basic Roo Code functionality
+- [ ] Create custom mode for Performance Review analysis
+  - [ ] Define role definition for Analyst mode
+  - [ ] Configure tool permissions
+  - [ ] Test custom mode functionality
 
-## Phase 3: Command-Line Interface
-- [ ] Design CLI structure
-  - [ ] Plan command structure and arguments
-  - [ ] Document expected user workflows
-- [ ] Implement basic CLI with `argparse`
-  - [ ] Create main script entry point (`main.py`)
-  - [ ] Add arguments for report type (annual/competency)
-  - [ ] Add arguments for date ranges
-  - [ ] Add arguments for input/output file paths
-  - [ ] Add optional arguments for configuration overrides
-- [ ] Create help documentation
-  - [ ] Add detailed help text for all commands
-  - [ ] Create usage examples
+## Phase 3: Criteria Definition
+- [ ] Create criteria definition files
+  - [ ] Create `criteria/annual_review_criteria.json` with detailed definitions
+  - [ ] Create `criteria/competency_assessment_criteria.json` with detailed definitions
+- [ ] Create report templates
+  - [ ] Develop `templates/annual_review_template.md`
+  - [ ] Develop `templates/competency_assessment_template.md`
 
 ## Phase 4: Google Sheets Integration
-- [ ] Set up Google Sheets API access
-  - [ ] Create Google Cloud project (if needed)
-  - [ ] Enable Google Sheets API
-  - [ ] Create service account for API access
-  - [ ] Download and secure credentials file
-- [ ] Implement Google Sheets client
-  - [ ] Create `sheets.py` module for Google Sheets interaction
-  - [ ] Implement function to authenticate with API
-  - [ ] Create function to load sheet by ID
-  - [ ] Implement data extraction function
-- [ ] Create data processing functions
+- [ ] Create Google Sheet template
+  - [ ] Set up simplified column structure (without manual tagging columns)
+  - [ ] Add data validation for dropdown fields
+  - [ ] Create sample data for testing
+- [ ] Set up data export process
+  - [ ] Document manual CSV export process
+  - [ ] (Optional) Set up Google Sheets API access
+    - [ ] Create Google Cloud project (if needed)
+    - [ ] Enable Google Sheets API
+    - [ ] Create service account for API access
+    - [ ] Download and secure credentials file
+
+## Phase 5: Data Processing Scripts
+- [ ] Create data processing module
+  - [ ] Implement `src/data_processor.py`
+  - [ ] Add functions to load data from CSV/Excel
+  - [ ] (Optional) Add functions to load data directly from Google Sheets
   - [ ] Implement date filtering for Annual Reviews
-  - [ ] Implement tag-based filtering for criteria
-  - [ ] Create data validation functions
-  - [ ] Implement data transformation for Claude API
+  - [ ] Add data validation and cleaning functions
+  - [ ] Create functions to save processed data as JSON
+- [ ] Create report generation module
+  - [ ] Implement `src/report_generator.py`
+  - [ ] Add functions to load Roo Code analysis output
+  - [ ] Create markdown to DOCX conversion function
+  - [ ] Implement file naming and organization functions
+- [ ] Create utilities module
+  - [ ] Implement `src/utils.py`
+  - [ ] Add helper functions for file operations
+  - [ ] Create date handling utilities
+  - [ ] Implement logging functions
 
-## Phase 5: Data Models
-- [ ] Design data models
-  - [ ] Create `models.py` module
-  - [ ] Implement `WorkEntry` class/dataclass for work accomplishments
-  - [ ] Implement `ReportConfig` class for report settings
-  - [ ] Add serialization/deserialization methods
-- [ ] Create data validation functions
-  - [ ] Implement validation for date formats
-  - [ ] Create tag validation against expected values
-  - [ ] Add impact level validation
+## Phase 6: Roo Code Integration
+- [ ] Finalize Roo Code custom system prompt
+  - [ ] Refine criteria definitions for better analysis
+  - [ ] Improve output formatting instructions
+  - [ ] Add detailed error handling guidance
+- [ ] Create prompting guide
+  - [ ] Document sample prompts for different report types
+  - [ ] Create examples with different parameters
+  - [ ] Develop troubleshooting guidance
+- [ ] Develop context mention patterns
+  - [ ] Create standardized file references
+  - [ ] Document effective mention strategies
+  - [ ] Test with various data scenarios
 
-## Phase 6: Claude API Integration
-- [ ] Set up Claude API client
-  - [ ] Create `claude.py` module for Claude API interaction
-  - [ ] Implement authentication function
-  - [ ] Create function to send prompts to Claude
-  - [ ] Implement response handling
-- [ ] Develop prompt templates
-  - [ ] Create `templates.py` module for prompt management
-  - [ ] Implement Annual Review prompt template
-  - [ ] Implement Competency Assessment prompt template
-  - [ ] Create function to fill templates with data
-- [ ] Implement response parsing
-  - [ ] Create functions to extract structured data from Claude responses
-  - [ ] Implement error checking for malformed responses
-  - [ ] Add fallback handling for incomplete responses
+## Phase 7: Command-Line Interface
+- [ ] Implement command-line interface for data processor
+  - [ ] Add arguments for input file path
+  - [ ] Add arguments for review type (annual/competency)
+  - [ ] Add arguments for date ranges and year
+  - [ ] Implement help documentation
+- [ ] Implement command-line interface for report generator
+  - [ ] Add arguments for input file path
+  - [ ] Add arguments for output format
+  - [ ] Add arguments for output file path
+  - [ ] Implement help documentation
+- [ ] Create combined CLI script
+  - [ ] Implement `src/main.py` for end-to-end processing
+  - [ ] Add subcommands for different functionality
+  - [ ] Create sample usage commands
 
-## Phase 7: Report Generation
-- [ ] Design report formatters
-  - [ ] Create `formatters.py` module
-  - [ ] Implement base formatter class
-  - [ ] Create Markdown formatter
-  - [ ] Implement DOCX formatter (using python-docx)
-- [ ] Create output management
-  - [ ] Implement function to save reports to files
-  - [ ] Add timestamp and naming conventions
-  - [ ] Create backup functionality
-
-## Phase 8: Error Handling and Logging
-- [ ] Set up logging system
-  - [ ] Create `logging.py` module
-  - [ ] Implement different log levels
-  - [ ] Add log file rotation
-- [ ] Implement comprehensive error handling
-  - [ ] Add try/except blocks for API calls
-  - [ ] Create meaningful error messages
-  - [ ] Implement graceful failure modes
-  - [ ] Add retry logic for transient errors
-
-## Phase 9: Testing
+## Phase 8: Testing and Validation
 - [ ] Set up testing framework
-  - [ ] Create `tests` directory with appropriate structure
-  - [ ] Set up pytest configuration
-  - [ ] Implement test fixtures
+  - [ ] Configure pytest in the project
+  - [ ] Create test fixtures with sample data
+  - [ ] Implement helper functions for testing
 - [ ] Create unit tests
-  - [ ] Test configuration loading
-  - [ ] Test data processing functions
-  - [ ] Test Claude prompt generation
-  - [ ] Test report formatting
-- [ ] Implement integration tests
-  - [ ] Test Google Sheets connectivity
-  - [ ] Test Claude API interaction
-  - [ ] Test end-to-end workflows
+  - [ ] Test data loading and processing functions
+  - [ ] Test date filtering functions
+  - [ ] Test report generation functions
+- [ ] Create integration tests
+  - [ ] Test end-to-end workflow with sample data
+  - [ ] Validate output format and content
+  - [ ] Test edge cases and error conditions
+- [ ] Create validation tools
+  - [ ] Implement validation for criteria coverage
+  - [ ] Create checks for report completeness
+  - [ ] Add tools to validate report structure
 
-## Phase 10: Documentation and Refinement
-- [ ] Create comprehensive documentation
-  - [ ] Write installation guide
-  - [ ] Create usage documentation
-  - [ ] Document configuration options
+## Phase 9: Documentation
+- [ ] Create user documentation
+  - [ ] Write Google Sheet setup guide
+  - [ ] Create data entry instructions
+  - [ ] Document report generation process
   - [ ] Add troubleshooting section
-- [ ] Perform code refinement
-  - [ ] Conduct code review
-  - [ ] Optimize performance
-  - [ ] Improve error messages
-  - [ ] Enhance user experience
+- [ ] Create developer documentation
+  - [ ] Document project structure
+  - [ ] Create module descriptions
+  - [ ] Add function documentation
+  - [ ] Document testing procedures
+- [ ] Create Roo Code usage guide
+  - [ ] Document Analyst mode functionality
+  - [ ] Provide sample prompts
+  - [ ] Create troubleshooting guide
+  - [ ] Add examples of effective context references
 
-## Phase 11: Final Packaging and Deployment
-- [ ] Package for distribution
-  - [ ] Create `setup.py` for pip installation
-  - [ ] Generate requirements.txt from current environment
-  - [ ] Create distribution packages
-- [ ] Prepare for deployment
-  - [ ] Write deployment documentation
-  - [ ] Create sample configuration files
-  - [ ] Test in target environment
+## Phase 10: Workflow Integration and Optimization
+- [ ] Create streamlined workflows
+  - [ ] Develop shell scripts for common tasks
+  - [ ] Add VS Code tasks for frequent operations
+  - [ ] Create batch processing capabilities
+- [ ] Optimize performance
+  - [ ] Review and optimize data processing
+  - [ ] Improve file handling efficiency
+  - [ ] Enhance Roo Code interaction patterns
+- [ ] Add batch processing capability
+  - [ ] Enable processing multiple entries at once
+  - [ ] Create summarization tools for large datasets
+  - [ ] Implement progress reporting for long operations
+
+## Phase 11: Finalizing and Packaging
+- [ ] Conduct final testing
+  - [ ] Test with realistic data volume
+  - [ ] Validate all report formats
+  - [ ] Check error handling and edge cases
+- [ ] Prepare for user handover
+  - [ ] Create quick start guide
+  - [ ] Develop sample walkthroughs
+  - [ ] Create troubleshooting reference
+- [ ] Finalize project structure
+  - [ ] Clean up any temporary files
+  - [ ] Organize code for maintainability
+  - [ ] Update all documentation to final state
 
 ## Phase 12: Future Enhancements (Placeholder)
-- [ ] Web-based interface
-- [ ] Email notifications
-- [ ] Integration with task tracking systems
-- [ ] Automated scheduling
-- [ ] Analytics features
-- [ ] Team collaboration features
+- [ ] Direct Google Sheets API integration without CSV export
+- [ ] Web-based interface for report generation
+- [ ] Automated scheduling of monthly milestone reports
+- [ ] Analytics on accomplishment distribution across criteria
+- [ ] Integration with other task tracking systems (e.g., Azure DevOps)
 
 ## Notes
 - Remember to test frequently throughout development
 - Commit code regularly with descriptive commit messages
 - Keep credentials secure and never commit them to the repository
-- Use environment variables for sensitive information
+- Use environment variables for sensitive information (if using API integration)
 - Document as you go to avoid documentation debt
+- Keep the Roo Code extension updated to the latest version
