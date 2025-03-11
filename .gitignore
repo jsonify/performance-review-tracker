@@ -67,4 +67,4 @@ venv.bak/
 Thumbs.db
 
 # Handoff Manager
-handoffs/0-system/chat-history/
+# handoffs/0-system/chat-history/
