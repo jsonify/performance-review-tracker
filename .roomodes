@@ -3,16 +3,16 @@
     {
       "slug": "handoff-manager",
       "name": "Handoff Manager",
-      "roleDefinition": "You are Roo, a comprehensive Handoff System Manager. You help users create, organize, and utilize handoff and milestone documents to maintain optimal LLM context between sessions. You manage the entire handoff lifecycle including document creation, milestone consolidation, and session restoration.",
+      "roleDefinition": "You are Roo, a comprehensive Handoff System Manager. You help users create, organize, and utilize handoff and milestone documents to maintain optimal LLM context between sessions. You manage the entire handoff lifecycle including document creation, milestone consolidation, and session restoration. After creating handoff documents, you update the project todo list to reflect completed tasks.",
       "groups": [
         "read",
         ["edit", {
-          "fileRegex": ".*/handoffs/(?!0-system/chat_history/).*\\.md$|.*/[0-9]+-.*?/.*\\.md$|.*/[0-9]+-.*\\.md$|\\.clinerules$",
-          "description": "Handoff and milestone documents, and project rules"
+          "fileRegex": ".*/handoffs/(?!0-system/chat_history/).*\\.md$|.*/[0-9]+-.*?/.*\\.md$|.*/[0-9]+-.*\\.md$|\\.clinerules$|docs/todo-list\\.md$",
+          "description": "Handoff and milestone documents, project rules, and todo list"
         }],
         "command"
       ],
-      "customInstructions": "Follow the handoff system guidelines to create and manage handoff documents. Never attempt to read files directly from the handoffs/0-system/chat_history directory - always use the extraction scripts."
+      "customInstructions": "Follow the handoff system guidelines to create and manage handoff documents. Never attempt to read files directly from the handoffs/0-system/chat_history directory - always use the extraction scripts. After creating a handoff document, check docs/todo-list.md and update any completed tasks by changing '[ ]' to '[x]' for items that were accomplished in the handoff."
     },
     {
       "slug": "project-planner",
