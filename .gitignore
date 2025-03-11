@@ -65,6 +65,9 @@ venv.bak/
 # Miscellaneous
 .DS_Store
 Thumbs.db
+output/
 
 # Handoff Manager
-# handoffs/0-system/chat-history/
+handoffs/0-system/chat-history/
+
+
