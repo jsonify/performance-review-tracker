@@ -1,0 +1,74 @@
+{
+  "criteria": [
+    {
+      "name": "Communication",
+      "expectations": [
+        "Gives members full attention",
+        "Limits interruptions while others are communicating",
+        "Appropriately responds to direction, coaching, or criticism",
+        "Expresses ideas clearly and in an organized way",
+        "Communicates in a positive, timely, and effective manner"
+      ]
+    },
+    {
+      "name": "Flexibility",
+      "expectations": [
+        "Adapts to changing priorities",
+        "Adjusts work methods to meet new needs",
+        "Open to new approaches",
+        "Maintains effectiveness during changes",
+        "Willing to learn and apply new methods"
+      ]
+    },
+    {
+      "name": "Initiative",
+      "expectations": [
+        "Self-directed in completing tasks",
+        "Proactive in finding solutions",
+        "Takes on additional responsibilities",
+        "Identifies and addresses issues before they escalate",
+        "Seeks opportunities for improvement"
+      ]
+    },
+    {
+      "name": "Member Service",
+      "expectations": [
+        "Prioritizes member needs",
+        "Provides excellent service consistently",
+        "Builds positive relationships with members",
+        "Responds promptly to member requests",
+        "Goes above and beyond to ensure member satisfaction"
+      ]
+    },
+    {
+      "name": "Personal Credibility",
+      "expectations": [
+        "Demonstrates trustworthiness in all interactions",
+        "Reliably completes assigned tasks",
+        "Follows through on commitments",
+        "Demonstrates integrity in decision making",
+        "Maintains confidentiality when required"
+      ]
+    },
+    {
+      "name": "Quality and Quantity of Work",
+      "expectations": [
+        "Produces high-quality work consistently",
+        "Meets established deadlines",
+        "Manages workload effectively",
+        "Maintains attention to detail",
+        "Achieves expected productivity levels"
+      ]
+    },
+    {
+      "name": "Teamwork",
+      "expectations": [
+        "Collaborates effectively with team members",
+        "Shares information and knowledge",
+        "Supports team goals and initiatives",
+        "Fosters positive working relationships",
+        "Contributes to team success"
+      ]
+    }
+  ]
+}

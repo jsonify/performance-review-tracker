@@ -1,0 +1,134 @@
+{
+  "criteria": [
+    {
+      "name": "Accountability",
+      "expectations": [
+        "Takes responsibility for own actions and decisions",
+        "Meets commitments consistently",
+        "Admits mistakes and learns from them",
+        "Follows through on responsibilities",
+        "Takes ownership of project outcomes"
+      ]
+    },
+    {
+      "name": "Agility",
+      "expectations": [
+        "Adapts quickly to changing requirements",
+        "Embraces change positively",
+        "Maintains effectiveness during uncertainty",
+        "Adjusts strategies based on new information",
+        "Helps others navigate change"
+      ]
+    },
+    {
+      "name": "Inclusion",
+      "expectations": [
+        "Values diverse perspectives and experiences",
+        "Creates an inclusive environment for all team members",
+        "Ensures equitable participation in discussions",
+        "Promotes diverse viewpoints in decision-making",
+        "Supports inclusive practices in team activities"
+      ]
+    },
+    {
+      "name": "Influence",
+      "expectations": [
+        "Persuades effectively through clear communication",
+        "Builds consensus among team members",
+        "Inspires action in others",
+        "Gains support for initiatives",
+        "Leads by example"
+      ]
+    },
+    {
+      "name": "Innovation",
+      "expectations": [
+        "Generates creative solutions to problems",
+        "Challenges status quo constructively",
+        "Implements improvements to processes",
+        "Thinks outside conventional approaches",
+        "Encourages innovative thinking in others"
+      ]
+    },
+    {
+      "name": "Problem Management",
+      "expectations": [
+        "Identifies issues proactively",
+        "Determines root causes effectively",
+        "Implements effective solutions",
+        "Prevents recurring problems",
+        "Manages complex problems systematically"
+      ]
+    },
+    {
+      "name": "Programming/Software Development",
+      "expectations": [
+        "Writes efficient and maintainable code",
+        "Follows established best practices",
+        "Creates well-documented solutions",
+        "Implements secure coding practices",
+        "Delivers high-quality software solutions"
+      ]
+    },
+    {
+      "name": "Project Management",
+      "expectations": [
+        "Plans projects effectively",
+        "Manages resources efficiently",
+        "Delivers projects on time and within budget",
+        "Tracks and communicates progress clearly",
+        "Manages project risks proactively"
+      ]
+    },
+    {
+      "name": "Release and Deployment",
+      "expectations": [
+        "Manages releases smoothly",
+        "Minimizes service disruption",
+        "Ensures deployment quality",
+        "Plans and executes rollbacks when needed",
+        "Maintains deployment documentation"
+      ]
+    },
+    {
+      "name": "Requirements Definition and Management",
+      "expectations": [
+        "Gathers requirements comprehensively",
+        "Documents requirements clearly",
+        "Manages scope effectively",
+        "Ensures requirement traceability",
+        "Validates requirements with stakeholders"
+      ]
+    },
+    {
+      "name": "Solution Architecture",
+      "expectations": [
+        "Designs scalable solutions",
+        "Makes appropriate technology choices",
+        "Considers business needs in design",
+        "Creates maintainable architectures",
+        "Ensures security in design"
+      ]
+    },
+    {
+      "name": "Systems Design",
+      "expectations": [
+        "Creates effective system designs",
+        "Considers integration points thoroughly",
+        "Focuses on user needs",
+        "Ensures system scalability",
+        "Designs for maintainability"
+      ]
+    },
+    {
+      "name": "Testing",
+      "expectations": [
+        "Develops comprehensive test plans",
+        "Identifies defects effectively",
+        "Ensures quality standards",
+        "Implements automated testing",
+        "Creates meaningful test documentation"
+      ]
+    }
+  ]
+}

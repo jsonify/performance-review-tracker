@@ -41,12 +41,12 @@
 
 ## Phase 3: Criteria Definition
 
-- [ ] Create criteria definition files
-  - [ ] Create `criteria/annual_review_criteria.json` with detailed definitions
-  - [ ] Create `criteria/competency_assessment_criteria.json` with detailed definitions
-- [ ] Create report templates
-  - [ ] Develop `templates/annual_review_template.md`
-  - [ ] Develop `templates/competency_assessment_template.md`
+- [x] Create criteria definition files
+  - [x] Create `criteria/annual_review_criteria.json` with detailed definitions
+  - [x] Create `criteria/competency_assessment_criteria.json` with detailed definitions
+- [x] Create report templates
+  - [x] Develop `templates/annual_review_template.md`
+  - [x] Develop `templates/competency_assessment_template.md`
 
 ## Phase 4: Google Sheets Integration
 
