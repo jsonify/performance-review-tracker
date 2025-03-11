@@ -1,24 +1,30 @@
 # Performance Review Tracking System
+
 ## Design Document
 
-**Author:** Claude  
-**Version:** 2.0  
+**Author:** Claude
+**Version:** 2.0
 **Date:** March 11, 2025
 
 ## 1. Introduction
 
 ### 1.1 Purpose
+
 This document outlines the design for a Performance Review Tracking System that helps employees track their work accomplishments throughout the year and generate targeted reports for both Annual Reviews and Competency Assessments.
 
 ### 1.2 Problem Statement
+
 Employees need to track their work accomplishments and map them to specific criteria required for:
+
 1. Annual Reviews (covering September to August timeframe)
 2. Competency Assessments (covering all relevant work since the previous assessment)
 
 Currently, this process is manual, time-consuming, and prone to omissions, as employees must recall and organize their work achievements when review time arrives.
 
 ### 1.3 Solution Overview
+
 A streamlined system consisting of:
+
 1. A Google Sheet for continuous documentation of work accomplishments
 2. A VS Code-based solution using Roo Code, an AI-powered coding agent
 3. Python scripts to process data and generate structured reports
@@ -28,16 +34,18 @@ A streamlined system consisting of:
 
 ### 2.1 Component Overview
 
-```
+```unused
 [User] → [Google Sheet] → [VS Code + Roo Code] → [Python Scripts] → [Generated Reports]
 ```
 
 ### 2.2 Components
 
 #### 2.2.1 Google Sheet (Data Collection)
+
 A structured spreadsheet where the user records work accomplishments as they occur.
 
 **Key Features:**
+
 - Simple data entry interface
 - Consistent structure for all entries
 - No manual tagging required (AI will determine relevant criteria)
@@ -45,9 +53,11 @@ A structured spreadsheet where the user records work accomplishments as they occ
 - Filterable columns for easy review
 
 #### 2.2.2 VS Code + Roo Code (Processing Environment)
+
 The integrated development environment where data processing and AI analysis occurs.
 
 **Key Features:**
+
 - VS Code as the central development/execution environment
 - Roo Code extension providing AI analysis capabilities
 - File system access for reading data and writing reports
@@ -55,18 +65,22 @@ The integrated development environment where data processing and AI analysis occ
 - Specialized modes for performance review analysis
 
 #### 2.2.3 Python Scripts (Data Processing)
+
 Scripts that extract data from the Google Sheet and prepare it for analysis.
 
 **Key Features:**
+
 - Google Sheets API integration or CSV import
 - Date filtering for Annual Reviews
 - Data preparation and cleaning
 - File handling for intermediate and final outputs
 
 #### 2.2.4 Roo Code AI Analysis (Analysis Engine)
+
 Uses Roo Code to analyze work entries and generate insights based on review criteria.
 
 **Key Features:**
+
 - Pattern recognition across work entries
 - Automatic tagging of accomplishments to criteria
 - Generating strengths, improvement areas, and action plans
@@ -74,9 +88,11 @@ Uses Roo Code to analyze work entries and generate insights based on review crit
 - Formatting output according to templates
 
 #### 2.2.5 Generated Reports
+
 The final output documents formatted according to the requirements.
 
 **Key Features:**
+
 - Separate reports for Annual Review and Competency Assessment
 - Consistent formatting following organizational templates
 - Specific examples tied to each criterion
@@ -88,6 +104,7 @@ The final output documents formatted according to the requirements.
 ### 3.1 Google Sheet Structure
 
 #### 3.1.1 Columns
+
 1. **Date** - When the work was completed (Date format)
 2. **Title** - Brief title of the accomplishment (Text)
 3. **Description** - Detailed description of the work (Text)
@@ -100,13 +117,14 @@ Note: Manual tagging columns have been removed as Roo Code will determine releva
 #### 3.1.2 Data Validation
 
 **Impact Dropdown Values:**
+
 - High
 - Medium
 - Low
 
 ### 3.2 VS Code Project Structure
 
-```
+```unused
 performance-review-tracker/
 ├── src/
 │   ├── data_processor.py
@@ -132,6 +150,7 @@ performance-review-tracker/
 ### 3.3 Python Script Functionality
 
 #### 3.3.1 Data Processor Script
+
 The `data_processor.py` script handles loading and preparing data:
 
 ```python
@@ -157,10 +176,10 @@ def filter_by_date_range(data, start_date, end_date):
         start_date = datetime.strptime(start_date, '%Y-%m-%d')
     if isinstance(end_date, str):
         end_date = datetime.strptime(end_date, '%Y-%m-%d')
-    
+
     # Convert data dates to datetime for comparison
     data['Date'] = pd.to_datetime(data['Date'])
-    
+
     # Filter by date range
     filtered_data = data[(data['Date'] >= start_date) & (data['Date'] <= end_date)]
     return filtered_data
@@ -172,34 +191,35 @@ def prepare_data_for_analysis(data, review_type, year=None):
         start_date = f"{int(year)-1}-09-01"
         end_date = f"{year}-08-31"
         data = filter_by_date_range(data, start_date, end_date)
-    
+
     # Convert to JSON format for Roo Code
     json_data = data.to_json(orient='records', date_format='iso')
-    
+
     # Save to file for Roo Code to access
     output_path = f"data/processed_{review_type.lower()}.json"
     with open(output_path, 'w') as f:
         f.write(json_data)
-    
+
     return output_path
 
 # Example usage
 if __name__ == "__main__":
     import argparse
-    
+
     parser = argparse.ArgumentParser(description='Process performance data')
     parser.add_argument('--file', required=True, help='Path to data file')
     parser.add_argument('--type', required=True, choices=['annual', 'competency'], help='Review type')
     parser.add_argument('--year', help='Year for annual review')
-    
+
     args = parser.parse_args()
-    
+
     data = load_data(args.file)
     output_path = prepare_data_for_analysis(data, args.type, args.year)
     print(f"Data processed and saved to {output_path}")
 ```
 
 #### 3.3.2 Report Generator Script
+
 The `report_generator.py` script handles final report formatting:
 
 ```python
@@ -224,7 +244,7 @@ def markdown_to_docx(markdown_text, output_path):
 def generate_final_report(roo_output, review_type, output_format='markdown'):
     """Generate final formatted report"""
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    
+
     if output_format.lower() == 'markdown':
         output_path = f"output/{review_type.lower()}_review_{timestamp}.md"
         with open(output_path, 'w') as f:
@@ -235,20 +255,20 @@ def generate_final_report(roo_output, review_type, output_format='markdown'):
             f.write(roo_output)
         output_path = md_path.replace('.md', '.docx')
         markdown_to_docx(roo_output, output_path)
-    
+
     return output_path
 
 # Example usage
 if __name__ == "__main__":
     import argparse
-    
+
     parser = argparse.ArgumentParser(description='Generate final report')
     parser.add_argument('--input', required=True, help='Path to Roo Code output file')
     parser.add_argument('--type', required=True, choices=['annual', 'competency'], help='Review type')
     parser.add_argument('--format', default='markdown', choices=['markdown', 'docx'], help='Output format')
-    
+
     args = parser.parse_args()
-    
+
     output_path = generate_final_report(load_roo_code_output(args.input), args.type, args.format)
     print(f"Report generated at {output_path}")
 ```
@@ -256,9 +276,10 @@ if __name__ == "__main__":
 ### 3.4 Roo Code Integration
 
 #### 3.4.1 Custom System Prompt
+
 A custom system prompt will be created for the Analyst mode in `.roo/system-prompt-analyst`:
 
-```
+```unused
 You are Roo in Performance Analyst mode, an AI assistant specialized in analyzing work accomplishments and generating performance reviews.
 
 ==== CAPABILITIES
@@ -332,17 +353,20 @@ Always format your analysis into a structured report following this pattern for 
 ```
 
 #### 3.4.2 Workflow with Roo Code
+
 The typical workflow would involve:
 
 1. Process data using Python script:
+
    ```bash
    python src/data_processor.py --file data/accomplishments.csv --type annual --year 2025
    ```
 
 2. Use Roo Code to analyze the data:
-   ```
-   @/data/processed_annual.json I need to generate an Annual Review report using this data. 
-   Please analyze each work entry, determine which criteria they satisfy, and create a structured 
+
+   ```bash
+   @/data/processed_annual.json I need to generate an Annual Review report using this data.
+   Please analyze each work entry, determine which criteria they satisfy, and create a structured
    report following the annual review template. Include specific examples for each criterion, areas
    for improvement, an improvement plan, and a summary paragraph.
    ```
@@ -350,6 +374,7 @@ The typical workflow would involve:
 3. Roo Code generates the analysis in Markdown format
 
 4. (Optional) Convert to DOCX if needed:
+
    ```bash
    python src/report_generator.py --input output/roo_analysis.md --type annual --format docx
    ```
@@ -360,7 +385,7 @@ The output report formats remain the same as in the original design:
 
 #### 3.5.1 Annual Review Report
 
-```
+```markdown
 # Annual Review [Year]
 [September 1, YYYY - August 31, YYYY]
 
@@ -396,7 +421,7 @@ The output report formats remain the same as in the original design:
 
 #### 3.5.2 Competency Assessment Report
 
-```
+```markdown
 # Competency Assessment [Date]
 
 ## 1. Accountability
@@ -430,30 +455,35 @@ The output report formats remain the same as in the original design:
 ### 4.1 Development Phases
 
 #### 4.1.1 Phase 1: VS Code Project Setup
+
 - Set up VS Code project structure
 - Install Roo Code extension
 - Create custom system prompt for Analyst mode
 - Test basic Roo Code functionality
 
 #### 4.1.2 Phase 2: Google Sheet Setup
+
 - Create Google Sheet with simplified structure
 - Set up data validation for dropdown menus
 - Create simple input instructions
 - Test with sample data entries
 
 #### 4.1.3 Phase 3: Python Script Development
+
 - Develop data processor script
 - Implement data extraction and preparation
 - Create report generator script
 - Test with sample data
 
 #### 4.1.4 Phase 4: Roo Code Integration
+
 - Finalize custom system prompt
 - Create criteria definition files
 - Test analysis quality with sample data
 - Refine prompt based on test results
 
 #### 4.1.5 Phase 5: Output Formatting
+
 - Create report templates
 - Implement formatting options
 - Test report generation
@@ -462,10 +492,12 @@ The output report formats remain the same as in the original design:
 ### 4.2 Technology Stack
 
 #### 4.2.1 Frontend
+
 - Google Sheets (data entry interface)
 - VS Code with Roo Code extension (development environment)
 
 #### 4.2.2 Backend
+
 - Python 3.9+
 - Libraries:
   - pandas (data processing)
@@ -475,11 +507,13 @@ The output report formats remain the same as in the original design:
   - argparse (command line interface)
 
 #### 4.2.3 Tools
+
 - VS Code
 - Roo Code extension
 - Google Sheets
 
 ### 4.3 Security Considerations
+
 - Data remains local within VS Code environment
 - No API keys needed for basic functionality (CSV export/import)
 - Google Sheets credentials only needed if using direct API integration
@@ -488,30 +522,38 @@ The output report formats remain the same as in the original design:
 ## 5. Usage Instructions
 
 ### 5.1 Google Sheet Setup
+
 1. Create a new Google Sheet or use the provided template
 2. Set up columns with appropriate data validation
 3. Record accomplishments throughout the year
 
 ### 5.2 Generating Reports with Roo Code
+
 1. Export Google Sheet data to CSV (or use API integration)
 2. Process data using Python script:
+
    ```bash
    python src/data_processor.py --file data/accomplishments.csv --type annual --year 2025
    ```
+
 3. Open VS Code and switch to Analyst mode in Roo Code
 4. Ask Roo Code to analyze the data:
-   ```
-   @/data/processed_annual.json I need to generate an Annual Review report using this data. 
-   Please analyze each work entry, determine which criteria they satisfy, and create a structured 
+
+   ```bash
+   @/data/processed_annual.json I need to generate an Annual Review report using this data.
+   Please analyze each work entry, determine which criteria they satisfy, and create a structured
    report following the annual review template.
    ```
+
 5. Review the generated report
 6. (Optional) Convert to DOCX if needed:
+
    ```bash
    python src/report_generator.py --input output/roo_analysis.md --type annual --format docx
    ```
 
 ### 5.3 Recording Work Accomplishments
+
 1. Enter new accomplishments as they occur
 2. Ensure all fields are completed
 3. Add any additional notes or context
@@ -520,11 +562,13 @@ The output report formats remain the same as in the original design:
 ## 6. Maintenance and Support
 
 ### 6.1 Regular Maintenance
+
 - Update criteria definitions as organizational requirements change
 - Keep Roo Code extension updated to latest version
 - Refresh the custom system prompt as needed
 
 ### 6.2 Troubleshooting
+
 - Check file paths if data loading fails
 - Verify VS Code and Roo Code are properly installed
 - Ensure Google Sheet format hasn't been modified
@@ -532,6 +576,7 @@ The output report formats remain the same as in the original design:
 ## 7. Future Enhancements
 
 ### 7.1 Potential Additions
+
 - Direct Google Sheets API integration without CSV export
 - Web-based interface for running reports (vs. command line)
 - Automated scheduling of monthly milestone reports
@@ -539,6 +584,7 @@ The output report formats remain the same as in the original design:
 - Integration with other task tracking systems (e.g., Azure DevOps)
 
 ### 7.2 Roadmap
+
 1. Core functionality (current design)
 2. Improved user interface
 3. Direct API integration
@@ -548,6 +594,7 @@ The output report formats remain the same as in the original design:
 ## 8. Appendices
 
 ### 8.1 Sample Data Format
+
 ```json
 [
   {
@@ -570,14 +617,16 @@ The output report formats remain the same as in the original design:
 ```
 
 ### 8.2 Roo Code Prompt Example
-```
-@/data/processed_annual.json I need to generate an Annual Review report using this data. 
-Please analyze each work entry, determine which criteria they satisfy, and create a structured 
+
+```bash
+@/data/processed_annual.json I need to generate an Annual Review report using this data.
+Please analyze each work entry, determine which criteria they satisfy, and create a structured
 report following the annual review template. Include specific examples for each criterion, areas
 for improvement, an improvement plan, and a summary paragraph.
 ```
 
 ### 8.3 Sample Report Output
+
 See sections 3.5.1 and 3.5.2 for the detailed report structure.
 
 ## 9. Conclusion
@@ -585,6 +634,7 @@ See sections 3.5.1 and 3.5.2 for the detailed report structure.
 This updated Performance Review Tracking System design leverages VS Code with Roo Code to provide a more integrated and efficient solution. By using Roo Code's AI capabilities directly within the VS Code environment, we've eliminated the need for external API calls while maintaining the system's core functionality.
 
 Key improvements in this design include:
+
 - Removal of manual tagging requirements (AI determines relevant criteria)
 - Local development environment without external API dependencies
 - Direct file system access for reading data and writing reports
