@@ -84,18 +84,18 @@
 
 ## Phase 6: Roo Code Integration
 
-- [ ] Finalize Roo Code custom system prompt
-  - [ ] Refine criteria definitions for better analysis
-  - [ ] Improve output formatting instructions
-  - [ ] Add detailed error handling guidance
-- [ ] Create prompting guide
-  - [ ] Document sample prompts for different report types
-  - [ ] Create examples with different parameters
-  - [ ] Develop troubleshooting guidance
-- [ ] Develop context mention patterns
-  - [ ] Create standardized file references
-  - [ ] Document effective mention strategies
-  - [ ] Test with various data scenarios
+- [x] Finalize Roo Code custom system prompt
+  - [x] Refine criteria definitions for better analysis
+  - [x] Improve output formatting instructions
+  - [x] Add detailed error handling guidance
+- [x] Create prompting guide
+  - [x] Document sample prompts for different report types
+  - [x] Create examples with different parameters
+  - [x] Develop troubleshooting guidance
+- [x] Develop context mention patterns
+  - [x] Create standardized file references
+  - [x] Document effective mention strategies
+  - [x] Test with various data scenarios
 
 ## Phase 7: Command-Line Interface
 
