@@ -99,20 +99,20 @@
 
 ## Phase 7: Command-Line Interface
 
-- [ ] Implement command-line interface for data processor
-  - [ ] Add arguments for input file path
-  - [ ] Add arguments for review type (annual/competency)
-  - [ ] Add arguments for date ranges and year
-  - [ ] Implement help documentation
-- [ ] Implement command-line interface for report generator
-  - [ ] Add arguments for input file path
-  - [ ] Add arguments for output format
-  - [ ] Add arguments for output file path
-  - [ ] Implement help documentation
-- [ ] Create combined CLI script
-  - [ ] Implement `src/main.py` for end-to-end processing
-  - [ ] Add subcommands for different functionality
-  - [ ] Create sample usage commands
+- [x] Implement command-line interface for data processor
+  - [x] Add arguments for input file path
+  - [x] Add arguments for review type (annual/competency)
+  - [x] Add arguments for date ranges and year
+  - [x] Implement help documentation
+- [x] Implement command-line interface for report generator
+  - [x] Add arguments for input file path
+  - [x] Add arguments for output format
+  - [x] Add arguments for output file path
+  - [x] Implement help documentation
+- [x] Create combined CLI script
+  - [x] Implement `src/main.py` for end-to-end processing
+  - [x] Add subcommands for different functionality
+  - [x] Create sample usage commands
 
 ## Phase 8: Testing and Validation
 
