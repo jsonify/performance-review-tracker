@@ -1,14 +1,9 @@
-"""
-Integration tests for the performance review system.
-"""
-
-import os
-import json
 import pytest
 import subprocess
+import re
 from docx import Document
-from src.data_processor import load_data, prepare_data_for_analysis
-from src.report_generator import load_roo_code_output, generate_final_report
+from typing import List, Dict, Union
+from src.validation import validate_report, load_criteria
 
 # Sample data for testing
 SAMPLE_DATA = [
@@ -82,10 +77,53 @@ def test_end_to_end_annual_review(tmp_path, sample_csv):
     subprocess.run(command, check=True, cwd=tmp_path)
     assert os.path.exists(final_report_path)
 
-    # 3. Validate output content (basic check)
+    # 3. Validate output content and format
+    criteria_file = "criteria/annual_review_criteria.json"
+    criteria = load_criteria(criteria_file)
+    is_valid, issues = validate_report(str(final_report_path), criteria_file)
+    assert is_valid, f"Report should be valid. Issues: {issues}"
+
     with open(final_report_path, "r") as f:
         report_content = f.read()
-        assert "Roo Code Output" in report_content
+
+    # Check basic content
+    assert "Roo Code Output" in report_content
+
+    # Validate data inclusion
+    for task in SAMPLE_DATA:
+        assert task["Title"] in report_content, f"Missing task: {task['Title']}"
+        assert task["Impact"] in report_content, f"Missing impact level: {task['Impact']}"
+
+def test_edge_cases(tmp_path):
+    """Test handling of edge cases and error conditions."""
+    # Test with empty CSV
+    empty_csv = tmp_path / "empty.csv"
+    empty_csv.write_text("Date,Title,Description,Acceptance Criteria,Success Notes,Impact\n")
+
+    # Should handle empty input gracefully
+    data_processor_script = "src/data_processor.py"
+    command = [
+        "python", data_processor_script,
+        "--file", str(empty_csv),
+        "--type", "annual",
+        "--year", "2025"
+    ]
+    process = subprocess.run(command, capture_output=True, text=True)
+    assert process.returncode != 0, "Should fail with empty input"
+    assert "No data found" in process.stderr or "No data found" in process.stdout
+
+    # Test with invalid dates
+    invalid_csv = tmp_path / "invalid.csv"
+    invalid_csv.write_text(
+        "Date,Title,Description,Acceptance Criteria,Success Notes,Impact\n"
+        "invalid-date,Task 1,Desc,Criteria,Notes,High\n"
+    )
+    process = subprocess.run(
+        ["python", data_processor_script, "--file", str(invalid_csv), "--type", "annual", "--year", "2025"],
+        capture_output=True, text=True
+    )
+    assert process.returncode != 0, "Should fail with invalid date"
+    assert "Invalid date format" in process.stderr or "Invalid date format" in process.stdout
 
 def test_end_to_end_competency_assessment(tmp_path, sample_csv):
     """Test the end-to-end workflow for competency assessment."""
@@ -119,7 +157,25 @@ def test_end_to_end_competency_assessment(tmp_path, sample_csv):
     subprocess.run(command, check=True, cwd=".")
     assert os.path.exists(final_report_path)
 
-    # 3. Validate output content (basic check)
+    # 3. Validate output content and format
+    criteria_file = "criteria/competency_assessment_criteria.json"
+    criteria = load_criteria(criteria_file)
+    is_valid, issues = validate_report(str(final_report_path), criteria_file)
+    assert is_valid, f"Report should be valid. Issues: {issues}"
+
     doc = Document(final_report_path)
     report_content = "\n".join([p.text for p in doc.paragraphs])
+
+    # Check basic content
     assert "Roo Code Output" in report_content
+
+    # Validate document structure
+    assert len(doc.sections) > 0, "Document should have at least one section"
+    assert len(doc.paragraphs) > 0, "Document should have content"
+
+    # Validate data inclusion
+    for task in SAMPLE_DATA:
+        task_found = any(task["Title"] in p.text for p in doc.paragraphs)
+        assert task_found, f"Missing task: {task['Title']}"
+        impact_found = any(task["Impact"] in p.text for p in doc.paragraphs)
+        assert impact_found, f"Missing impact level: {task['Impact']}"
