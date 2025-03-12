@@ -1,4 +1,3 @@
-from test_analyst_prompt import TestAnalystPrompt
 
 def print_section(prompt, start_marker):
     """Print the section of text starting with the given marker"""
@@ -18,7 +17,7 @@ def print_section(prompt, start_marker):
 
 def main():
     # Create test instance
-    test = TestAnalystPrompt()
+    # test = TestAnalystPrompt()
     
     # Load system prompt
     print("Loading system prompt...")
@@ -30,17 +29,17 @@ def main():
     print_section(prompt, "For COMPETENCY ASSESSMENTS")
     
     # Extract criteria
-    print("\nExtracting annual review criteria...")
-    annual = test._extract_detailed_criteria(prompt, "ANNUAL REVIEWS")
-    print(f"\nFound {len(annual)} annual review criteria:")
-    for c in annual:
-        print(f"\n- {c['name']} (Weight: {c['weight']})")
+    print("\nExtracting annual review criteria...Skipped")
+    # annual = test._extract_detailed_criteria(prompt, "ANNUAL REVIEWS")
+    # print(f"\nFound {len(annual)} annual review criteria:")
+    # for c in annual:
+    #     print(f"\n- {c['name']} (Weight: {c['weight']})")
     
-    print("\nExtracting competency assessment criteria...")
-    comp = test._extract_detailed_criteria(prompt, "COMPETENCY ASSESSMENTS")
-    print(f"\nFound {len(comp)} competency assessment criteria:")
-    for c in comp:
-        print(f"\n- {c['name']} (Weight: {c['weight']})")
+    print("\nExtracting competency assessment criteria...Skipped")
+    # comp = test._extract_detailed_criteria(prompt, "COMPETENCY ASSESSMENTS")
+    # print(f"\nFound {len(comp)} competency assessment criteria:")
+    # for c in comp:
+    #     print(f"\n- {c['name']} (Weight: {c['weight']})")
 
 if __name__ == '__main__':
     main()

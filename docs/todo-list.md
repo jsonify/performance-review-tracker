@@ -125,7 +125,16 @@
   - [x] Test date filtering functions
   - [x] Test report generation functions
 - [ ] Create integration tests
-  - [ ] Test end-to-end workflow with sample data
+  - [x] Test end-to-end workflow with sample data
+  - [ ] Validate output format and content
+  - [ ] Test edge cases and error conditions
+- [ ] Create validation tools
+  - [x] Implement validation for criteria coverage
+  - [ ] Create checks for report completeness
+  - [ ] Add tools to validate report structure
+- [x] Fixed tests failing due to missing dependencies
+- [x] Fixed tests failing due to incorrect import statements
+- [x] Updated cwd argument in integration tests
   - [ ] Validate output format and content
   - [ ] Test edge cases and error conditions
 - [ ] Create validation tools

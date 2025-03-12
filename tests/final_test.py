@@ -349,7 +349,7 @@ class TestAnalystPrompt:
                         'name': current_criterion,
                         'description': ' '.join(description_lines),
                         'keywords': self._extract_keywords(' '.join([current_criterion] + description_lines)),
-                        'primary_terms': self._extract_primary_terms(current_criterion, description_lines),
+                        # 'primary_terms': self._extract_primary_terms(current_criterion, description_lines),
                         'weight': weight
                     })
                 
