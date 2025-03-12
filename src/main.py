@@ -280,6 +280,7 @@ def generate_final_report(data_file, review_type, output_format='markdown', outp
     """
     print("DEBUG: generate_final_report - START", data_file, review_type, output_format, output_path) # DEBUG LOG
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    current_year = datetime.now().year
 
     # If no output path is specified, create a default one
     if not output_path:
@@ -297,6 +298,16 @@ def generate_final_report(data_file, review_type, output_format='markdown', outp
 
         # Load and apply the template
         template = load_template(review_type)
+        
+        # For annual review, modify the year and date range
+        if review_type.lower() == 'annual':
+            # Replace [Year] with the current year
+            template = template.replace('[Year]', str(current_year))
+            # Replace date range
+            template = template.replace('[September 1, YYYY - August 31, YYYY]', 
+                                       f'[September 1, {current_year-1} - August 31, {current_year}]')
+        
+        # Format the template with the analyzed content
         report_content = template.format(analyzed_content=analyzed_content)
         print("DEBUG: generate_final_report - Report content after template formatting:\n", report_content) # DEBUG LOG
 
@@ -346,11 +357,23 @@ def run_roo_code_analysis(data_file: str, review_type: str) -> str:
     # Determine output path for the analysis
     analysis_path = data_file.replace('processed_', 'analyzed_').replace('.json', '.md')
 
+    # Create a detailed prompt based on review type
+    if review_type.lower() == 'annual':
+        prompt = (f"@{data_file} Please analyze this data to generate an Annual Review report. "
+                 "Follow the exact format from the system prompt, with separate sections for each criterion: "
+                 "1. Communication, 2. Flexibility, 3. Initiative, 4. Member Service, "
+                 "5. Personal Credibility, 6. Quality and Quantity of Work, 7. Teamwork, "
+                 "and an Overall Summary. For each criterion, include 'How I Met This Criterion', "
+                 "'Areas for Improvement', 'Improvement Plan', and 'Summary' sections.")
+    else:
+        prompt = (f"@{data_file} Please analyze this data to generate a Competency Assessment report. "
+                 "Follow the exact format from the system prompt, with separate sections for each criterion.")
+
     # Prepare the Roo Code command
     roo_command = [
         'code', '--cli',  # Use VS Code CLI mode
         '--execute-command', 'roo.sendMessage',  # Execute Roo Code command
-        '--args', f"@{data_file} Please analyze this data" # Simplified prompt
+        '--args', prompt  # Detailed prompt
     ]
 
     try:
