@@ -25,11 +25,28 @@ def validate_criteria_coverage(content: str, criteria: List[Dict[str, Union[str,
     missing = []
     for criterion in criteria:
         name = criterion["name"]
+        expectations = criterion["expectations"]
+        
         # Check if criterion name is mentioned in the content
-        if not re.search(r'(?i)' + re.escape(name), content):
+        name_found = re.search(r'(?i)' + re.escape(name), content)
+        if not name_found:
             missing.append(name)
-        # No need to check expectations - just checking for the criterion name is sufficient
-        # for basic validation of coverage
+            continue
+        
+        # Get all significant words (length > 3) from expectations
+        expectation_words = set()
+        for expectation in expectations:
+            words = re.findall(r'\b\w+\b', expectation.lower())
+            expectation_words.update(word for word in words if len(word) > 3)
+        
+        # Check if a sufficient number of expectation words are present
+        content_lower = content.lower()
+        words_found = sum(1 for word in expectation_words if word in content_lower)
+        
+        # Require at least 25% of the significant words to be present
+        if words_found < len(expectation_words) * 0.25:
+            missing.append(name)
+    
     return missing
 
 def validate_report_structure(content: str) -> List[str]:

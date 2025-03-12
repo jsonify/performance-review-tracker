@@ -165,3 +165,43 @@ def test_docx_report(tmp_path, valid_report_content, criteria_file):
     is_valid, issues = validate_report(str(docx_report), str(criteria_file))
     assert is_valid, "Valid docx report should pass validation"
     assert not issues, f"Unexpected issues: {issues}"
+
+def test_missing_criteria_coverage(sample_criteria, valid_report_content):
+    """Test that the validation identifies missing criteria coverage."""
+    # Modify the valid report content to remove coverage of one criterion
+    modified_report_content = valid_report_content.replace("Led team communication initiatives, consistently expressing ideas clearly and giving members full attention during meetings", "")
+    
+    # Validate that the modified report now reports a missing criterion
+    missing = validate_criteria_coverage(modified_report_content, sample_criteria)
+    assert len(missing) > 0, "Should find at least one missing criterion"
+    assert "Communication" in missing[0] or "Initiative" in missing[0]
+
+def test_missing_sections(valid_report_content):
+    """Test that the validation identifies missing sections in the report."""
+    # Modify the valid report content to remove the "Summary" section
+    modified_report_content = valid_report_content.replace("## Summary", "")
+
+    # Validate that the modified report now reports a missing section
+    issues = validate_report_structure(modified_report_content)
+    assert len(issues) > 0, "Should find at least one structural issue"
+    assert any("Missing required section" in issue for issue in issues)
+
+def test_missing_content(valid_report_content):
+    """Test that the validation identifies missing content in the report."""
+    # Modify the valid report content to remove the "Accomplishments" section
+    modified_report_content = valid_report_content.replace("## Accomplishments", "")
+
+    # Validate that the modified report now reports a missing content
+    issues = validate_content_completeness(modified_report_content)
+    assert len(issues) > 0, "Should find at least one content issue"
+    assert any("accomplish" in issue.lower() for issue in issues)
+
+def test_tools_validate_report_structure(valid_report_content):
+    """Test that the validation identifies tools to validate report structure."""
+    # Modify the valid report content to remove the "Areas for Improvement" section
+    modified_report_content = valid_report_content.replace("## Areas for Improvement", "")
+
+    # Validate that the modified report now reports a missing section
+    issues = validate_report_structure(modified_report_content)
+    assert len(issues) > 0, "Should find at least one structural issue"
+    assert any("Missing required section" in issue for issue in issues)
