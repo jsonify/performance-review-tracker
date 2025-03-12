@@ -48,12 +48,12 @@ pip install -r requirements.txt
 
 Generate an Annual Review report:
 ```bash
-python review_generator.py --type annual --year 2025 --sheet-id [SHEET_ID] --output [OUTPUT_PATH]
+python src/main.py --file data/accomplishments.csv --type annual --year 2025 --format docx
 ```
 
 Generate a Competency Assessment report:
 ```bash
-python review_generator.py --type competency --sheet-id [SHEET_ID] --output [OUTPUT_PATH]
+python src/main.py --file data/accomplishments.csv --type competency --format markdown
 ```
 
 ## Documentation

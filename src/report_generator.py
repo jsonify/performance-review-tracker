@@ -53,77 +53,72 @@ def markdown_to_docx(markdown_text, output_path):
     """
     if not markdown_text.strip():
         raise ValueError("Markdown text cannot be empty")
-
-    # Convert markdown to HTML with extensions
-    html = markdown.markdown(
-        markdown_text,
-        extensions=[
-            'fenced_code',
-            'tables',
-            'nl2br'  # Convert newlines to line breaks
-        ]
-    )
     
     # Create new Document
     doc = Document()
     
-    # Basic HTML to DOCX conversion
-    # Note: This is a simplified conversion. For more complex formatting,
-    # you would need to parse the HTML and map elements to DOCX styles
-    paragraphs = html.split('<br />')
-    for p in paragraphs:
-        if p.strip():
-            # Remove basic HTML tags
-            text = p.replace('<p>', '').replace('</p>', '')
-            text = text.replace('<strong>', '').replace('</strong>', '')
-            text = text.replace('<em>', '').replace('</em>', '')
-            doc.add_paragraph(text.strip())
+    # Process markdown line by line
+    in_list = False
+    lines = markdown_text.split('\n')
+    
+    for line in lines:
+        line = line.rstrip()
+        if not line:
+            # Empty line
+            continue
+            
+        # Check for headers
+        if line.startswith('# '):
+            doc.add_heading(line[2:], level=1)
+        elif line.startswith('## '):
+            doc.add_heading(line[3:], level=2)
+        elif line.startswith('### '):
+            doc.add_heading(line[4:], level=3)
+        # Check for list items
+        elif line.startswith('- '):
+            if not in_list:
+                in_list = True
+            doc.add_paragraph(line[2:], style='List Bullet')
+        # Regular paragraph
+        else:
+            in_list = False
+            doc.add_paragraph(line)
     
     # Save the document
     doc.save(output_path)
     return output_path
 
-def generate_final_report(roo_output, review_type, output_format='markdown'):
-    """
-    Generate the final formatted report in the specified format.
-    
-    Args:
-        roo_output (str): The Roo Code analysis output
-        review_type (str): Type of review ('annual' or 'competency')
-        output_format (str): Desired output format ('markdown' or 'docx')
-        
-    Returns:
-        str: Path to the generated report file
-        
-    Raises:
-        ValueError: If parameters are invalid
-    """
-    if review_type.lower() not in ['annual', 'competency']:
-        raise ValueError("Review type must be 'annual' or 'competency'")
-        
-    if output_format.lower() not in ['markdown', 'docx']:
-        raise ValueError("Output format must be 'markdown' or 'docx'")
-    
-    # Create output directory if it doesn't exist
-    os.makedirs('output', exist_ok=True)
-    
-    # Generate timestamp for unique filenames
+def generate_final_report(roo_output, review_type, output_format='markdown', output_path=None):
+    """Generate final formatted report"""
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     
-    # Generate file paths
-    md_path = f"output/{review_type.lower()}_review_{timestamp}.md"
+    # If no output path is specified, create a default one
+    if not output_path:
+        output_path = f"output/{review_type.lower()}_review_{timestamp}.{'md' if output_format.lower() == 'markdown' else 'docx'}"
     
-    # Always write markdown file first
-    with open(md_path, 'w', encoding='utf-8') as f:
-        f.write(roo_output)
+    # Ensure the directory exists
+    output_dir = os.path.dirname(output_path)
+    if output_dir:  # If there's a directory part in the path
+        os.makedirs(output_dir, exist_ok=True)
     
-    if output_format.lower() == 'docx':
-        # Convert to DOCX if requested
-        docx_path = md_path.replace('.md', '.docx')
+    if output_format.lower() == 'markdown':
+        with open(output_path, 'w') as f:
+            f.write(roo_output)
+    elif output_format.lower() == 'docx':
+        # If output path is for a docx, but we need a temporary md file
+        if output_path.endswith('.docx'):
+            md_path = output_path.replace('.docx', '.md')
+        else:
+            md_path = f"{output_path}.md"
+            
+        with open(md_path, 'w') as f:
+            f.write(roo_output)
+            
+        docx_path = output_path if output_path.endswith('.docx') else f"{output_path}.docx"
         markdown_to_docx(roo_output, docx_path)
-        return docx_path
-    
-    return md_path
+        output_path = docx_path
+
+    return output_path
 
 def main():
     """Command line interface for the report generator."""
@@ -135,6 +130,9 @@ def main():
                       help='Type of review')
     parser.add_argument('--format', default='markdown', choices=['markdown', 'docx'],
                       help='Output format (default: markdown)')
+    parser.add_argument(
+    '--output',
+    help='Output file path for the generated report')
     
     args = parser.parse_args()
     
@@ -143,7 +141,12 @@ def main():
         roo_output = load_roo_code_output(args.input)
         
         # Generate report
-        output_path = generate_final_report(roo_output, args.type, args.format)
+        output_path = generate_final_report(
+            load_roo_code_output(args.input), 
+            args.type, 
+            args.format,
+            args.output  # Pass the output path
+        )
         
         print(f"Report generated successfully at: {output_path}")
         
