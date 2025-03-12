@@ -4,6 +4,7 @@ Tests for the report validation tools.
 
 import os
 import pytest
+from docx import Document
 from src.validation import (
     load_criteria,
     validate_criteria_coverage,

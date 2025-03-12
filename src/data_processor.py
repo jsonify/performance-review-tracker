@@ -11,6 +11,7 @@ This module handles loading and preparing data for analysis, including:
 import argparse
 import json
 import os
+import sys
 from datetime import datetime
 from typing import Optional, Union
 
@@ -45,7 +46,6 @@ def load_data(file_path: str) -> pd.DataFrame:
     except Exception as e:
         raise ValueError(f"Error loading data from {file_path}: {str(e)}")
 
-
 def filter_by_date_range(
     data: pd.DataFrame,
     start_date: Union[str, datetime],
@@ -68,6 +68,15 @@ def filter_by_date_range(
     if 'Date' not in data.columns:
         raise ValueError("DataFrame must contain a 'Date' column")
 
+    # Make a copy to avoid modifying the original
+    filtered_data = data.copy()
+    
+    # Try to convert dates to datetime, with error handling
+    try:
+        filtered_data['Date'] = pd.to_datetime(filtered_data['Date'], errors='raise')
+    except Exception as e:
+        raise ValueError(f"Invalid date format in data: {str(e)}")
+
     # Convert string dates to datetime if needed
     if isinstance(start_date, str):
         try:
@@ -81,16 +90,12 @@ def filter_by_date_range(
         except ValueError:
             raise ValueError(f"Invalid end date format: {end_date}. Use YYYY-MM-DD")
 
-    # Convert data dates to datetime for comparison
-    data['Date'] = pd.to_datetime(data['Date'])
-
     start_ts = pd.Timestamp(start_date)
     end_ts = pd.Timestamp(end_date)
 
     # Filter by date range
-    mask = data['Date'].between(start_ts, end_ts)
-    return pd.DataFrame(data[mask]).reset_index(drop=True)
-
+    mask = filtered_data['Date'].between(start_ts, end_ts)
+    return filtered_data[mask].reset_index(drop=True)
 
 def validate_data(data: pd.DataFrame) -> None:
     """
@@ -124,11 +129,11 @@ def validate_data(data: pd.DataFrame) -> None:
             f"Valid values are: {', '.join(valid_impacts)}"
         )
 
-
 def prepare_data_for_analysis(
     data: pd.DataFrame,
     review_type: str,
-    year: Optional[str] = None
+    year: Optional[str] = None,
+    output_dir: str = 'data'
 ) -> str:
     """
     Prepare data for Roo Code analysis.
@@ -137,6 +142,7 @@ def prepare_data_for_analysis(
         data (pd.DataFrame): Input DataFrame to prepare
         review_type (str): Type of review ('annual' or 'competency')
         year (Optional[str]): Year for annual review filtering
+        output_dir (str): Directory to save the output file (default: 'data')
 
     Returns:
         str: Path to the saved JSON file containing prepared data
@@ -150,8 +156,18 @@ def prepare_data_for_analysis(
             "Invalid review type. Must be either 'annual' or 'competency'"
         )
 
+    # Check if data is empty (after header)
+    if len(data) == 0:
+        raise ValueError("No data found in the input file")
+
     # Validate and prepare data
     validate_data(data)
+
+    # Always try to convert 'Date' column to datetime for consistency
+    try:
+        data['Date'] = pd.to_datetime(data['Date'], errors='raise')
+    except Exception as e:
+        raise ValueError(f"Invalid date format in data: {str(e)}")
 
     if review_type.lower() == 'annual':
         if not year:
@@ -162,21 +178,25 @@ def prepare_data_for_analysis(
         end_date = f"{year}-08-31"
         data = filter_by_date_range(data, start_date, end_date)
 
-    # Ensure the data directory exists
-    os.makedirs('data', exist_ok=True)
+    # Ensure the output directory exists
+    os.makedirs(output_dir, exist_ok=True)
 
     # Convert to JSON format for Roo Code
-    output_path = f"data/processed_{review_type.lower()}.json"
+    output_path = os.path.join(output_dir, f"processed_{review_type.lower()}.json")
 
     # Convert dates to ISO format strings for JSON serialization
-    data['Date'] = data['Date'].dt.strftime('%Y-%m-%d')
+    # First ensure we have datetime type in the Date column
+    if hasattr(data['Date'], 'dt'):
+        data['Date'] = data['Date'].dt.strftime('%Y-%m-%d')
+    else:
+        # If somehow we don't have datetime objects, try a safe conversion
+        data['Date'] = data['Date'].apply(lambda x: x.strftime('%Y-%m-%d') if hasattr(x, 'strftime') else str(x))
 
     # Save to file for Roo Code to access
     with open(output_path, 'w', encoding='utf-8') as f:
         json.dump(json.loads(data.to_json(orient='records')), f, indent=2)
 
     return output_path
-
 
 def main():
     """Command-line interface for the data processor."""
@@ -208,6 +228,12 @@ Examples:
         '--year',
         help='Year for annual review (required for annual review type)'
     )
+    
+    parser.add_argument(
+        '--output-dir',
+        default='data',
+        help='Directory to save processed output (default: data)'
+    )
 
     args = parser.parse_args()
 
@@ -218,12 +244,17 @@ Examples:
 
         # Process data
         print("Processing data...")
-        output_path = prepare_data_for_analysis(data, args.type, args.year)
+        output_path = prepare_data_for_analysis(
+            data, 
+            args.type, 
+            args.year,
+            args.output_dir  # Pass the output directory
+        )
 
         print(f"Data processed successfully and saved to {output_path}")
 
     except Exception as e:
-        print(f"Error: {str(e)}")
+        print(f"Error: {str(e)}", file=sys.stderr)  # Print to stderr
         exit(1)
 
 
