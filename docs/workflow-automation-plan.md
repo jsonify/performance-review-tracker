@@ -138,6 +138,33 @@ flowchart TD
 - Maintain detailed logs for debugging
 - Implement error recovery mechanisms
 
+## Standard Workflows
+
+### 1. Performance Review Generation
+
+The performance review generation process follows a three-step workflow:
+
+#### Step 1: Process Raw Data
+Uses the data processor script to prepare accomplishment data:
+```bash
+./scripts/process-data.sh --input data/accomplishments.csv --type annual --year 2025
+```
+This creates the processed data file: data/processed_annual.json
+
+#### Step 2: Generate Roo Code Analysis
+Uses VS Code with Roo Code to analyze the processed data:
+1. Open VS Code
+2. Switch to Performance Analyst mode
+3. Enter command: `@/data/processed_annual.json Please analyze this data and generate a structured report`
+4. Save Roo Code's analysis output to: data/analyzed_annual.md
+
+#### Step 3: Generate Final Report
+Uses the report generator script to combine analysis with template:
+```bash
+./scripts/generate-report.sh --input data/processed_annual.json --format markdown --output output/review.md
+```
+This creates the final report using the appropriate template and the saved Roo Code analysis.
+
 ## Implementation Steps
 
 1. Create `scripts` directory

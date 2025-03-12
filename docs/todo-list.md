@@ -166,6 +166,20 @@
   - [x] Develop shell scripts for common tasks
   - [x] Add VS Code tasks for frequent operations
   - [x] Create batch processing capabilities
+  - [x] Document performance review workflow steps:
+    - [x] Step 1: Process raw data (process-data.sh)
+      ```bash
+      python src/data_processor.py --file data/accomplishments.csv --type annual --year 2025
+      ```
+    - [x] Step 2: Generate Roo Code analysis
+      - Open VS Code
+      - Switch to Performance Analyst mode
+      - Run: @/data/processed_annual.json analyze for review
+      - Save output as: data/analyzed_annual.md
+    - [x] Step 3: Generate final report (generate-report.sh)
+      ```bash
+      ./scripts/generate-report.sh --input data/processed_annual.json --format markdown --output output/review.md
+      ```
 - [ ] Optimize performance
   - [ ] Review and optimize data processing
   - [ ] Improve file handling efficiency

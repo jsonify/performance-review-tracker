@@ -146,19 +146,28 @@ for ((i=0; i<${#files[@]}; i++)); do
             process_cmd="$process_cmd --year $review_year"
         fi
         
-        if ! eval "$process_cmd"; then
+        eval "$process_cmd" > batch_process.log 2>&1
+        if [ $? -ne 0 ]; then
             echo
-            echo "Error: Failed to process $filename"
+            echo "Error: Failed to process $filename. See batch_process.log for details."
             continue
         fi
-        
+        # Check if Roo Code analysis file exists
+        analysis_file="data/analyzed_annual.md"
+        if [ ! -f "$analysis_file" ]; then
+            echo
+            echo "Error: Roo Code analysis file '$analysis_file' not found for $filename. Skipping report generation."
+            continue
+        fi
+
         # Generate the report
         output_file="$output_dir/${base_filename}_${review_type}.docx"
         generate_cmd="./scripts/generate-report.sh --input \"data/processed_${review_type}.json\" --format docx --output \"$output_file\""
         
-        if ! eval "$generate_cmd"; then
+        eval "$generate_cmd" > batch_process.log 2>&1
+        if [ $? -ne 0 ]; then
             echo
-            echo "Error: Failed to generate report for $filename"
+            echo "Error: Failed to generate report for $filename. See batch_process.log for details."
             continue
         fi
     else
@@ -174,9 +183,10 @@ for ((i=0; i<${#files[@]}; i++)); do
                 output_file="$output_dir/${base_filename}_${type}.docx"
                 generate_cmd="./scripts/generate-report.sh --input \"data/processed_${type}.json\" --format docx --output \"$output_file\""
                 
-                if ! eval "$generate_cmd"; then
+                eval "$generate_cmd" > batch_process.log 2>&1
+                if [ $? -ne 0 ]; then
                     echo
-                    echo "Error: Failed to generate $type report for $filename"
+                    echo "Error: Failed to generate $type report for $filename. See batch_process.log for details."
                 fi
             fi
         done

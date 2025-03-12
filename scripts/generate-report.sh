@@ -129,8 +129,9 @@ cmd="python src/report_generator.py --input \"$input_file\" --type $review_type 
 
 # Execute report generation
 echo "Executing: $cmd"
-if ! eval "$cmd"; then
-    echo "Error: Report generation failed"
+eval "$cmd" > generate_report.log 2>&1
+if [ $? -ne 0 ]; then
+    echo "Error: Report generation failed. See generate_report.log for details."
     exit 1
 fi
 

@@ -114,8 +114,9 @@ fi
 
 # Execute data processing
 echo "Executing: $cmd"
-if ! eval "$cmd"; then
-    echo "Error: Data processing failed"
+eval "$cmd" > process_data.log 2>&1
+if [ $? -ne 0 ]; then
+    echo "Error: Data processing failed. See process_data.log for details."
     exit 1
 fi
 
