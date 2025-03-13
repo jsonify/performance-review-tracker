@@ -219,7 +219,7 @@
 
 ## Phase 12: Future Enhancements (Placeholder)
 
-- [ ] Add "self rating" system to annual review that reflects how well achievements align with the criteria on a scale of 1, 2, 3 (Poor, Good, Excellent)
+- [x] Add "self rating" system to annual review that reflects how well achievements align with the criteria on a scale of 1, 2, 3 (Poor, Good, Excellent)
 - [ ] Refine the `system-prompt-competency-analyst` to add a "self rating" system to better define achievements aligned with criteria on a scale of 1-5, resulting in a final rating
 - [ ] Simplify the `system-prompt-competency-analyst` file output by removing unnecessary sections like "improvement plan with 3-5 actionable steps" and "areas for improvement for this competency"
 - [ ] Prepare for user handover

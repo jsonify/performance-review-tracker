@@ -107,7 +107,9 @@ def validate_data(data: pd.DataFrame) -> None:
         'Description',
         'Acceptance Criteria',
         'Success Notes',
-        'Impact'
+        'Impact',
+        'Self Rating',
+        'Rating Justification'
     ]
 
     missing_columns = [col for col in required_columns if col not in data.columns]
@@ -127,6 +129,23 @@ def validate_data(data: pd.DataFrame) -> None:
             f"Invalid Impact values found: {', '.join(map(str, invalid_impacts))}. "
             f"Valid values are: {', '.join(valid_impacts)}"
         )
+
+    # Validate Self Rating values (1-3)
+    valid_ratings = [1, 2, 3]
+    # Convert ratings to numeric, replacing any non-numeric values with NaN
+    data['Self Rating'] = pd.to_numeric(data['Self Rating'], errors='coerce')
+    invalid_ratings = data[~data['Self Rating'].isin(valid_ratings)]['Self Rating'].dropna().unique()
+    if len(invalid_ratings) > 0:
+        raise ValueError(
+            f"Invalid Self Rating values found: {', '.join(map(str, invalid_ratings))}. "
+            "Valid values are: 1 (Poor), 2 (Good), 3 (Excellent)"
+        )
+
+    # Check for empty rating justifications
+    empty_justifications = data['Rating Justification'].isnull() | (data['Rating Justification'].astype(str).str.strip() == '')
+    if empty_justifications.any():
+        raise ValueError("Found entries with empty rating justifications")
+
     print("DEBUG: validate_data - END") # DEBUG LOG
 
 
@@ -303,7 +322,7 @@ def generate_final_report(data_file, review_type, output_format='markdown', outp
 
         # Load and apply the template
         template = load_template(review_type)
-        
+
         # For annual review, modify the year and date range
         if review_type.lower() == 'annual':
             # Replace [Year] with the current year
@@ -311,11 +330,11 @@ def generate_final_report(data_file, review_type, output_format='markdown', outp
             # Replace date range
             template = template.replace('[September 1, YYYY - August 31, YYYY]',
                                     f'[September 1, {current_year-1} - August 31, {current_year}]')
-        
+
         # Handle empty analysis content
         if not analyzed_content.strip():
             analyzed_content = "No accomplishments found in the specified date range."
-        
+
         # Format the template with the analyzed content
         report_content = template.format(analyzed_content=analyzed_content)
         print("DEBUG: generate_final_report - Report content after template formatting:\n", report_content) # DEBUG LOG
@@ -371,9 +390,11 @@ def run_roo_code_analysis(data_file: str, review_type: str) -> str:
         prompt = (f"@{data_file} Please analyze this data to generate an Annual Review report. "
                  "Follow the exact format from the system prompt, with separate sections for each criterion: "
                  "1. Communication, 2. Flexibility, 3. Initiative, 4. Member Service, "
-                 "5. Personal Credibility, 6. Quality and Quantity of Work, 7. Teamwork, "
-                 "and an Overall Summary. For each criterion, include 'How I Met This Criterion', "
-                 "'Areas for Improvement', 'Improvement Plan', and 'Summary' sections.")
+                 "5. Personal Credibility, 6. Quality and Quantity of Work, 7. Teamwork. "
+                 "For each criterion, include 'Self Rating' (1=Poor, 2=Good, 3=Excellent) with justification, "
+                 "'How I Met This Criterion', 'Areas for Improvement', 'Improvement Plan', "
+                 "and 'Summary' sections. Consider the employee's self-ratings and justifications "
+                 "when analyzing each criterion. Conclude with an Overall Summary.")
     else:
         prompt = (f"@{data_file} Please analyze this data to generate a Competency Assessment report. "
                  "Follow the exact format from the system prompt, with separate sections for each criterion.")
@@ -390,7 +411,7 @@ def run_roo_code_analysis(data_file: str, review_type: str) -> str:
         print("DEBUG: run_roo_code_analysis - Running Roo Code analysis subprocess...") # DEBUG LOG
         result = subprocess.run(roo_command, capture_output=True, text=True, check=True) # Capture output here
         print("DEBUG: run_roo_code_analysis - Roo Code analysis subprocess completed") # DEBUG LOG
-        
+
         # Log stdout and stderr
         print("DEBUG: run_roo_code_analysis - Roo Code stdout:\n", result.stdout) # DEBUG LOG
         print("DEBUG: run_roo_code_analysis - Roo Code stderr:\n", result.stderr) # DEBUG LOG
