@@ -87,6 +87,8 @@ For detailed information about the system:
 - Project Tasks: `docs/todo-list.md`
 - Automation Plan: `docs/automation-implementation-plan.md`
 - Workflow Automation: `docs/workflow-automation-plan.md`
+- Performance Review Analyst Prompt: `docs/roo-code-annual-review-prompt.txt`
+  - This file contains the main prompt to use in the Performance Review Analyst role.
 
 ## Testing
 
