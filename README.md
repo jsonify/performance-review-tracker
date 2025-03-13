@@ -62,6 +62,62 @@ Generate a Competency Assessment report:
 python src/main.py --file data/accomplishments.csv --type competency --format markdown
 ```
 
+### Performance Review Analyst Prompt
+
+To use the Performance Review Analyst mode, use the following prompt, replacing `'data/accomplishments.csv'` with the path to your CSV file and adjusting the year as needed:
+
+```text
+'data/accomplishments.csv' I need to generate an Annual Review report for 2025. Please follow these instructions EXACTLY:
+
+1. For EACH of these 7 criteria ONLY:
+   - Communication
+   - Flexibility
+   - Initiative
+   - Member Service
+   - Personal Credibility
+   - Quality and Quantity of Work
+   - Teamwork
+
+2. For EACH criterion, follow this EXACT structure:
+
+   ## [Criterion Name]
+
+   ### How I Met This Criterion
+   - [Select ONLY 2-3 most relevant examples that demonstrate this criterion]
+   - [For each example, include brief details and impact]
+   - [DO NOT list all accomplishments - be selective]
+
+   ### Areas for Improvement
+   - [Identify 1-2 specific areas to improve for this criterion]
+   - [Be specific and constructive]
+
+   ### Improvement Plan
+   - [Provide 3-5 concrete, actionable steps for improvement]
+   - [Include measurable goals and timelines]
+
+   ### Summary
+   - [Write a concise paragraph summarizing performance in this area]
+   - [Include key strengths and improvement opportunities]
+
+3. IMPORTANT:
+   - Select only the MOST RELEVANT examples for each criterion
+   - If there's limited data for a criterion, make reasonable inferences
+   - Provide improvement areas and plans even if they must be inferred
+   - Be balanced and constructive
+   - Follow the specified format precisely
+
+4. End with an Overall Summary section that highlights key achievements and development areas.
+
+DO NOT reorganize by accomplishment or impact level. Focus on analyzing by criteria.
+```
+
+**To use this prompt:**
+
+1.  Open the `.roo/system-prompt-analyst` file.
+2.  Copy and paste the prompt into the file.
+3.  Modify the file path and year as needed.
+4.  Run the "Generate Annual Review" VS Code task.
+
 ### Command Line Options
 
 - `--file`: Path to the input CSV file (required)
