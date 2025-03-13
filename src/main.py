@@ -114,6 +114,11 @@ def validate_data(data: pd.DataFrame) -> None:
     if missing_columns:
         raise ValueError(f"Missing required columns: {', '.join(missing_columns)}")
 
+    # Check for empty descriptions
+    empty_descriptions = data['Description'].isnull() | (data['Description'].astype(str).str.strip() == '')
+    if empty_descriptions.any():
+        raise ValueError("Found entries with empty descriptions")
+
     # Validate Impact values
     valid_impacts = ['High', 'Medium', 'Low']
     invalid_impacts = data[~data['Impact'].isin(valid_impacts)]['Impact'].unique()
@@ -304,8 +309,12 @@ def generate_final_report(data_file, review_type, output_format='markdown', outp
             # Replace [Year] with the current year
             template = template.replace('[Year]', str(current_year))
             # Replace date range
-            template = template.replace('[September 1, YYYY - August 31, YYYY]', 
-                                       f'[September 1, {current_year-1} - August 31, {current_year}]')
+            template = template.replace('[September 1, YYYY - August 31, YYYY]',
+                                    f'[September 1, {current_year-1} - August 31, {current_year}]')
+        
+        # Handle empty analysis content
+        if not analyzed_content.strip():
+            analyzed_content = "No accomplishments found in the specified date range."
         
         # Format the template with the analyzed content
         report_content = template.format(analyzed_content=analyzed_content)
