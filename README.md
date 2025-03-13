@@ -62,61 +62,35 @@ Generate a Competency Assessment report:
 python src/main.py --file data/accomplishments.csv --type competency --format markdown
 ```
 
-### Performance Review Analyst Prompt
+### Using Performance Review Analyst Mode
 
-To use the Performance Review Analyst mode, use the following prompt, replacing `'data/accomplishments.csv'` with the path to your CSV file and adjusting the year as needed:
+The system now uses dedicated system prompt files for different review types, allowing for much simpler user prompts.
+
+#### System Prompt Files
+
+Two specialized system prompt files are included:
+- `.roo/system-prompt-annual-analyst` - Contains the 7 Annual Review criteria with structured formatting instructions
+- `.roo/system-prompt-competency-analyst` - Contains the 13 Competency Assessment criteria with structured formatting instructions
+
+#### Using Annual Review Analysis
+
+To generate an Annual Review report, use this simple prompt in Roo Code:
 
 ```text
-'data/accomplishments.csv' I need to generate an Annual Review report for 2025. Please follow these instructions EXACTLY:
-
-1. For EACH of these 7 criteria ONLY:
-   - Communication
-   - Flexibility
-   - Initiative
-   - Member Service
-   - Personal Credibility
-   - Quality and Quantity of Work
-   - Teamwork
-
-2. For EACH criterion, follow this EXACT structure:
-
-   ## [Criterion Name]
-
-   ### How I Met This Criterion
-   - [Select ONLY 2-3 most relevant examples that demonstrate this criterion]
-   - [For each example, include brief details and impact]
-   - [DO NOT list all accomplishments - be selective]
-
-   ### Areas for Improvement
-   - [Identify 1-2 specific areas to improve for this criterion]
-   - [Be specific and constructive]
-
-   ### Improvement Plan
-   - [Provide 3-5 concrete, actionable steps for improvement]
-   - [Include measurable goals and timelines]
-
-   ### Summary
-   - [Write a concise paragraph summarizing performance in this area]
-   - [Include key strengths and improvement opportunities]
-
-3. IMPORTANT:
-   - Select only the MOST RELEVANT examples for each criterion
-   - If there's limited data for a criterion, make reasonable inferences
-   - Provide improvement areas and plans even if they must be inferred
-   - Be balanced and constructive
-   - Follow the specified format precisely
-
-4. End with an Overall Summary section that highlights key achievements and development areas.
-
-DO NOT reorganize by accomplishment or impact level. Focus on analyzing by criteria.
+@/data/accomplishments.csv @/.roo/system-prompt-annual-analyst Please generate my annual review report for 2025.
 ```
 
-**To use this prompt:**
+#### Using Competency Assessment Analysis
 
-1.  Open the `.roo/system-prompt-analyst` file.
-2.  Copy and paste the prompt into the file.
-3.  Modify the file path and year as needed.
-4.  Run the "Generate Annual Review" VS Code task.
+To generate a Competency Assessment report, use this prompt:
+
+```text
+@/data/accomplishments.csv @/.roo/system-prompt-competency-analyst Please generate my competency assessment.
+```
+
+#### Customizing for Different Job Roles
+
+When your job role changes, simply edit the "COMPETENCY ASSESSMENT CRITERIA" section in the `.roo/system-prompt-competency-analyst` file. The system prompt is designed with clear section boundaries to make updates straightforward.
 
 ### Command Line Options
 

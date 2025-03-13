@@ -36,7 +36,7 @@
         "command",
         "mcp"
       ],
-      "customInstructions": "Use the system prompt in .roo/system-prompt-analyst for detailed guidance on review criteria and report formatting. Always maintain a structured approach to performance analysis and ensure all reports follow the specified templates."
+      "customInstructions": "For Annual Reviews, reference the system prompt in .roo/system-prompt-annual-analyst. For Competency Assessments, reference the system prompt in .roo/system-prompt-competency-analyst. Both contain explicit formatting requirements."
     }
   ]
 }
