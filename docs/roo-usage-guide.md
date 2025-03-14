@@ -10,7 +10,7 @@ Use this format to generate a competency-based assessment with ratings:
 
 ```
 @/data/accomplishments.csv
-'.roo/system-prompt-competency-analyst'
+@/.roo/system-prompt-competency-analyst
 Please generate my competency assessment.
 ```
 
@@ -25,8 +25,8 @@ This will:
 Use a different format for annual performance reviews:
 
 ```
-'data/accomplishments.csv' (see below for file content)
-'.roo/system-prompt-annual-review' (see below for file content)
+@/data/accomplishments.csv 
+@/.roo/system-prompt-annual-review 
 Please generate my annual review.
 ```
 
