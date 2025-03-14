@@ -1,143 +1,184 @@
-# Performance Review Tracking System
+# Competency Assessment System
 
-A Python-based system that helps employees track work accomplishments and generate structured reports for Annual Reviews and Competency Assessments.
+A system for analyzing work accomplishments and generating comprehensive competency assessments with ratings and justifications.
 
-## Overview
+## Assessment Options
 
-The Performance Review Tracking System streamlines the process of documenting and reporting work accomplishments by:
-- Using a CSV file for continuous documentation
-- Processing data through automated Python scripts
-- Leveraging Roo Code's Performance Review Analyst mode for analysis
-- Producing formatted reports for Annual Reviews and Competency Assessments
+You have two ways to generate competency assessments:
+
+### 1. Automated System (Python-based)
+
+This approach uses the Python scripts to automatically:
+- Map accomplishments to competencies using keyword analysis
+- Calculate ratings based on impact and evidence
+- Generate formatted Markdown reports
+
+### 2. Roo Performance Review Analyst Mode
+
+Use Roo's custom Performance Review Analyst mode which:
+- Provides more nuanced analysis
+- Offers deeper insights into accomplishments
+- Uses the updated system-prompt-competency-analyst with rating system
+
+Choose the approach based on your needs:
+- Automated System: Best for batch processing or quick assessments
+- Roo Analyst Mode: Best for detailed, nuanced analysis with human-like insights
 
 ## Features
 
-- **Continuous Documentation**: Track work accomplishments as they occur
-- **Automated Analysis**: AI-powered analysis using Roo Code to map accomplishments to review criteria
-- **Automated Report Generation**: Generate structured reports with specific examples and action plans
-- **Multiple Output Formats**: Support for both Markdown and DOCX formats
-- **VS Code Integration**: Easy-to-use tasks for common operations
-- **Comprehensive Error Handling**: Clear error messages and progress reporting
-- **Batch Processing**: Support for processing multiple entries
-
-## Requirements
-
-- Python 3.9+
-- VS Code with Roo Code extension
-- Required Python packages (see `requirements.txt`):
-  - pandas (data processing)
-  - python-docx (document creation)
-  - markdown (markdown processing)
-  - argparse (command line interface)
+- Automatic mapping of accomplishments to competencies using keyword analysis
+- 1-5 rating system with detailed justifications
+- Evidence-based assessment with impact analysis
+- Comprehensive Markdown report generation
+- Clear, maintainable output format
 
 ## Installation
 
-1. Install Python dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-2. Install VS Code and the Roo Code extension
-3. Open the project in VS Code
+1. Clone the repository
+2. Create a Python virtual environment:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
 ## Usage
 
-### Using VS Code Tasks
+### Option 1: Automated System
 
-1. Press `Cmd+Shift+P` (Mac) or `Ctrl+Shift+P` (Windows/Linux)
-2. Type "Run Task" and select:
-   - "Generate Annual Review" for annual reviews
-   - "Generate Competency Assessment" for competency assessments
-3. Enter the requested information (year, output format)
+1. Prepare your accomplishments data in CSV format with the following columns:
+   - Title
+   - Description
+   - Success Notes
+   - Impact (High/Medium/Low)
+   - Date
 
-### Using Command Line
+2. Generate an assessment:
+   ```bash
+   # Generate fresh test data and run assessment
+   ./scripts/run_assessment.sh --fresh
 
-Generate an Annual Review report:
-```bash
-python src/main.py --file data/accomplishments.csv --type annual --year 2025 --format docx
+   # Or run with existing data
+   ./scripts/run_assessment.sh
+   ```
+
+The system will:
+1. Load accomplishments from data/accomplishments.csv
+2. Map them to competencies using keyword analysis
+3. Calculate ratings based on impact and evidence
+4. Generate a comprehensive Markdown report in output/competency_assessment.md
+
+### Option 2: Roo Analyst Mode
+
+See [Roo Usage Guide](docs/roo-usage-guide.md) for detailed instructions on using Roo's Performance Review Analyst mode.
+
+To generate a competency assessment in Roo:
+
+1. Open VS Code
+2. Switch to Performance Review Analyst mode
+3. Use this exact format:
+   ```
+   'data/accomplishments.csv' (see below for file content)
+   '.roo/system-prompt-competency-analyst' (see below for file content)
+   Please generate my competency assessment.
+   ```
+
+Important: This specific format distinguishes competency assessments from annual reviews and ensures proper analysis.
+
+The analysis will provide:
+- 1-5 rating scale for each competency
+- Evidence-based justifications
+- Impact analysis
+- Comprehensive explanations
+
+For more details on the differences between competency assessments and annual reviews, see the [Roo Usage Guide](docs/roo-usage-guide.md).
+
+## Report Structure
+
+The generated report includes:
+
+### Overall Summary
+- Average competency rating
+- Key strengths
+- Total impact metrics
+
+### Per Competency
+- Rating (1-5)
+- Supporting evidence
+- Comprehensive justification including:
+  - Rating context
+  - Key achievements
+  - Business impact
+  - Growth trajectory (for high performers)
+
+## Customization
+
+### Adding Keywords
+
+Edit `src/competency_keywords.py` to modify the keyword mappings for each competency:
+
+```python
+COMPETENCY_KEYWORDS = {
+    "Programming/Software Development": [
+        "code", "develop", "programming", ...
+    ],
+    ...
+}
 ```
 
-Generate a Competency Assessment report:
-```bash
-python src/main.py --file data/accomplishments.csv --type competency --format markdown
-```
+### Modifying Output Format
 
-### Using Performance Review Analyst Mode
-
-The system now uses dedicated system prompt files for different review types, allowing for much simpler user prompts.
-
-#### System Prompt Files
-
-Two specialized system prompt files are included:
-- `.roo/system-prompt-annual-analyst` - Contains the 7 Annual Review criteria with structured formatting instructions
-- `.roo/system-prompt-competency-analyst` - Contains the 13 Competency Assessment criteria with structured formatting instructions
-
-#### Using Annual Review Analysis
-
-To generate an Annual Review report, use this simple prompt in Roo Code:
-
-```text
-@/data/accomplishments.csv @/.roo/system-prompt-annual-analyst Please generate my annual review report for 2025.
-```
-
-#### Using Competency Assessment Analysis
-
-To generate a Competency Assessment report, use this prompt:
-
-```text
-@/data/accomplishments.csv @/.roo/system-prompt-competency-analyst Please generate my competency assessment.
-```
-
-#### Customizing for Different Job Roles
-
-When your job role changes, simply edit the "COMPETENCY ASSESSMENT CRITERIA" section in the `.roo/system-prompt-competency-analyst` file. The system prompt is designed with clear section boundaries to make updates straightforward.
-
-### Command Line Options
-
-- `--file`: Path to the input CSV file (required)
-- `--type`: Type of review ('annual' or 'competency') (required)
-- `--year`: Year for annual review (required for annual reviews)
-- `--format`: Output format ('markdown' or 'docx', default: markdown)
-- `--output`: Custom output path for the generated report (optional)
-
-## CSV File Format
-
-The input CSV file should have the following columns:
-- `Date`: When the work was completed
-- `Title`: Brief title of the accomplishment
-- `Description`: Detailed description of the work
-- `Acceptance Criteria`: What defined success for this work
-- `Success Notes`: How the work met or exceeded expectations
-- `Impact`: Significance of the accomplishment (High/Medium/Low)
-
-## Documentation
-
-For detailed information about the system:
-- Design Document: `docs/performance-review-tracking-system-design-document.md`
-- Project Tasks: `docs/todo-list.md`
-- Automation Plan: `docs/automation-implementation-plan.md`
-- Workflow Automation: `docs/workflow-automation-plan.md`
-- Performance Review Analyst Prompt: `docs/roo-code-annual-review-prompt.txt`
-  - This file contains the main prompt to use in the Performance Review Analyst role.
+The output format can be customized by editing the templates in `CompetencyFormatter` class (`src/competency_formatter.py`).
 
 ## Testing
 
-Run the automated tests to verify the system:
+Run the test suite:
 ```bash
-pytest tests/test_automation.py
+pytest
 ```
 
-## Security Considerations
+For test coverage:
+```bash
+pytest --cov=src tests/
+```
 
-- All processing is done locally within VS Code
-- No external API calls required
-- Data remains on the local system
-- No persistent storage of sensitive information
+## Project Structure
 
-## Future Enhancements
+```
+.
+├── data/                       # Input data
+│   ├── accomplishments.csv     # Work accomplishments
+│   └── competencies-formatted.csv  # Rating definitions
+├── src/
+│   ├── competency_formatter.py # Output formatting
+│   ├── competency_keywords.py  # Keyword mappings
+│   └── example_assessment.py   # Main script
+├── templates/                  # Example templates
+├── tests/                     # Test suite
+└── output/                    # Generated reports
+```
 
-- Direct Google Sheets API integration
-- Web-based interface
-- Automated scheduling of monthly milestone reports
-- Analytics on accomplishment distribution
-- Integration with task tracking systems (e.g., Azure DevOps)
+## Rating Scale
+
+1. **Learning** - Beginning to apply the competency
+2. **Developing** - Building basic competency
+3. **Practicing** - Demonstrating solid competency
+4. **Mastering** - Leading and teaching others
+5. **Leading** - Setting direction and driving innovation
+
+Each rating includes specific evidence and comprehensive justification based on demonstrated accomplishments.
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+## License
+
+MIT License. See LICENSE file for details.
