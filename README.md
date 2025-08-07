@@ -45,6 +45,20 @@ Choose the approach based on your needs:
    pip install -r requirements.txt
    ```
 
+## Configuration
+
+This configuration file is used to set up the Azure DevOps client and should be stored in the root of the repo named `config.json`.
+
+```json
+{
+    "organization": "CostcoWholesale",
+    "project": "CloudModernization",
+    "personal_access_token": "your_github_pat",
+    "output_directory": "ado_user_stories"
+}
+
+```
+
 ## Usage
 
 ### Option 1: Automated System

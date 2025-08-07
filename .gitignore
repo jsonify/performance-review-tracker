@@ -67,7 +67,11 @@ venv.bak/
 Thumbs.db
 output/
 
+# Data
+ado_user_stories/*.json
+
+# Config
+config.json
+
 # Handoff Manager
 handoffs/0-system/chat-history/
-
-
