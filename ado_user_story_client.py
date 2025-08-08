@@ -140,13 +140,145 @@ class ADOUserStoryClient:
                 # Handle rate limiting response
                 if response.status_code == 429:
                     retry_after = int(response.headers.get('Retry-After', '60'))
-                    print(f\"Rate limited. Waiting {retry_after} seconds before retry...\")\n                    time.sleep(retry_after)\n                    continue
+                    print(f"Rate limited. Waiting {retry_after} seconds before retry...")
+                    time.sleep(retry_after)
+                    continue
                 
                 # Check for successful response or client errors that shouldn't be retried
                 if response.status_code < 500:
                     return response
                 
-                # Server error - retry with backoff\n                if attempt < self.MAX_RETRIES:\n                    delay = min(self.BASE_DELAY * (2 ** attempt), self.MAX_DELAY)\n                    print(f\"Server error {response.status_code}, retrying in {delay:.1f}s (attempt {attempt + 1}/{self.MAX_RETRIES})\")\n                    time.sleep(delay)\n                    continue\n                else:\n                    response.raise_for_status()\n                    \n            except requests.exceptions.Timeout:\n                if attempt < self.MAX_RETRIES:\n                    delay = min(self.BASE_DELAY * (2 ** attempt), self.MAX_DELAY)\n                    print(f\"Request timeout, retrying in {delay:.1f}s (attempt {attempt + 1}/{self.MAX_RETRIES})\")\n                    time.sleep(delay)\n                    continue\n                else:\n                    raise\n                    \n            except requests.exceptions.ConnectionError:\n                if attempt < self.MAX_RETRIES:\n                    delay = min(self.BASE_DELAY * (2 ** attempt), self.MAX_DELAY)\n                    print(f\"Connection error, retrying in {delay:.1f}s (attempt {attempt + 1}/{self.MAX_RETRIES})\")\n                    time.sleep(delay)\n                    continue\n                else:\n                    raise\n        \n        raise requests.RequestException(\"All retry attempts exhausted\")\n    \n    def _enforce_rate_limit(self) -> None:\n        \"\"\"\n        Enforce rate limiting to stay within Azure DevOps API limits.\n        \"\"\"\n        current_time = time.time()\n        \n        # Clean old timestamps (older than 1 minute)\n        cutoff_time = current_time - 60\n        self._request_timestamps = [ts for ts in self._request_timestamps if ts > cutoff_time]\n        \n        # Check if we're approaching the rate limit\n        if len(self._request_timestamps) >= self.REQUESTS_PER_MINUTE - 10:  # Leave some buffer\n            sleep_time = 60 - (current_time - self._request_timestamps[0])\n            if sleep_time > 0:\n                print(f\"Rate limit protection: sleeping for {sleep_time:.1f}s\")\n                time.sleep(sleep_time)\n                current_time = time.time()\n        \n        # Record this request timestamp\n        self._request_timestamps.append(current_time)\n        self._last_request_time = current_time\n    \n    def _get_cache_key(self, request_type: str, **kwargs) -> str:\n        \"\"\"\n        Generate cache key for request caching.\n        \n        Args:\n            request_type: Type of request (e.g., 'work_items', 'user_id')\n            **kwargs: Request parameters\n            \n        Returns:\n            MD5 hash as cache key\n        \"\"\"\n        key_data = f\"{self.organization}:{self.project}:{request_type}:{sorted(kwargs.items())}\"\n        return hashlib.md5(key_data.encode()).hexdigest()\n    \n    def _get_cached_response(self, cache_key: str, max_age_minutes: int = 60) -> Optional[Dict]:\n        \"\"\"\n        Retrieve cached response if it exists and is not expired.\n        \n        Args:\n            cache_key: Cache key to look up\n            max_age_minutes: Maximum age of cached response in minutes\n            \n        Returns:\n            Cached response data or None if not found/expired\n        \"\"\"\n        if not self.enable_caching:\n            return None\n            \n        cache_file = self.cache_dir / f\"{cache_key}.json\"\n        if not cache_file.exists():\n            return None\n        \n        try:\n            # Check file age\n            file_age = datetime.now() - datetime.fromtimestamp(cache_file.stat().st_mtime)\n            if file_age > timedelta(minutes=max_age_minutes):\n                cache_file.unlink()  # Remove expired cache\n                return None\n            \n            # Load cached data\n            with open(cache_file, 'r', encoding='utf-8') as f:\n                return json.load(f)\n                \n        except Exception as e:\n            print(f\"Error reading cache file {cache_file}: {e}\")\n            return None\n    \n    def _save_cached_response(self, cache_key: str, data: Dict) -> None:\n        \"\"\"\n        Save response data to cache.\n        \n        Args:\n            cache_key: Cache key to save under\n            data: Response data to cache\n        \"\"\"\n        if not self.enable_caching:\n            return\n            \n        try:\n            cache_file = self.cache_dir / f\"{cache_key}.json\"\n            with open(cache_file, 'w', encoding='utf-8') as f:\n                json.dump(data, f, indent=2, ensure_ascii=False, default=str)\n        except Exception as e:\n            print(f\"Error saving to cache: {e}\")\n    \n    def clear_cache(self) -> None:\n        \"\"\"\n        Clear all cached responses.\n        \"\"\"\n        if not self.enable_caching:\n            return\n            \n        try:\n            for cache_file in self.cache_dir.glob(\"*.json\"):\n                cache_file.unlink()\n            print(\"Cache cleared successfully\")\n        except Exception as e:\n            print(f\"Error clearing cache: {e}\")\n\n    def test_connection(self) -> bool:"}
+                # Server error - retry with backoff
+                if attempt < self.MAX_RETRIES:
+                    delay = min(self.BASE_DELAY * (2 ** attempt), self.MAX_DELAY)
+                    print(f"Server error {response.status_code}, retrying in {delay:.1f}s (attempt {attempt + 1}/{self.MAX_RETRIES})")
+                    time.sleep(delay)
+                    continue
+                else:
+                    response.raise_for_status()
+                    
+            except requests.exceptions.Timeout:
+                if attempt < self.MAX_RETRIES:
+                    delay = min(self.BASE_DELAY * (2 ** attempt), self.MAX_DELAY)
+                    print(f"Request timeout, retrying in {delay:.1f}s (attempt {attempt + 1}/{self.MAX_RETRIES})")
+                    time.sleep(delay)
+                    continue
+                else:
+                    raise
+                    
+            except requests.exceptions.ConnectionError:
+                if attempt < self.MAX_RETRIES:
+                    delay = min(self.BASE_DELAY * (2 ** attempt), self.MAX_DELAY)
+                    print(f"Connection error, retrying in {delay:.1f}s (attempt {attempt + 1}/{self.MAX_RETRIES})")
+                    time.sleep(delay)
+                    continue
+                else:
+                    raise
+        
+        raise requests.RequestException("All retry attempts exhausted")
+    
+    def _enforce_rate_limit(self) -> None:
+        """
+        Enforce rate limiting to stay within Azure DevOps API limits.
+        """
+        current_time = time.time()
+        
+        # Clean old timestamps (older than 1 minute)
+        cutoff_time = current_time - 60
+        self._request_timestamps = [ts for ts in self._request_timestamps if ts > cutoff_time]
+        
+        # Check if we're approaching the rate limit
+        if len(self._request_timestamps) >= self.REQUESTS_PER_MINUTE - 10:  # Leave some buffer
+            sleep_time = 60 - (current_time - self._request_timestamps[0])
+            if sleep_time > 0:
+                print(f"Rate limit protection: sleeping for {sleep_time:.1f}s")
+                time.sleep(sleep_time)
+                current_time = time.time()
+        
+        # Record this request timestamp
+        self._request_timestamps.append(current_time)
+        self._last_request_time = current_time
+    
+    def _get_cache_key(self, request_type: str, **kwargs) -> str:
+        """
+        Generate cache key for request caching.
+        
+        Args:
+            request_type: Type of request (e.g., 'work_items', 'user_id')
+            **kwargs: Request parameters
+            
+        Returns:
+            MD5 hash as cache key
+        """
+        key_data = f"{self.organization}:{self.project}:{request_type}:{sorted(kwargs.items())}"
+        return hashlib.md5(key_data.encode()).hexdigest()
+    
+    def _get_cached_response(self, cache_key: str, max_age_minutes: int = 60) -> Optional[Dict]:
+        """
+        Retrieve cached response if it exists and is not expired.
+        
+        Args:
+            cache_key: Cache key to look up
+            max_age_minutes: Maximum age of cached response in minutes
+            
+        Returns:
+            Cached response data or None if not found/expired
+        """
+        if not self.enable_caching:
+            return None
+            
+        cache_file = self.cache_dir / f"{cache_key}.json"
+        if not cache_file.exists():
+            return None
+        
+        try:
+            # Check file age
+            file_age = datetime.now() - datetime.fromtimestamp(cache_file.stat().st_mtime)
+            if file_age > timedelta(minutes=max_age_minutes):
+                cache_file.unlink()  # Remove expired cache
+                return None
+            
+            # Load cached data
+            with open(cache_file, 'r', encoding='utf-8') as f:
+                return json.load(f)
+                
+        except Exception as e:
+            print(f"Error reading cache file {cache_file}: {e}")
+            return None
+    
+    def _save_cached_response(self, cache_key: str, data: Dict) -> None:
+        """
+        Save response data to cache.
+        
+        Args:
+            cache_key: Cache key to save under
+            data: Response data to cache
+        """
+        if not self.enable_caching:
+            return
+            
+        try:
+            cache_file = self.cache_dir / f"{cache_key}.json"
+            with open(cache_file, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2, ensure_ascii=False, default=str)
+        except Exception as e:
+            print(f"Error saving to cache: {e}")
+    
+    def clear_cache(self) -> None:
+        """
+        Clear all cached responses.
+        """
+        if not self.enable_caching:
+            return
+            
+        try:
+            for cache_file in self.cache_dir.glob("*.json"):
+                cache_file.unlink()
+            print("Cache cleared successfully")
+        except Exception as e:
+            print(f"Error clearing cache: {e}")
+
+    def test_connection(self) -> bool:
         """
         Test the connection and authentication with Azure DevOps
 
@@ -160,7 +292,7 @@ class ADOUserStoryClient:
         print(f"Testing connection to: {test_url}")
 
         try:
-            response = self._make_request_with_retry(test_url, \"GET\", params=params)
+            response = self._make_request_with_retry(test_url, "GET", params=params)
             print(f"Test response status: {response.status_code}")
             print(f"Test response headers: {dict(response.headers)}")
 

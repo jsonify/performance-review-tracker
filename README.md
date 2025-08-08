@@ -8,8 +8,9 @@ A comprehensive workplace productivity tool that helps professionals articulate 
 - **Dual Analysis Modes**: Choose between automated Python processing or AI-assisted deep analysis
 - **Multi-Format Output**: Professional Markdown and DOCX reports with customizable templates  
 - **Impact-Based Rating System**: 5-point scale (Learning → Developing → Practicing → Mastering → Leading) with evidence-based scoring
-- **Integration Ready**: Azure DevOps integration with planned support for Jira, GitHub, and other platforms
-- **Validation Framework**: Comprehensive quality checks for report completeness and accuracy
+- **Azure DevOps Integration**: Fully functional integration with automatic work item import and real-time data processing
+- **Validation Framework**: Comprehensive quality checks with automatic data normalization and flexible validation
+- **Smart Data Handling**: Automatic column detection, missing data normalization, and hybrid data source support
 
 ## Installation
 
@@ -26,16 +27,77 @@ A comprehensive workplace productivity tool that helps professionals articulate 
 
 ## Configuration
 
-This configuration file is used to set up the Azure DevOps client and should be stored in the root of the repo named `config.json`.
+### Complete Configuration File
+
+Create a `config.json` file in the project root with the following structure:
 
 ```json
 {
-    "organization": "OrganizationName",
-    "project": "ProjectName",
-    "personal_access_token": "your_github_pat",
-    "output_directory": "ado_user_stories"
+    "azure_devops": {
+        "organization": "YourOrgName",
+        "project": "YourProjectName",
+        "personal_access_token": "your_pat_token_here",
+        "user_id": "auto-detected",
+        "work_item_type": "User Story",
+        "states": ["Closed", "Resolved"],
+        "fields": [
+            "System.Id",
+            "System.Title",
+            "Microsoft.VSTS.Common.ClosedDate",
+            "System.Description",
+            "Microsoft.VSTS.Common.AcceptanceCriteria"
+        ]
+    },
+    "llm_integration": {
+        "provider": "roo_code",
+        "api_key": "",
+        "model": "",
+        "fallback_to_roo": true,
+        "options": {
+            "temperature": 0.7,
+            "max_tokens": 4000
+        }
+    },
+    "processing": {
+        "output_directory": "data",
+        "backup_csv": true,
+        "date_range_months": 12,
+        "default_source": "csv"
+    }
 }
+```
 
+**Configuration Sections:**
+- **azure_devops**: Required for ADO integration
+- **llm_integration**: Required for AI analysis (set to "roo_code" for current system)
+- **processing**: Optional processing settings (defaults applied if missing)
+
+### Quick Configuration Setup
+
+The fastest way to get started:
+
+```bash
+# Generate example config.json file
+python src/config_validation.py --create
+
+# Edit the generated config.json with your actual settings
+# Then validate your configuration and test connections
+python src/config_validation.py
+
+# Test configuration through main script
+python src/main.py --test-config
+```
+
+### Configuration Validation
+
+Additional validation commands:
+
+```bash
+# Validate config and test connections (default behavior)
+python src/config_validation.py
+
+# Show config summary without testing connections
+python src/config_validation.py --summary --no-test
 ```
 
 ## Usage
@@ -55,32 +117,81 @@ Or use existing data:
 ### Data Format
 
 Prepare your accomplishments in CSV format with these columns:
-- **Date**: When the accomplishment occurred
-- **Title**: Brief description of the accomplishment
-- **Description**: Detailed explanation of what was done
-- **Acceptance Criteria**: Success criteria or requirements met
-- **Success Notes**: Additional context about the success
-- **Impact**: Business impact level (High/Medium/Low)
-- **Self Rating**: Optional self-assessment
-- **Rating Justification**: Optional reasoning for self-rating
+- **Date**: When the accomplishment occurred (Required)
+- **Title**: Brief description of the accomplishment (Required)
+- **Description**: Detailed explanation of what was done (Optional - auto-filled if missing)
+- **Acceptance Criteria**: Success criteria or requirements met (Optional - auto-filled if missing)
+- **Success Notes**: Additional context about the success (Optional - auto-filled if missing)
+- **Impact**: Business impact level (High/Medium/Low) (Optional - defaults to "Medium")
+- **Self Rating**: Self-assessment (1-3 scale) (Optional - defaults to 2 "Good")
+- **Rating Justification**: Reasoning for self-rating (Optional - auto-generated if missing)
+
+**Note**: The system automatically handles missing columns by adding them with sensible defaults, making it flexible for various CSV formats.
+
+### Data Source Options
+
+#### Option 1: Azure DevOps Integration (Recommended)
+Automatically import your work items from Azure DevOps:
+
+```bash
+# Generate competency assessment from ADO data
+python src/main.py --source ado --type competency --format markdown
+
+# Generate annual review from ADO data
+python src/main.py --source ado --type annual --year 2025 --format docx
+```
+
+**Benefits**: Zero data entry, real-time accuracy, comprehensive work history
+
+#### Option 2: CSV File Import
+Use manually prepared CSV data:
+
+```bash
+# Generate from CSV file
+python src/main.py --source csv --file data/accomplishments.csv --type competency --format markdown
+```
+
+**Benefits**: Full control over data, works without external integrations, automatic data normalization for incomplete files
+
+#### Option 3: Hybrid Mode
+Try Azure DevOps first, fallback to CSV if ADO fails:
+
+```bash
+# Hybrid mode with fallback
+python src/main.py --source hybrid --file data/backup.csv --type competency --format markdown
+```
+
+**Benefits**: Best of both worlds - automatic data retrieval with manual backup
 
 ### Analysis Options
 
 #### 1. Automated Python System
 Fast, reliable processing using keyword analysis and statistical scoring:
-```bash
-python src/main.py --file data/accomplishments.csv --type competency --format markdown
-```
 
 Best for: Batch processing, consistent results, quick assessments
 
-#### 2. AI-Assisted Analysis
+#### 2. AI-Assisted Analysis  
 Advanced analysis with nuanced insights (requires compatible AI tools):
-```bash
-python src/main.py --file data/accomplishments.csv --type annual --year 2025 --format docx
-```
 
 Best for: Detailed insights, strategic recommendations, complex scenarios
+
+### Azure DevOps Standalone Usage
+
+You can also use the ADO integration directly for data exploration:
+
+```bash
+# Test your ADO connection
+python ado_user_story_client.py --config config.json --test-connection
+
+# Get your user ID (needed for filtering)
+python ado_user_story_client.py --config config.json --get-my-user-id
+
+# Export all your closed work items
+python ado_user_story_client.py --config config.json --filter-assigned-to-me --filter-state Closed
+
+# Diagnose available work items in your project
+python ado_user_story_client.py --config config.json --diagnose
+```
 
 ## Output & Reports
 
@@ -147,37 +258,81 @@ pytest --cov=src tests/
 
 ## Integration
 
-### Azure DevOps
-Configure `config.json` for automatic work item import:
+### Azure DevOps (Fully Functional)
+
+The Azure DevOps integration is production-ready and provides:
+
+- **Automatic Authentication**: Uses Personal Access Tokens for secure API access
+- **Work Item Filtering**: Retrieves closed/resolved work items assigned to you
+- **Real-time Data**: No manual CSV maintenance required
+- **Flexible Configuration**: Configurable work item types, states, and fields
+- **Connection Validation**: Built-in connection testing and diagnostics
+- **Rate Limiting**: Respects Azure DevOps API limits with intelligent throttling
+- **Caching**: Optional response caching for improved performance
+
+#### Setup Steps
+
+1. **Generate PAT**: Create a Personal Access Token in Azure DevOps with "Work Items (Read)" permission
+2. **Configure**: Add your settings to `config.json` (see Configuration section above)
+3. **Validate**: Run `python src/config_validation.py` to test connections
+4. **Use**: Run `python src/main.py --source ado --type competency --format markdown`
+
+#### Advanced Configuration Options
+
 ```json
 {
-    "organization": "YourOrg",
-    "project": "YourProject", 
-    "personal_access_token": "your_pat",
-    "output_directory": "ado_user_stories"
+    "azure_devops": {
+        "organization": "YourOrg",
+        "project": "YourProject", 
+        "personal_access_token": "your_pat_here",
+        "user_id": "auto-detected",
+        "work_item_type": "User Story",
+        "states": ["Closed", "Resolved", "Done"],
+        "fields": [
+            "System.Id",
+            "System.Title",
+            "Microsoft.VSTS.Common.ClosedDate",
+            "System.Description",
+            "Microsoft.VSTS.Common.AcceptanceCriteria",
+            "Microsoft.VSTS.Scheduling.StoryPoints",
+            "System.Tags"
+        ]
+    }
 }
 ```
 
 ### Planned Integrations
 - **Jira**: Issue and project tracking integration
-- **GitHub**: Pull request and contribution analysis
+- **GitHub**: Pull request and contribution analysis  
 - **GitLab**: Merge request and pipeline integration
 - **Direct LLM APIs**: Enhanced AI analysis capabilities
 
 ## Project Architecture
 
 ### Core Components
-- **src/main.py**: Primary orchestration and entry point
+- **src/main.py**: Primary orchestration and entry point with multi-source data handling
 - **src/competency_formatter.py**: Report generation and template system
 - **src/competency_keywords.py**: Keyword-based competency mapping
-- **src/validation.py**: Quality assurance and validation framework
-- **ado_user_story_client.py**: Azure DevOps integration client
+- **src/config_validation.py**: Configuration validation and connection testing framework
+- **ado_user_story_client.py**: Azure DevOps integration client with comprehensive API support
 - **scripts/run_assessment.sh**: Automated workflow scripts
 
 ### Data Flow
 ```
-CSV Input → Data Validation → Competency Mapping → 
-Rating Calculation → Template Application → Report Output
+Data Source (ADO/CSV/Hybrid) → Data Normalization → Data Validation → 
+Competency Mapping → Rating Calculation → Template Application → Report Output
+```
+
+**Azure DevOps Flow**:
+```
+ADO API → Work Item Retrieval → Field Mapping → Data Transformation → 
+Automatic Normalization → Standard Processing Pipeline → Report Generation
+```
+
+**Enhanced Processing Pipeline**:
+```
+Raw Data → Missing Column Detection → Default Value Assignment → 
+Validation → Analysis → Template Rendering → Multi-Format Output
 ```
 
 ### Directory Structure
