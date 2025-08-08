@@ -12,3 +12,9 @@ mypy>=0.910        # Type checking
 # Optional dependencies
 python-docx>=0.8.11  # For DOCX export (if needed)
 markdown>=3.3.4      # For Markdown processing
+
+# LLM Provider Dependencies (optional - install as needed)
+# OpenAI: pip install openai>=1.0.0
+# Anthropic: pip install anthropic>=0.8.0
+# Google: pip install google-generativeai>=0.3.0
+# Ollama: pip install ollama>=0.1.0

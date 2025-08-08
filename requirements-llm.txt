@@ -1,0 +1,17 @@
+# LLM Provider Dependencies
+# Install based on your chosen provider(s)
+
+# OpenAI (GPT-4, GPT-3.5)
+openai>=1.0.0
+
+# Anthropic (Claude)
+anthropic>=0.8.0
+
+# Google (Gemini)
+google-generativeai>=0.3.0
+
+# Ollama (Local LLMs)
+ollama>=0.1.0
+
+# All providers (if you want maximum flexibility)
+# pip install -r requirements-llm.txt

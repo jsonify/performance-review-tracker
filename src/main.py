@@ -19,6 +19,21 @@ import markdown
 from markdown.extensions import fenced_code, tables
 import site
 
+# Import LLM analyzer module
+try:
+    from .llm_analyzer import run_llm_analysis, validate_llm_config
+except ImportError:
+    try:
+        from llm_analyzer import run_llm_analysis, validate_llm_config
+    except ImportError:
+        print("Warning: LLM analyzer module not found. Will use fallback manual analysis.", file=sys.stderr)
+        def run_llm_analysis(data_file, review_type, config):
+            # Fallback implementation
+            from .llm_analyzer import generate_manual_analysis
+            return generate_manual_analysis(data_file, review_type)
+        def validate_llm_config(config):
+            return []
+
 print(f"Python executable: {sys.executable}")
 print(f"Python version: {sys.version}")
 print(f"Site packages: {site.getsitepackages()}")
@@ -579,8 +594,20 @@ def generate_final_report(data_file, review_type, output_format='markdown', outp
         if not analyzed_content.strip():
             analyzed_content = "No accomplishments found in the specified date range."
 
-        # Format the template with the analyzed content
-        report_content = template.format(analyzed_content=analyzed_content)
+        # Check if the analyzed content is LLM-generated (contains structured markdown)
+        if analyzed_content.startswith('#') and ('## Executive Summary' in analyzed_content or '## Criterion Analysis' in analyzed_content):
+            # LLM-generated content is already properly formatted - use directly
+            report_content = analyzed_content
+            print("DEBUG: Using LLM-generated content directly (already formatted)")
+        else:
+            # Traditional analysis - use template formatting
+            # For now, just use the analyzed content since templates don't have proper placeholders
+            report_content = analyzed_content
+            print("DEBUG: Using analyzed content directly (template formatting needs {analyzed_content} placeholder)")
+            
+        # For annual review, add current year to the title if it's LLM content
+        if review_type.lower() == 'annual' and report_content.startswith('# Annual Review'):
+            report_content = report_content.replace('# Annual Review', f'# Annual Review {current_year}')
         print("DEBUG: generate_final_report - Report content after template formatting:\n", report_content) # DEBUG LOG
 
         if output_format.lower() == 'markdown':
@@ -1024,8 +1051,8 @@ def generate_review_from_data(
         )
         print(f"DEBUG: Data processed and saved to {processed_data_path}")
         
-        # Run analysis (Roo Code or future LLM integration)
-        analysis_path = run_roo_code_analysis(processed_data_path, review_type)
+        # Run analysis (LLM integration)
+        analysis_path = run_llm_analysis(processed_data_path, review_type, config or {})
         
         # Generate final report
         report_path = generate_final_report(
@@ -1070,8 +1097,8 @@ def generate_review(
         )
         print(f"DEBUG: generate_review - Data processed and saved to {processed_data_path}") # DEBUG LOG
 
-        # 2. Run Roo Code analysis
-        analysis_path = run_roo_code_analysis(processed_data_path, review_type)
+        # 2. Run LLM analysis (no config available - will use fallback)
+        analysis_path = run_llm_analysis(processed_data_path, review_type, {})
 
         # 3. Generate final report
         print("DEBUG: generate_review - Generating final report...") # DEBUG LOG
@@ -1218,6 +1245,14 @@ Examples:
             return 1
         
         print("Configuration loaded successfully.")
+        
+        # Validate LLM configuration
+        llm_issues = validate_llm_config(config)
+        if llm_issues:
+            print("LLM Configuration Issues Found:")
+            for issue in llm_issues:
+                print(f"  - {issue}")
+            print("Note: System will fall back to manual analysis if LLM fails.")
         
         # Generate the review using new configuration-based method
         report_path = generate_review_with_config(
