@@ -69,6 +69,7 @@ output/
 
 # Data
 ado_user_stories/*.json
+data/batch/ado_backup_*.csv
 
 # Config
 config.json

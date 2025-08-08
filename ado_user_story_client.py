@@ -2,17 +2,63 @@ import requests
 import json
 import os
 import base64
-from datetime import datetime
-from typing import Dict, List, Optional, Any
+import time
+from datetime import datetime, timedelta
+from typing import Dict, List, Optional, Any, Tuple, Union
+from pathlib import Path
+import re
+import hashlib
 import argparse
 
 
 class ADOUserStoryClient:
     """
-    Azure DevOps client for retrieving User Story information via REST API
+    Enhanced Azure DevOps client for retrieving User Story information via REST API.
+    
+    Features:
+    - Robust error handling with exponential backoff
+    - Data transformation for performance review format
+    - Field mapping and filtering capabilities
+    - Request caching for performance
+    - Comprehensive logging and validation
     """
 
-    def __init__(self, organization: str, project: str, personal_access_token: str):
+    # Field mapping from Azure DevOps to Performance Review format
+    DEFAULT_FIELD_MAPPING = {
+        'System.Title': 'Title',
+        'Microsoft.VSTS.Common.ClosedDate': 'Date', 
+        'System.Description': 'Description',
+        'Microsoft.VSTS.Common.AcceptanceCriteria': 'Acceptance Criteria',
+        'System.Id': 'Work Item ID',
+        'System.State': 'Status'
+    }
+    
+    # Default fields to retrieve from Azure DevOps
+    DEFAULT_FIELDS = [
+        "System.Id",
+        "System.Title",
+        "Microsoft.VSTS.Common.ClosedDate",
+        "System.Description", 
+        "Microsoft.VSTS.Common.AcceptanceCriteria",
+        "System.State",
+        "System.AssignedTo",
+        "Microsoft.VSTS.Common.Priority",
+        "Microsoft.VSTS.Scheduling.StoryPoints",
+        "System.Tags"
+    ]
+    
+    # Rate limiting configuration
+    MAX_RETRIES = 3
+    BASE_DELAY = 1.0  # Base delay for exponential backoff
+    MAX_DELAY = 60.0  # Maximum delay between retries
+    REQUESTS_PER_MINUTE = 300  # Azure DevOps API rate limit
+    
+    def __init__(self, 
+                 organization: str, 
+                 project: str, 
+                 personal_access_token: str,
+                 enable_caching: bool = True,
+                 cache_dir: str = ".ado_cache"):
         """
         Initialize the ADO client
 
@@ -21,25 +67,216 @@ class ADOUserStoryClient:
             project: Project name
             personal_access_token: Personal Access Token for authentication
         """
+        # Basic configuration
         self.organization = organization
         self.project = project
         self.base_url = f"https://dev.azure.com/{organization}/{project}/_apis/wit"
-
-        # Setup authentication header
-        # PAT tokens should be encoded as ":token" in base64 for basic auth
+        
+        # Authentication setup
+        if not personal_access_token or personal_access_token.strip() == "":
+            raise ValueError("Personal Access Token cannot be empty")
+        
         token_bytes = f":{personal_access_token}".encode('ascii')
         token_b64 = base64.b64encode(token_bytes).decode('ascii')
         self.headers = {
             'Authorization': f'Basic {token_b64}',
             'Content-Type': 'application/json',
-            'Accept': 'application/json'
+            'Accept': 'application/json',
+            'User-Agent': 'Performance-Review-Tracker/1.0'
         }
-
-        print(f"Initialized ADO client:")
+        
+        # Caching configuration
+        self.enable_caching = enable_caching
+        self.cache_dir = Path(cache_dir)
+        if enable_caching:
+            self.cache_dir.mkdir(exist_ok=True)
+        
+        # Rate limiting tracking
+        self._request_timestamps = []
+        self._last_request_time = 0
+        
+        # Session for connection pooling
+        self._session = requests.Session()
+        self._session.headers.update(self.headers)
+        
+        print(f"Initialized enhanced ADO client:")
         print(f"  Organization: {organization}")
         print(f"  Project: {project}")
         print(f"  Base URL: {self.base_url}")
+        print(f"  Caching: {'Enabled' if enable_caching else 'Disabled'}")
         print(f"  Token length: {len(personal_access_token)} characters")
+
+    def _make_request_with_retry(self, url: str, method: str = "GET", 
+                                json_data: Optional[Dict] = None,
+                                params: Optional[Dict] = None) -> requests.Response:
+        """
+        Make HTTP request with exponential backoff retry logic.
+        
+        Args:
+            url: Request URL
+            method: HTTP method (GET, POST, etc.)
+            json_data: JSON data for POST requests
+            params: Query parameters
+            
+        Returns:
+            Response object
+            
+        Raises:
+            requests.RequestException: If all retry attempts fail
+        """
+        for attempt in range(self.MAX_RETRIES + 1):
+            try:
+                # Rate limiting - ensure we don't exceed API limits
+                self._enforce_rate_limit()
+                
+                # Make the request
+                if method.upper() == "GET":
+                    response = self._session.get(url, params=params, timeout=30)
+                elif method.upper() == "POST":
+                    response = self._session.post(url, json=json_data, params=params, timeout=30)
+                else:
+                    raise ValueError(f"Unsupported HTTP method: {method}")
+                
+                # Handle rate limiting response
+                if response.status_code == 429:
+                    retry_after = int(response.headers.get('Retry-After', '60'))
+                    print(f"Rate limited. Waiting {retry_after} seconds before retry...")
+                    time.sleep(retry_after)
+                    continue
+                
+                # Check for successful response or client errors that shouldn't be retried
+                if response.status_code < 500:
+                    return response
+                
+                # Server error - retry with backoff
+                if attempt < self.MAX_RETRIES:
+                    delay = min(self.BASE_DELAY * (2 ** attempt), self.MAX_DELAY)
+                    print(f"Server error {response.status_code}, retrying in {delay:.1f}s (attempt {attempt + 1}/{self.MAX_RETRIES})")
+                    time.sleep(delay)
+                    continue
+                else:
+                    response.raise_for_status()
+                    
+            except requests.exceptions.Timeout:
+                if attempt < self.MAX_RETRIES:
+                    delay = min(self.BASE_DELAY * (2 ** attempt), self.MAX_DELAY)
+                    print(f"Request timeout, retrying in {delay:.1f}s (attempt {attempt + 1}/{self.MAX_RETRIES})")
+                    time.sleep(delay)
+                    continue
+                else:
+                    raise
+                    
+            except requests.exceptions.ConnectionError:
+                if attempt < self.MAX_RETRIES:
+                    delay = min(self.BASE_DELAY * (2 ** attempt), self.MAX_DELAY)
+                    print(f"Connection error, retrying in {delay:.1f}s (attempt {attempt + 1}/{self.MAX_RETRIES})")
+                    time.sleep(delay)
+                    continue
+                else:
+                    raise
+        
+        raise requests.RequestException("All retry attempts exhausted")
+    
+    def _enforce_rate_limit(self) -> None:
+        """
+        Enforce rate limiting to stay within Azure DevOps API limits.
+        """
+        current_time = time.time()
+        
+        # Clean old timestamps (older than 1 minute)
+        cutoff_time = current_time - 60
+        self._request_timestamps = [ts for ts in self._request_timestamps if ts > cutoff_time]
+        
+        # Check if we're approaching the rate limit
+        if len(self._request_timestamps) >= self.REQUESTS_PER_MINUTE - 10:  # Leave some buffer
+            sleep_time = 60 - (current_time - self._request_timestamps[0])
+            if sleep_time > 0:
+                print(f"Rate limit protection: sleeping for {sleep_time:.1f}s")
+                time.sleep(sleep_time)
+                current_time = time.time()
+        
+        # Record this request timestamp
+        self._request_timestamps.append(current_time)
+        self._last_request_time = current_time
+    
+    def _get_cache_key(self, request_type: str, **kwargs) -> str:
+        """
+        Generate cache key for request caching.
+        
+        Args:
+            request_type: Type of request (e.g., 'work_items', 'user_id')
+            **kwargs: Request parameters
+            
+        Returns:
+            MD5 hash as cache key
+        """
+        key_data = f"{self.organization}:{self.project}:{request_type}:{sorted(kwargs.items())}"
+        return hashlib.md5(key_data.encode()).hexdigest()
+    
+    def _get_cached_response(self, cache_key: str, max_age_minutes: int = 60) -> Optional[Dict]:
+        """
+        Retrieve cached response if it exists and is not expired.
+        
+        Args:
+            cache_key: Cache key to look up
+            max_age_minutes: Maximum age of cached response in minutes
+            
+        Returns:
+            Cached response data or None if not found/expired
+        """
+        if not self.enable_caching:
+            return None
+            
+        cache_file = self.cache_dir / f"{cache_key}.json"
+        if not cache_file.exists():
+            return None
+        
+        try:
+            # Check file age
+            file_age = datetime.now() - datetime.fromtimestamp(cache_file.stat().st_mtime)
+            if file_age > timedelta(minutes=max_age_minutes):
+                cache_file.unlink()  # Remove expired cache
+                return None
+            
+            # Load cached data
+            with open(cache_file, 'r', encoding='utf-8') as f:
+                return json.load(f)
+                
+        except Exception as e:
+            print(f"Error reading cache file {cache_file}: {e}")
+            return None
+    
+    def _save_cached_response(self, cache_key: str, data: Dict) -> None:
+        """
+        Save response data to cache.
+        
+        Args:
+            cache_key: Cache key to save under
+            data: Response data to cache
+        """
+        if not self.enable_caching:
+            return
+            
+        try:
+            cache_file = self.cache_dir / f"{cache_key}.json"
+            with open(cache_file, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2, ensure_ascii=False, default=str)
+        except Exception as e:
+            print(f"Error saving to cache: {e}")
+    
+    def clear_cache(self) -> None:
+        """
+        Clear all cached responses.
+        """
+        if not self.enable_caching:
+            return
+            
+        try:
+            for cache_file in self.cache_dir.glob("*.json"):
+                cache_file.unlink()
+            print("Cache cleared successfully")
+        except Exception as e:
+            print(f"Error clearing cache: {e}")
 
     def test_connection(self) -> bool:
         """
@@ -49,12 +286,13 @@ class ADOUserStoryClient:
             True if connection is successful, False otherwise
         """
         # Try to get project information first
-        test_url = f"https://dev.azure.com/{self.organization}/_apis/projects/{self.project}?api-version=7.1"
+        test_url = f"https://dev.azure.com/{self.organization}/_apis/projects/{self.project}"
+        params = {'api-version': '7.1'}
 
         print(f"Testing connection to: {test_url}")
 
         try:
-            response = requests.get(test_url, headers=self.headers)
+            response = self._make_request_with_retry(test_url, "GET", params=params)
             print(f"Test response status: {response.status_code}")
             print(f"Test response headers: {dict(response.headers)}")
 
