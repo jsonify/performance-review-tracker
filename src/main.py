@@ -3,7 +3,7 @@
 Main script for the Performance Review Tracking System.
 
 This script provides end-to-end automation for generating performance review reports,
-including data processing, Roo Code analysis, and report generation.
+including data processing, Azure DevOps integration, LLM analysis, and report generation.
 """
 
 import argparse
@@ -12,7 +12,7 @@ import os
 import sys
 import subprocess
 from datetime import datetime
-from typing import Optional, Union
+from typing import Optional, Union, Dict
 import pandas as pd
 from docx import Document
 import markdown
@@ -22,6 +22,16 @@ import site
 print(f"Python executable: {sys.executable}")
 print(f"Python version: {sys.version}")
 print(f"Site packages: {site.getsitepackages()}")
+
+# Import configuration validation module
+try:
+    from config_validation import load_and_validate_config, ConfigValidationError
+except ImportError:
+    print("Warning: config_validation module not found. Configuration management disabled.", file=sys.stderr)
+    def load_and_validate_config(*args, **kwargs):
+        return {}
+    class ConfigValidationError(Exception):
+        pass
 
 # Data processor functions
 def load_data(file_path: str) -> pd.DataFrame:
@@ -51,6 +61,206 @@ def load_data(file_path: str) -> pd.DataFrame:
         raise ValueError(f"Error loading data from {file_path}: {str(e)}")
 
     print("DEBUG: load_data - END") # DEBUG LOG
+
+
+def load_data_from_ado(config: Dict, date_range_months: int = 12) -> pd.DataFrame:
+    """
+    Load data from Azure DevOps using the configured client.
+    
+    Args:
+        config: Configuration dictionary containing Azure DevOps settings
+        date_range_months: Number of months to look back for work items
+        
+    Returns:
+        DataFrame with work items formatted for performance review processing
+        
+    Raises:
+        ImportError: If ADO client is not available
+        ValueError: If ADO configuration is invalid or connection fails
+    """
+    print("DEBUG: load_data_from_ado - START", date_range_months) # DEBUG LOG
+    
+    try:
+        # Import ADO client
+        import sys
+        sys.path.append('..')  # Add parent directory to path for ado_user_story_client
+        from ado_user_story_client import ADOUserStoryClient
+    except ImportError as e:
+        raise ImportError("ADO client not available. Please ensure ado_user_story_client.py is accessible.")
+    
+    # Get Azure DevOps configuration
+    ado_config = config.get("azure_devops", {})
+    if not ado_config:
+        raise ValueError("Azure DevOps configuration not found in config file")
+    
+    # Validate required ADO configuration
+    required_fields = ["organization", "project", "personal_access_token"]
+    for field in required_fields:
+        if not ado_config.get(field):
+            raise ValueError(f"Missing required Azure DevOps configuration: {field}")
+    
+    # Initialize ADO client
+    print("DEBUG: load_data_from_ado - Initializing ADO client") # DEBUG LOG
+    client = ADOUserStoryClient(
+        organization=ado_config["organization"],
+        project=ado_config["project"],
+        personal_access_token=ado_config["personal_access_token"]
+    )
+    
+    # Test connection
+    if not client.test_connection():
+        raise ValueError("Failed to connect to Azure DevOps. Please check your credentials.")
+    
+    # Get user ID
+    user_id = ado_config.get("user_id")
+    if not user_id or user_id == "auto-detected":
+        user_id = client.get_current_user_id()
+        if not user_id:
+            raise ValueError("Could not determine current user ID from Azure DevOps")
+    
+    # Get work items
+    work_item_type = ado_config.get("work_item_type", "User Story")
+    states = ado_config.get("states", ["Closed", "Resolved"])
+    fields = ado_config.get("fields", [
+        "System.Id",
+        "System.Title", 
+        "Microsoft.VSTS.Common.ClosedDate",
+        "System.Description",
+        "Microsoft.VSTS.Common.AcceptanceCriteria"
+    ])
+    
+    print(f"DEBUG: load_data_from_ado - Fetching work items for user: {user_id}") # DEBUG LOG
+    
+    all_work_items = []
+    
+    # Fetch work items for each configured state
+    for state in states:
+        work_items = client.get_work_items_by_criteria(
+            assigned_to_id=user_id,
+            state=state,
+            work_item_type=work_item_type,
+            fields=fields
+        )
+        all_work_items.extend(work_items)
+    
+    if not all_work_items:
+        print("DEBUG: load_data_from_ado - No work items found") # DEBUG LOG
+        # Return empty DataFrame with expected columns
+        empty_df = pd.DataFrame(columns=[
+            'Date', 'Title', 'Description', 'Acceptance Criteria', 
+            'Success Notes', 'Impact', 'Self Rating', 'Rating Justification'
+        ])
+        return empty_df
+    
+    print(f"DEBUG: load_data_from_ado - Found {len(all_work_items)} work items") # DEBUG LOG
+    
+    # Transform ADO work items to performance review format
+    performance_data = []
+    
+    for item in all_work_items:
+        fields_data = item.get('fields', {})
+        
+        # Map ADO fields to performance review structure
+        perf_item = {
+            'Date': _format_ado_date(fields_data.get('Microsoft.VSTS.Common.ClosedDate')),
+            'Title': fields_data.get('System.Title', ''),
+            'Description': _clean_html_content(fields_data.get('System.Description', '')),
+            'Acceptance Criteria': _clean_html_content(fields_data.get('Microsoft.VSTS.Common.AcceptanceCriteria', '')),
+            'Success Notes': f"Completed work item ID {item.get('id')} successfully",
+            'Impact': _calculate_impact_from_ado(fields_data),
+            'Self Rating': 2,  # Default to "Good"
+            'Rating Justification': f"Successfully completed {work_item_type.lower()} as assigned, meeting acceptance criteria"
+        }
+        
+        performance_data.append(perf_item)
+    
+    # Create DataFrame
+    df = pd.DataFrame(performance_data)
+    
+    # Filter by date range
+    if date_range_months > 0:
+        cutoff_date = datetime.now() - pd.DateOffset(months=date_range_months)
+        df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+        df = df[df['Date'] >= cutoff_date].reset_index(drop=True)
+    
+    print(f"DEBUG: load_data_from_ado - Returning {len(df)} work items after date filtering") # DEBUG LOG
+    print("DEBUG: load_data_from_ado - END") # DEBUG LOG
+    return df
+
+
+def _format_ado_date(ado_date_str: Optional[str]) -> str:
+    """
+    Format Azure DevOps date string to YYYY-MM-DD format.
+    
+    Args:
+        ado_date_str: Date string from ADO (ISO format)
+        
+    Returns:
+        Formatted date string or current date if parsing fails
+    """
+    if not ado_date_str:
+        return datetime.now().strftime('%Y-%m-%d')
+    
+    try:
+        # ADO dates are typically in ISO format like "2025-06-15T14:30:00Z"
+        dt = datetime.fromisoformat(ado_date_str.replace('Z', '+00:00'))
+        return dt.strftime('%Y-%m-%d')
+    except:
+        return datetime.now().strftime('%Y-%m-%d')
+
+
+def _clean_html_content(html_content: Optional[str]) -> str:
+    """
+    Clean HTML content from ADO fields to plain text.
+    
+    Args:
+        html_content: HTML content from ADO
+        
+    Returns:
+        Cleaned plain text content
+    """
+    if not html_content:
+        return ""
+    
+    # Basic HTML tag removal (could be enhanced with BeautifulSoup if needed)
+    import re
+    # Remove HTML tags
+    text = re.sub(r'<[^>]+>', '', html_content)
+    # Replace common HTML entities
+    text = text.replace('&nbsp;', ' ').replace('&amp;', '&').replace('&lt;', '<').replace('&gt;', '>')
+    # Clean up whitespace
+    text = ' '.join(text.split())
+    return text
+
+
+def _calculate_impact_from_ado(fields_data: Dict) -> str:
+    """
+    Calculate impact level from ADO work item fields.
+    
+    Args:
+        fields_data: Dictionary of ADO work item fields
+        
+    Returns:
+        Impact level: "High", "Medium", or "Low"
+    """
+    # This is a simple heuristic - could be enhanced based on specific ADO fields
+    title = fields_data.get('System.Title', '').lower()
+    description = fields_data.get('System.Description', '').lower()
+    
+    # High impact indicators
+    high_impact_keywords = [
+        'critical', 'urgent', 'security', 'production', 'outage', 
+        'major', 'enterprise', 'system-wide', 'architecture'
+    ]
+    
+    # Check for high impact indicators
+    content = f"{title} {description}"
+    if any(keyword in content for keyword in high_impact_keywords):
+        return "High"
+    
+    # Medium impact is default for completed work items
+    # Low impact could be determined by specific criteria if needed
+    return "Medium"
 
 
 def filter_by_date_range(
@@ -435,6 +645,172 @@ def run_roo_code_analysis(data_file: str, review_type: str) -> str:
         raise RuntimeError(f"Error running Roo Code analysis: {str(e)}")
 
 
+def generate_review_with_config(
+    config: Dict,
+    source: str = "auto",
+    input_file: Optional[str] = None,
+    review_type: str = "competency",
+    year: Optional[str] = None,
+    output_format: str = 'markdown',
+    output_path: Optional[str] = None
+) -> str:
+    """
+    Generate a performance review report with configuration-based data source selection.
+    
+    Args:
+        config: Configuration dictionary
+        source: Data source ("csv", "ado", "auto")
+        input_file: CSV file path (required if source is "csv")
+        review_type: Type of review ("annual" or "competency")
+        year: Year for annual review
+        output_format: Output format ("markdown" or "docx")
+        output_path: Custom output path
+        
+    Returns:
+        Path to generated report
+    """
+    print("DEBUG: generate_review_with_config - START", source, input_file, review_type) # DEBUG LOG
+    
+    # Determine data source
+    if source == "auto":
+        source = config.get("processing", {}).get("default_source", "csv")
+        print(f"DEBUG: Auto-selected data source: {source}")
+    
+    try:
+        # Load data based on source
+        if source == "csv":
+            if not input_file:
+                raise ValueError("input_file is required when source is 'csv'")
+            print(f"DEBUG: Loading data from CSV file: {input_file}")
+            data = load_data(input_file)
+            
+        elif source == "ado":
+            print("DEBUG: Loading data from Azure DevOps")
+            processing_config = config.get("processing", {})
+            date_range_months = processing_config.get("date_range_months", 12)
+            data = load_data_from_ado(config, date_range_months)
+            
+            # Optionally backup to CSV
+            if processing_config.get("backup_csv", True):
+                backup_path = _backup_ado_data_to_csv(data, config)
+                print(f"DEBUG: Backed up ADO data to CSV: {backup_path}")
+        
+        elif source == "hybrid":
+            # Try ADO first, fallback to CSV
+            try:
+                print("DEBUG: Attempting to load data from Azure DevOps (hybrid mode)")
+                processing_config = config.get("processing", {})
+                date_range_months = processing_config.get("date_range_months", 12)
+                data = load_data_from_ado(config, date_range_months)
+                print("DEBUG: Successfully loaded data from Azure DevOps")
+            except Exception as ado_error:
+                print(f"DEBUG: ADO loading failed, falling back to CSV: {ado_error}")
+                if not input_file:
+                    raise ValueError(
+                        f"Azure DevOps loading failed ({ado_error}) and no CSV fallback file provided. "
+                        "Please provide --file argument for CSV fallback."
+                    )
+                data = load_data(input_file)
+                print(f"DEBUG: Successfully loaded fallback data from CSV: {input_file}")
+        
+        else:
+            raise ValueError(f"Invalid source: {source}. Must be 'csv', 'ado', or 'hybrid'")
+        
+        # Continue with existing review generation logic
+        return generate_review_from_data(
+            data=data,
+            review_type=review_type,
+            year=year,
+            output_format=output_format,
+            output_path=output_path,
+            config=config
+        )
+        
+    except Exception as e:
+        print(f"DEBUG: generate_review_with_config - ERROR: {str(e)}") # DEBUG LOG
+        raise
+
+
+def _backup_ado_data_to_csv(data: pd.DataFrame, config: Dict) -> str:
+    """
+    Backup ADO data to CSV file for future reference.
+    
+    Args:
+        data: DataFrame with ADO data
+        config: Configuration dictionary
+        
+    Returns:
+        Path to backup CSV file
+    """
+    output_dir = config.get("processing", {}).get("output_directory", "data")
+    os.makedirs(output_dir, exist_ok=True)
+    
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    backup_path = os.path.join(output_dir, f"ado_backup_{timestamp}.csv")
+    
+    data.to_csv(backup_path, index=False)
+    print(f"DEBUG: ADO data backed up to: {backup_path}")
+    return backup_path
+
+
+def generate_review_from_data(
+    data: pd.DataFrame,
+    review_type: str,
+    year: Optional[str] = None,
+    output_format: str = 'markdown',
+    output_path: Optional[str] = None,
+    config: Optional[Dict] = None
+) -> str:
+    """
+    Generate a performance review report from DataFrame data.
+    
+    Args:
+        data: DataFrame with performance review data
+        review_type: Type of review ("annual" or "competency")  
+        year: Year for annual review
+        output_format: Output format ("markdown" or "docx")
+        output_path: Custom output path
+        config: Configuration dictionary (for output directory)
+        
+    Returns:
+        Path to generated report
+    """
+    print("DEBUG: generate_review_from_data - START", review_type, year, output_format) # DEBUG LOG
+    
+    try:
+        # Prepare data for analysis
+        output_dir = "data"
+        if config and config.get("processing", {}).get("output_directory"):
+            output_dir = config["processing"]["output_directory"]
+            
+        processed_data_path = prepare_data_for_analysis(
+            data,
+            review_type,
+            year,
+            output_dir
+        )
+        print(f"DEBUG: Data processed and saved to {processed_data_path}")
+        
+        # Run analysis (Roo Code or future LLM integration)
+        analysis_path = run_roo_code_analysis(processed_data_path, review_type)
+        
+        # Generate final report
+        report_path = generate_final_report(
+            processed_data_path,
+            review_type,
+            output_format,
+            output_path
+        )
+        print(f"DEBUG: Report generated successfully at: {report_path}")
+        
+        print("DEBUG: generate_review_from_data - END", report_path) # DEBUG LOG
+        return report_path
+        
+    except Exception as e:
+        print(f"DEBUG: generate_review_from_data - ERROR: {str(e)}") # DEBUG LOG
+        raise
+
+
 def generate_review(
     input_file: str,
     review_type: str,
@@ -494,29 +870,59 @@ def generate_review(
 def main():
     """Main function to orchestrate the review generation process."""
     parser = argparse.ArgumentParser(
-        description="Generate performance review reports",
+        description="Generate performance review reports with Azure DevOps integration",
         formatter_class=argparse.RawTextHelpFormatter,
         epilog="""
 Examples:
-  Generate an annual review report:
-    %(prog)s --file data/accomplishments.csv --type annual --year 2025 --format docx
-
-  Generate a competency assessment report:
-    %(prog)s --file data/accomplishments.csv --type competency --format markdown
+  Generate from CSV (traditional):
+    %(prog)s --file data/accomplishments.csv --type competency --source csv
+  
+  Generate from Azure DevOps:
+    %(prog)s --type competency --source ado --config config.json
+  
+  Generate with hybrid fallback:
+    %(prog)s --file data/accomplishments.csv --type annual --year 2025 --source hybrid
+    
+  Generate annual review with configuration:
+    %(prog)s --type annual --year 2025 --format docx --config config.json
         """
     )
 
-    # Add arguments
+    # Configuration arguments
     parser.add_argument(
-        "--file",
-        required=True,
-        help="Path to the data file (CSV or Excel)"
+        "--config",
+        default="config.json",
+        help="Path to configuration file (default: config.json)"
     )
     parser.add_argument(
+        "--source", 
+        choices=["csv", "ado", "hybrid", "auto"],
+        default="auto",
+        help="Data source: csv (file only), ado (Azure DevOps only), hybrid (ADO with CSV fallback), auto (from config)"
+    )
+    parser.add_argument(
+        "--create-config",
+        action="store_true",
+        help="Create example configuration file and exit"
+    )
+    parser.add_argument(
+        "--test-config",
+        action="store_true", 
+        help="Test configuration and connections, then exit"
+    )
+    
+    # Data arguments
+    parser.add_argument(
+        "--file",
+        help="Path to CSV/Excel data file (required for csv source, optional for hybrid fallback)"
+    )
+    
+    # Review arguments
+    parser.add_argument(
         "--type",
-        required=True,
+        default="competency",
         choices=["annual", "competency"],
-        help="Type of review (annual or competency)"
+        help="Type of review (default: competency)"
     )
     parser.add_argument(
         "--year",
@@ -526,7 +932,7 @@ Examples:
         "--format",
         default="markdown",
         choices=["markdown", "docx"],
-        help="Output format (markdown or docx)"
+        help="Output format (default: markdown)"
     )
     parser.add_argument(
         "--output",
@@ -535,24 +941,74 @@ Examples:
 
     args = parser.parse_args()
 
-    # Validate arguments
+    # Handle configuration-only commands first
+    if args.create_config:
+        try:
+            from config_validation import ConfigValidator
+            validator = ConfigValidator(args.config)
+            validator._create_example_config()
+            print(f"✓ Example configuration created at: {args.config}")
+            print("Please edit the configuration file with your actual settings before running reviews.")
+            return 0
+        except Exception as e:
+            print(f"Error creating configuration: {e}", file=sys.stderr)
+            return 1
+    
+    if args.test_config:
+        try:
+            config = load_and_validate_config(args.config, create_if_missing=True, test_connections=True)
+            print("✓ Configuration validation completed successfully!")
+            return 0
+        except ConfigValidationError as e:
+            print(f"Configuration validation failed: {e}", file=sys.stderr)
+            return 1
+        except Exception as e:
+            print(f"Unexpected error during configuration test: {e}", file=sys.stderr) 
+            return 1
+
+    # Validate review arguments
     if args.type == "annual" and not args.year:
         parser.error("--year is required for annual reviews")
+    
+    # Validate source-specific requirements
+    if args.source == "csv" and not args.file:
+        parser.error("--file is required when --source is 'csv'")
 
     try:
-        # Generate the review
-        report_path = generate_review(
-            args.file,
-            args.type,
-            args.year,
-            args.format,
-            args.output
+        # Load and validate configuration
+        print("Loading configuration...")
+        try:
+            config = load_and_validate_config(args.config, create_if_missing=False, test_connections=True)
+        except ConfigValidationError as e:
+            print(f"Configuration error: {e}", file=sys.stderr)
+            print("Hint: Use --create-config to create an example configuration file.", file=sys.stderr)
+            return 1
+        
+        print("Configuration loaded successfully.")
+        
+        # Generate the review using new configuration-based method
+        report_path = generate_review_with_config(
+            config=config,
+            source=args.source,
+            input_file=args.file,
+            review_type=args.type,
+            year=args.year,
+            output_format=args.format,
+            output_path=args.output
         )
-        print(f"\nReview generation complete! The report is available at: {report_path}")
+        print(f"\n✓ Review generation complete! The report is available at: {report_path}")
         return 0
 
+    except ValueError as e:
+        print(f"\nValidation error: {e}", file=sys.stderr)
+        return 1
+    except ImportError as e:
+        print(f"\nDependency error: {e}", file=sys.stderr) 
+        print("Hint: Ensure all required modules are installed and accessible.", file=sys.stderr)
+        return 1
     except Exception as e:
-        print("\nReview generation failed. Please check the error messages above.", file=sys.stderr)
+        print(f"\nReview generation failed: {str(e)}", file=sys.stderr)
+        print("Please check the error messages above for more details.", file=sys.stderr)
         return 1
 
 

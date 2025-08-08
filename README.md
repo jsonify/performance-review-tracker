@@ -1,36 +1,15 @@
-# Competency Assessment System
+# Performance Review Tracker
 
-A system for analyzing work accomplishments and generating comprehensive competency assessments with ratings and justifications.
+A comprehensive workplace productivity tool that helps professionals articulate their work accomplishments effectively for performance evaluations, career advancement, and salary negotiations through automated competency assessment and AI-assisted analysis.
 
-## Assessment Options
+## Core Features
 
-You have two ways to generate competency assessments:
-
-### 1. Automated System (Python-based)
-
-This approach uses the Python scripts to automatically:
-- Map accomplishments to competencies using keyword analysis
-- Calculate ratings based on impact and evidence
-- Generate formatted Markdown reports
-
-### 2. Roo Performance Review Analyst Mode
-
-Use Roo's custom Performance Review Analyst mode which:
-- Provides more nuanced analysis
-- Offers deeper insights into accomplishments
-- Uses the updated system-prompt-competency-analyst with rating system
-
-Choose the approach based on your needs:
-- Automated System: Best for batch processing or quick assessments
-- Roo Analyst Mode: Best for detailed, nuanced analysis with human-like insights
-
-## Features
-
-- Automatic mapping of accomplishments to competencies using keyword analysis
-- 1-5 rating system with detailed justifications
-- Evidence-based assessment with impact analysis
-- Comprehensive Markdown report generation
-- Clear, maintainable output format
+- **Automated Competency Assessment**: Maps accomplishments to 13 professional competency areas using intelligent keyword analysis
+- **Dual Analysis Modes**: Choose between automated Python processing or AI-assisted deep analysis
+- **Multi-Format Output**: Professional Markdown and DOCX reports with customizable templates  
+- **Impact-Based Rating System**: 5-point scale (Learning → Developing → Practicing → Mastering → Leading) with evidence-based scoring
+- **Integration Ready**: Azure DevOps integration with planned support for Jira, GitHub, and other platforms
+- **Validation Framework**: Comprehensive quality checks for report completeness and accuracy
 
 ## Installation
 
@@ -51,8 +30,8 @@ This configuration file is used to set up the Azure DevOps client and should be 
 
 ```json
 {
-    "organization": "CostcoWholesale",
-    "project": "CloudModernization",
+    "organization": "OrganizationName",
+    "project": "ProjectName",
     "personal_access_token": "your_github_pat",
     "output_directory": "ado_user_stories"
 }
@@ -61,91 +40,98 @@ This configuration file is used to set up the Azure DevOps client and should be 
 
 ## Usage
 
-### Option 1: Automated System
+### Quick Start
 
-1. Prepare your accomplishments data in CSV format with the following columns:
-   - Title
-   - Description
-   - Success Notes
-   - Impact (High/Medium/Low)
-   - Date
+Generate a competency assessment with test data:
+```bash
+./scripts/run_assessment.sh --fresh
+```
 
-2. Generate an assessment:
-   ```bash
-   # Generate fresh test data and run assessment
-   ./scripts/run_assessment.sh --fresh
+Or use existing data:
+```bash
+./scripts/run_assessment.sh
+```
 
-   # Or run with existing data
-   ./scripts/run_assessment.sh
-   ```
+### Data Format
 
-The system will:
-1. Load accomplishments from data/accomplishments.csv
-2. Map them to competencies using keyword analysis
-3. Calculate ratings based on impact and evidence
-4. Generate a comprehensive Markdown report in output/competency_assessment.md
+Prepare your accomplishments in CSV format with these columns:
+- **Date**: When the accomplishment occurred
+- **Title**: Brief description of the accomplishment
+- **Description**: Detailed explanation of what was done
+- **Acceptance Criteria**: Success criteria or requirements met
+- **Success Notes**: Additional context about the success
+- **Impact**: Business impact level (High/Medium/Low)
+- **Self Rating**: Optional self-assessment
+- **Rating Justification**: Optional reasoning for self-rating
 
-### Option 2: Roo Analyst Mode
+### Analysis Options
 
-See [Roo Usage Guide](docs/roo-usage-guide.md) for detailed instructions on using Roo's Performance Review Analyst mode.
+#### 1. Automated Python System
+Fast, reliable processing using keyword analysis and statistical scoring:
+```bash
+python src/main.py --file data/accomplishments.csv --type competency --format markdown
+```
 
-To generate a competency assessment in Roo:
+Best for: Batch processing, consistent results, quick assessments
 
-1. Open VS Code
-2. Switch to Performance Review Analyst mode
-3. Use this exact format:
-   ```
-   'data/accomplishments.csv' (see below for file content)
-   '.roo/system-prompt-competency-analyst' (see below for file content)
-   Please generate my competency assessment.
-   ```
+#### 2. AI-Assisted Analysis
+Advanced analysis with nuanced insights (requires compatible AI tools):
+```bash
+python src/main.py --file data/accomplishments.csv --type annual --year 2025 --format docx
+```
 
-Important: This specific format distinguishes competency assessments from annual reviews and ensures proper analysis.
+Best for: Detailed insights, strategic recommendations, complex scenarios
 
-The analysis will provide:
-- 1-5 rating scale for each competency
-- Evidence-based justifications
-- Impact analysis
-- Comprehensive explanations
+## Output & Reports
 
-For more details on the differences between competency assessments and annual reviews, see the [Roo Usage Guide](docs/roo-usage-guide.md).
+### Report Structure
+- **Executive Summary**: Overall performance metrics and key strengths
+- **Competency Analysis**: Detailed assessment across 13 professional competency areas
+- **Evidence-Based Ratings**: 1-5 scale with supporting accomplishments
+- **Development Recommendations**: Specific areas for growth and career advancement
 
-## Report Structure
+### Supported Formats
+- **Markdown**: Clean, readable format for web and documentation
+- **DOCX**: Professional Microsoft Word format for formal submissions
+- **JSON**: Structured data for integration with other tools
 
-The generated report includes:
+## Competency Framework
 
-### Overall Summary
-- Average competency rating
-- Key strengths
-- Total impact metrics
+### 13 Professional Competency Areas
+1. **Programming/Software Development**: Coding, technical implementation, software engineering
+2. **Solution Architecture**: System design, technical architecture, platform decisions  
+3. **Systems Design**: Infrastructure, scalability, performance optimization
+4. **Project Management**: Planning, execution, resource management, delivery
+5. **Requirements Definition**: Analysis, specification, stakeholder management
+6. **Testing**: Quality assurance, validation, test automation
+7. **Problem Management**: Issue resolution, root cause analysis, troubleshooting
+8. **Innovation**: Creative solutions, process improvement, new technology adoption
+9. **Release/Deployment**: CI/CD, production deployment, release management
+10. **Accountability**: Ownership, reliability, commitment to outcomes
+11. **Influence**: Leadership, mentoring, cross-team collaboration
+12. **Agility**: Adaptability, learning, response to change
+13. **Inclusion**: Team building, diversity support, inclusive practices
 
-### Per Competency
-- Rating (1-5)
-- Supporting evidence
-- Comprehensive justification including:
-  - Rating context
-  - Key achievements
-  - Business impact
-  - Growth trajectory (for high performers)
+### Rating Scale
+1. **Learning** - Beginning to apply the competency with guidance
+2. **Developing** - Building proficiency with occasional support
+3. **Practicing** - Demonstrating consistent competency independently
+4. **Mastering** - Advanced proficiency, able to guide others
+5. **Leading** - Expert level, driving innovation and setting standards
 
 ## Customization
 
-### Adding Keywords
-
-Edit `src/competency_keywords.py` to modify the keyword mappings for each competency:
-
+### Keyword Mapping
+Modify `src/competency_keywords.py` to adjust automatic competency detection:
 ```python
 COMPETENCY_KEYWORDS = {
-    "Programming/Software Development": [
-        "code", "develop", "programming", ...
-    ],
-    ...
+    "Programming/Software Development": ["code", "develop", "programming"],
+    "Solution Architecture": ["architecture", "design", "system"]
 }
 ```
 
-### Modifying Output Format
-
-The output format can be customized by editing the templates in `CompetencyFormatter` class (`src/competency_formatter.py`).
+### Report Templates
+Customize output by editing templates in `src/competency_formatter.py` and `templates/` directory.
 
 ## Testing
 
@@ -159,31 +145,54 @@ For test coverage:
 pytest --cov=src tests/
 ```
 
-## Project Structure
+## Integration
 
-```
-.
-├── data/                       # Input data
-│   ├── accomplishments.csv     # Work accomplishments
-│   └── competencies-formatted.csv  # Rating definitions
-├── src/
-│   ├── competency_formatter.py # Output formatting
-│   ├── competency_keywords.py  # Keyword mappings
-│   └── example_assessment.py   # Main script
-├── templates/                  # Example templates
-├── tests/                     # Test suite
-└── output/                    # Generated reports
+### Azure DevOps
+Configure `config.json` for automatic work item import:
+```json
+{
+    "organization": "YourOrg",
+    "project": "YourProject", 
+    "personal_access_token": "your_pat",
+    "output_directory": "ado_user_stories"
+}
 ```
 
-## Rating Scale
+### Planned Integrations
+- **Jira**: Issue and project tracking integration
+- **GitHub**: Pull request and contribution analysis
+- **GitLab**: Merge request and pipeline integration
+- **Direct LLM APIs**: Enhanced AI analysis capabilities
 
-1. **Learning** - Beginning to apply the competency
-2. **Developing** - Building basic competency
-3. **Practicing** - Demonstrating solid competency
-4. **Mastering** - Leading and teaching others
-5. **Leading** - Setting direction and driving innovation
+## Project Architecture
 
-Each rating includes specific evidence and comprehensive justification based on demonstrated accomplishments.
+### Core Components
+- **src/main.py**: Primary orchestration and entry point
+- **src/competency_formatter.py**: Report generation and template system
+- **src/competency_keywords.py**: Keyword-based competency mapping
+- **src/validation.py**: Quality assurance and validation framework
+- **ado_user_story_client.py**: Azure DevOps integration client
+- **scripts/run_assessment.sh**: Automated workflow scripts
+
+### Data Flow
+```
+CSV Input → Data Validation → Competency Mapping → 
+Rating Calculation → Template Application → Report Output
+```
+
+### Directory Structure
+```
+performance-review-tracker/
+├── .agent-os/              # Agent OS product documentation
+├── src/                    # Core Python modules  
+├── scripts/                # Automation scripts
+├── data/                   # Input CSV files and processed data
+├── output/                 # Generated reports
+├── templates/              # Report templates
+├── criteria/               # Evaluation criteria definitions
+├── tests/                  # Test suite
+└── docs/                   # Documentation and guides
+```
 
 ## Contributing
 
