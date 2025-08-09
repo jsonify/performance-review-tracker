@@ -1,0 +1,98 @@
+{
+  "competency_framework": {
+    "name": "Professional Competency Assessment",
+    "version": "2025.1",
+    "description": "Comprehensive competency framework for technical professionals"
+  },
+  "competencies": {
+    "Programming/Software Development": {
+      "description": "Coding, technical implementation, software engineering practices",
+      "keywords": ["code", "develop", "programming", "software", "implementation", "coding", "bug fix", "feature", "algorithm"],
+      "levels": {
+        "1": "Learning - Beginning to apply programming concepts with guidance",
+        "2": "Developing - Building programming proficiency with occasional support",
+        "3": "Practicing - Demonstrating consistent programming skills independently",
+        "4": "Mastering - Advanced programming proficiency, able to guide others",
+        "5": "Leading - Expert level programming, driving technical innovation"
+      }
+    },
+    "Solution Architecture": {
+      "description": "System design, technical architecture, platform decisions",
+      "keywords": ["architecture", "design", "system", "platform", "infrastructure", "scalability", "framework"],
+      "levels": {
+        "1": "Learning - Understanding basic architectural concepts",
+        "2": "Developing - Contributing to architectural discussions",
+        "3": "Practicing - Designing components within larger systems",
+        "4": "Mastering - Leading architectural decisions for projects",
+        "5": "Leading - Setting architectural standards across organization"
+      }
+    },
+    "Project Management": {
+      "description": "Planning, execution, resource management, delivery coordination",
+      "keywords": ["project", "management", "planning", "coordination", "delivery", "milestone", "schedule", "timeline"],
+      "levels": {
+        "1": "Learning - Understanding project management basics",
+        "2": "Developing - Managing small projects or project components",
+        "3": "Practicing - Successfully managing medium-complexity projects",
+        "4": "Mastering - Managing complex projects and mentoring others",
+        "5": "Leading - Setting project management standards and practices"
+      }
+    },
+    "Problem Management": {
+      "description": "Issue resolution, root cause analysis, troubleshooting",
+      "keywords": ["problem", "issue", "troubleshoot", "debug", "resolve", "fix", "solution", "root cause"],
+      "levels": {
+        "1": "Learning - Identifying and reporting problems",
+        "2": "Developing - Solving routine problems independently",
+        "3": "Practicing - Analyzing and solving complex problems",
+        "4": "Mastering - Leading problem resolution efforts",
+        "5": "Leading - Establishing problem management processes"
+      }
+    },
+    "Innovation": {
+      "description": "Creative solutions, process improvement, new technology adoption",
+      "keywords": ["innovation", "improvement", "optimize", "enhance", "creative", "new", "technology", "automation"],
+      "levels": {
+        "1": "Learning - Recognizing improvement opportunities",
+        "2": "Developing - Implementing minor improvements",
+        "3": "Practicing - Driving meaningful innovations in work area",
+        "4": "Mastering - Leading innovation initiatives",
+        "5": "Leading - Fostering culture of innovation organization-wide"
+      }
+    },
+    "Collaboration": {
+      "description": "Teamwork, cross-functional coordination, stakeholder engagement",
+      "keywords": ["collaborate", "teamwork", "coordinate", "stakeholder", "communication", "partnership"],
+      "levels": {
+        "1": "Learning - Working effectively within immediate team",
+        "2": "Developing - Collaborating across related teams",
+        "3": "Practicing - Facilitating collaboration across diverse groups",
+        "4": "Mastering - Building strategic partnerships and alliances",
+        "5": "Leading - Creating collaborative culture and practices"
+      }
+    }
+  },
+  "assessment_criteria": {
+    "rating_scale": {
+      "1": "Learning",
+      "2": "Developing", 
+      "3": "Practicing",
+      "4": "Mastering",
+      "5": "Leading"
+    },
+    "evidence_requirements": {
+      "minimum_accomplishments_per_competency": 1,
+      "impact_weighting": {
+        "High": 3,
+        "Medium": 2,
+        "Low": 1
+      }
+    },
+    "scoring_algorithm": {
+      "base_score": "keyword_match_count",
+      "impact_multiplier": true,
+      "frequency_bonus": true,
+      "recency_weighting": true
+    }
+  }
+}

@@ -25,6 +25,38 @@ A comprehensive workplace productivity tool that helps professionals articulate 
    pip install -r requirements.txt
    ```
 
+## Usage Options
+
+### 🌐 Web UI (Recommended)
+The easiest way to use the Performance Review Tracker is through the web interface:
+
+```bash
+./scripts/run_ui.sh
+```
+
+Then open your browser to: `http://localhost:8888`
+
+The web UI provides:
+- **Intuitive Interface**: Step-by-step wizard for all functionality
+- **Drag & Drop**: Easy file uploads for criteria and CSV data
+- **Azure DevOps Integration**: Direct connection with connection testing
+- **LLM Configuration**: Support for all major AI providers with secure API key management
+- **Real-time Progress**: Live feedback during analysis
+- **Professional Output**: Direct download of Markdown and Word documents
+
+For detailed web UI documentation, see [ui/README.md](ui/README.md).
+
+### 💻 Command Line Interface
+For advanced users or automation, use the command line interface:
+
+```bash
+# Quick start with existing data
+./scripts/run_assessment.sh
+
+# Or use the main script directly
+python src/main.py --source csv --file data/accomplishments.csv --type competency --format markdown
+```
+
 ## Configuration
 
 ### Complete Configuration File

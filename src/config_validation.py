@@ -45,7 +45,7 @@ class ConfigValidator:
     
     # Valid values for specific fields
     VALID_VALUES = {
-        "llm_integration.provider": ["openai", "anthropic", "roo_code"],
+        "llm_integration.provider": ["openai", "anthropic", "google", "roo_code"],
         "processing.default_source": ["csv", "ado", "hybrid"]
     }
     
