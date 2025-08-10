@@ -102,13 +102,7 @@ def get_year_options():
 def get_llm_providers():
     """Get available LLM providers."""
     return [
-        {'id': 'requestyai', 'name': 'RequestyAI (Unified Gateway - All Models)', 'recommended': True},
-        {'id': 'openai', 'name': 'OpenAI (GPT-3.5, GPT-4)'},
-        {'id': 'anthropic', 'name': 'Anthropic (Claude)'},
-        {'id': 'google', 'name': 'Google (Gemini)'},
-        {'id': 'azure_openai', 'name': 'Azure OpenAI'},
-        {'id': 'ollama', 'name': 'Ollama (Local)'},
-        {'id': 'roo_code', 'name': 'Roo Code (VS Code Integration)'}
+        {'id': 'requestyai', 'name': 'RequestyAI (Unified Gateway - All Models)', 'recommended': True}
     ]
 
 
