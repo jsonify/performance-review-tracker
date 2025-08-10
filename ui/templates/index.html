@@ -171,7 +171,7 @@
             <select id="llm-provider" class="form-select">
                 <option value="none">No AI Analysis (Automated Only)</option>
                 {% for provider in llm_providers %}
-                <option value="{{ provider.id }}">{{ provider.name }}</option>
+                <option value="{{ provider.id }}" {% if provider.recommended %}selected{% endif %}>{{ provider.name }}</option>
                 {% endfor %}
             </select>
         </div>
@@ -191,7 +191,18 @@
                     <i class="fas fa-eye"></i>
                 </button>
             </div>
-            <small class="text-muted">Leave empty if using environment variables</small>
+            <div class="mt-2">
+                <div id="stored-key-status" class="text-muted small"></div>
+                <div class="btn-group-sm mt-1">
+                    <button type="button" id="store-key-btn" class="btn btn-sm btn-outline-success" style="display: none;">
+                        <i class="fas fa-save"></i> Store Key
+                    </button>
+                    <button type="button" id="delete-key-btn" class="btn btn-sm btn-outline-danger" style="display: none;">
+                        <i class="fas fa-trash"></i> Delete Stored Key
+                    </button>
+                </div>
+            </div>
+            <small class="text-muted">Leave empty to use stored key or environment variables</small>
         </div>
     </div>
 </div>
@@ -375,7 +386,36 @@
                     modelSelect.appendChild(option);
                 });
             }
+            
+            // Check for stored key when provider changes
+            checkStoredKey(provider);
         });
+        
+        // Setup key storage button handlers
+        document.getElementById('store-key-btn').addEventListener('click', storeApiKey);
+        document.getElementById('delete-key-btn').addEventListener('click', deleteStoredKey);
+        
+        // Update key display when API key field changes
+        document.getElementById('llm-api-key').addEventListener('input', updateKeyButtons);
+        
+        // Initialize default provider models and check for stored key
+        const initialProvider = providerSelect.value;
+        if (initialProvider !== 'none') {
+            // Populate models for initially selected provider
+            if (modelsByProvider[initialProvider]) {
+                modelsByProvider[initialProvider].forEach(model => {
+                    const option = document.createElement('option');
+                    option.value = model;
+                    option.textContent = model;
+                    modelSelect.appendChild(option);
+                });
+                // Select a default model if available
+                if (modelsByProvider[initialProvider].length > 0) {
+                    modelSelect.value = modelsByProvider[initialProvider][0];
+                }
+            }
+            checkStoredKey(initialProvider);
+        }
     }
     
     function testADOConnection() {
@@ -523,6 +563,138 @@
             showProgress(false);
             document.getElementById('generate-btn').disabled = false;
             showAlert(`Analysis failed: ${error.message}`, 'danger');
+        });
+    }
+    
+    function checkStoredKey(provider) {
+        const statusDiv = document.getElementById('stored-key-status');
+        const storeBtn = document.getElementById('store-key-btn');
+        const deleteBtn = document.getElementById('delete-key-btn');
+        
+        if (provider === 'none' || !provider) {
+            statusDiv.textContent = '';
+            storeBtn.style.display = 'none';
+            deleteBtn.style.display = 'none';
+            return;
+        }
+        
+        fetch(`/api/get-stored-key/${provider}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.has_key) {
+                statusDiv.innerHTML = `<i class="fas fa-key text-success"></i> Stored key: ${data.key_preview}`;
+                if (data.model) {
+                    statusDiv.innerHTML += ` (Model: ${data.model})`;
+                }
+                storeBtn.style.display = 'none';
+                deleteBtn.style.display = 'inline-block';
+                
+                // Clear the API key field since we have a stored one
+                document.getElementById('llm-api-key').value = '';
+            } else {
+                statusDiv.textContent = 'No stored key found';
+                updateKeyButtons();
+            }
+        })
+        .catch(error => {
+            console.error('Error checking stored key:', error);
+            statusDiv.textContent = 'Error checking stored key';
+            updateKeyButtons();
+        });
+    }
+    
+    function updateKeyButtons() {
+        const apiKeyField = document.getElementById('llm-api-key');
+        const provider = document.getElementById('llm-provider').value;
+        const storeBtn = document.getElementById('store-key-btn');
+        const deleteBtn = document.getElementById('delete-key-btn');
+        
+        if (provider === 'none' || !provider) {
+            storeBtn.style.display = 'none';
+            deleteBtn.style.display = 'none';
+            return;
+        }
+        
+        if (apiKeyField.value.trim()) {
+            storeBtn.style.display = 'inline-block';
+        } else {
+            storeBtn.style.display = 'none';
+        }
+    }
+    
+    function storeApiKey() {
+        const provider = document.getElementById('llm-provider').value;
+        const apiKey = document.getElementById('llm-api-key').value.trim();
+        const model = document.getElementById('llm-model').value;
+        const statusDiv = document.getElementById('stored-key-status');
+        
+        if (!provider || provider === 'none') {
+            showAlert('Please select a provider first', 'warning');
+            return;
+        }
+        
+        if (!apiKey) {
+            showAlert('Please enter an API key to store', 'warning');
+            return;
+        }
+        
+        statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Storing key...';
+        
+        fetch('/api/store-api-key', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                provider: provider,
+                api_key: apiKey,
+                model: model
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert(data.message, 'success');
+                checkStoredKey(provider); // Refresh the display
+            } else {
+                showAlert(`Failed to store key: ${data.error}`, 'danger');
+                statusDiv.textContent = 'Error storing key';
+            }
+        })
+        .catch(error => {
+            showAlert(`Failed to store key: ${error.message}`, 'danger');
+            statusDiv.textContent = 'Error storing key';
+        });
+    }
+    
+    function deleteStoredKey() {
+        const provider = document.getElementById('llm-provider').value;
+        const statusDiv = document.getElementById('stored-key-status');
+        
+        if (!provider || provider === 'none') {
+            return;
+        }
+        
+        if (!confirm(`Delete stored API key for ${provider}?`)) {
+            return;
+        }
+        
+        statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting key...';
+        
+        fetch(`/api/delete-api-key/${provider}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert(data.message, 'success');
+                checkStoredKey(provider); // Refresh the display
+            } else {
+                showAlert(`Failed to delete key: ${data.error}`, 'danger');
+                statusDiv.textContent = 'Error deleting key';
+            }
+        })
+        .catch(error => {
+            showAlert(`Failed to delete key: ${error.message}`, 'danger');
+            statusDiv.textContent = 'Error deleting key';
         });
     }
     

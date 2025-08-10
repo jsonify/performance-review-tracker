@@ -27,6 +27,7 @@ The web UI provides a complete interface for:
 
 ### 🤖 **AI Integration**
 - Support for multiple LLM providers:
+  - **RequestyAI** (Unified Gateway - All Models) ⭐ Recommended
   - OpenAI (GPT-3.5, GPT-4)
   - Anthropic (Claude)
   - Google (Gemini)
@@ -34,6 +35,12 @@ The web UI provides a complete interface for:
   - Ollama (Local)
   - Roo Code (VS Code Integration)
 - Model selection per provider
+- **Persistent API Key Storage**: Securely encrypted storage that persists across server restarts
+- **Smart Key Management**: 
+  - Store keys with one click after entering them
+  - Visual indicators showing stored key status (preview: `rqy-abc123...`)
+  - Delete stored keys with confirmation
+  - Automatic fallback to stored keys when fields are left empty
 - Secure API key management with visibility toggle
 - Optional AI analysis (can run automated-only mode)
 

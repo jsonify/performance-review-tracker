@@ -65,6 +65,18 @@ except ImportError:
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Import key storage
+try:
+    from ui.key_storage import get_key_storage
+except ImportError:
+    try:
+        # Try relative import for when running from ui directory
+        from key_storage import get_key_storage
+    except ImportError:
+        print("Warning: key_storage module not found. API key persistence disabled.", file=sys.stderr)
+        def get_key_storage():
+            return None
+
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-key-change-in-production')
 
@@ -352,6 +364,17 @@ def run_analysis():
         llm_model = data.get('llm_model')
         api_key = data.get('api_key')
         
+        # Check for stored API key if none provided
+        if llm_provider and llm_provider != 'none' and not api_key:
+            storage = get_key_storage()
+            if storage:
+                stored_key_data = storage.get_key(llm_provider)
+                if stored_key_data:
+                    api_key = stored_key_data['api_key']
+                    # Use stored model if no model specified
+                    if not llm_model and stored_key_data.get('model'):
+                        llm_model = stored_key_data['model']
+        
         # Prepare arguments for main analysis
         analysis_args = {
             'source': data_source,
@@ -542,6 +565,102 @@ def download_result(filename):
     except Exception as e:
         logger.error(f"Download failed: {str(e)}")
         return jsonify({'error': 'Download failed'}), 500
+
+
+@app.route('/api/store-api-key', methods=['POST'])
+def store_api_key():
+    """Store an API key securely."""
+    try:
+        storage = get_key_storage()
+        if not storage:
+            return jsonify({'error': 'Key storage not available'}), 500
+        
+        data = request.get_json()
+        provider = data.get('provider')
+        api_key = data.get('api_key')
+        model = data.get('model')
+        
+        if not provider or not api_key:
+            return jsonify({'error': 'Provider and API key are required'}), 400
+        
+        success = storage.store_key(provider, api_key, model)
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': f'API key stored for {provider}'
+            })
+        else:
+            return jsonify({'error': 'Failed to store API key'}), 500
+            
+    except Exception as e:
+        logger.error(f"Error storing API key: {str(e)}")
+        return jsonify({'error': f'Failed to store API key: {str(e)}'}), 500
+
+
+@app.route('/api/get-stored-key/<provider>')
+def get_stored_key(provider):
+    """Get stored API key info (without exposing the key)."""
+    try:
+        storage = get_key_storage()
+        if not storage:
+            return jsonify({'has_key': False, 'error': 'Key storage not available'})
+        
+        key_data = storage.get_key(provider)
+        
+        if key_data:
+            # Return info without exposing the actual key
+            return jsonify({
+                'has_key': True,
+                'model': key_data.get('model'),
+                'stored_at': key_data.get('stored_at'),
+                'key_preview': f"{key_data['api_key'][:8]}..." if len(key_data['api_key']) > 8 else "***"
+            })
+        else:
+            return jsonify({'has_key': False})
+            
+    except Exception as e:
+        logger.error(f"Error retrieving API key info: {str(e)}")
+        return jsonify({'has_key': False, 'error': str(e)})
+
+
+@app.route('/api/delete-api-key/<provider>', methods=['DELETE'])
+def delete_api_key(provider):
+    """Delete a stored API key."""
+    try:
+        storage = get_key_storage()
+        if not storage:
+            return jsonify({'error': 'Key storage not available'}), 500
+        
+        success = storage.delete_key(provider)
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': f'API key deleted for {provider}'
+            })
+        else:
+            return jsonify({'error': 'API key not found or could not be deleted'}), 404
+            
+    except Exception as e:
+        logger.error(f"Error deleting API key: {str(e)}")
+        return jsonify({'error': f'Failed to delete API key: {str(e)}'}), 500
+
+
+@app.route('/api/list-stored-keys')
+def list_stored_keys():
+    """Get list of providers with stored keys."""
+    try:
+        storage = get_key_storage()
+        if not storage:
+            return jsonify({'providers': [], 'error': 'Key storage not available'})
+        
+        providers = storage.list_stored_providers()
+        return jsonify({'providers': providers})
+        
+    except Exception as e:
+        logger.error(f"Error listing stored keys: {str(e)}")
+        return jsonify({'providers': [], 'error': str(e)})
 
 
 if __name__ == '__main__':

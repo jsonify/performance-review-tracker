@@ -12,6 +12,7 @@ mypy>=0.910        # Type checking
 # Web UI dependencies
 Flask>=2.0.0         # Web framework
 Werkzeug>=2.0.0      # WSGI utilities
+cryptography>=3.4.0  # Secure key storage encryption
 
 # Optional dependencies
 python-docx>=0.8.11  # For DOCX export (if needed)
