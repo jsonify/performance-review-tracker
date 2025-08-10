@@ -1,0 +1,542 @@
+{% extends "base.html" %}
+
+{% block title %}Performance Review Tracker - Dashboard{% endblock %}
+
+{% block content %}
+<div class="main-header">
+    <h1><i class="fas fa-chart-line"></i> Performance Review Tracker</h1>
+    <p>Generate professional performance reviews with AI-powered analysis</p>
+</div>
+
+<!-- Step 1: Criteria Upload -->
+<div class="section-card" data-step="1">
+    <div class="section-header">
+        <div class="section-number">1</div>
+        <h3>Upload Review Criteria</h3>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <label class="form-label">Annual Review Criteria (JSON)</label>
+            <div class="upload-area" id="annual-upload-area">
+                <input type="file" id="annual-criteria-file" accept=".json" style="display: none;">
+                <i class="fas fa-upload fa-2x mb-2"></i>
+                <p class="mb-0">Click or drag to upload annual review criteria</p>
+                <small class="text-muted">JSON format required</small>
+            </div>
+            <div id="annual-criteria-status" class="mt-2"></div>
+        </div>
+        
+        <div class="col-md-6">
+            <label class="form-label">Competency Criteria (JSON)</label>
+            <div class="upload-area" id="competency-upload-area">
+                <input type="file" id="competency-criteria-file" accept=".json" style="display: none;">
+                <i class="fas fa-upload fa-2x mb-2"></i>
+                <p class="mb-0">Click or drag to upload competency criteria</p>
+                <small class="text-muted">JSON format required</small>
+            </div>
+            <div id="competency-criteria-status" class="mt-2"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Step 2: Review Configuration -->
+<div class="section-card" data-step="2">
+    <div class="section-header">
+        <div class="section-number">2</div>
+        <h3>Review Configuration</h3>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <label for="review-type" class="form-label">Review Type</label>
+            <select id="review-type" class="form-select">
+                <option value="competency" selected>Competency Assessment</option>
+                <option value="annual">Annual Review</option>
+            </select>
+        </div>
+        
+        <div class="col-md-6">
+            <label for="review-year" class="form-label">Review Year</label>
+            <select id="review-year" class="form-select">
+                {% for year in year_options %}
+                <option value="{{ year }}" {% if year == current_year %}selected{% endif %}>{{ year }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Step 3: Data Source -->
+<div class="section-card" data-step="3">
+    <div class="section-header">
+        <div class="section-number">3</div>
+        <h3>Data Source</h3>
+    </div>
+    
+    <!-- Data Source Selection -->
+    <div class="mb-3">
+        <label class="form-label">Choose Data Source</label>
+        <div class="btn-group w-100" role="group">
+            <input type="radio" class="btn-check" name="data-source" id="csv-source" value="csv" checked>
+            <label class="btn btn-outline-primary" for="csv-source">
+                <i class="fas fa-file-csv"></i> CSV Upload
+            </label>
+            
+            <input type="radio" class="btn-check" name="data-source" id="ado-source" value="ado">
+            <label class="btn btn-outline-primary" for="ado-source">
+                <i class="fas fa-cloud"></i> Azure DevOps
+            </label>
+        </div>
+    </div>
+    
+    <!-- CSV Upload Section -->
+    <div id="csv-section" class="data-source-section">
+        <label class="form-label">Accomplishments CSV File</label>
+        <div class="upload-area" id="csv-upload-area">
+            <input type="file" id="accomplishments-csv-file" accept=".csv" style="display: none;">
+            <i class="fas fa-file-csv fa-2x mb-2"></i>
+            <p class="mb-0">Click or drag to upload accomplishments CSV</p>
+            <small class="text-muted">Requires Date and Title columns minimum</small>
+        </div>
+        <div id="csv-status" class="mt-2"></div>
+    </div>
+    
+    <!-- Azure DevOps Section -->
+    <div id="ado-section" class="data-source-section" style="display: none;">
+        <div class="row">
+            <div class="col-md-4">
+                <label for="ado-org" class="form-label">Organization</label>
+                <input type="text" id="ado-org" class="form-control" placeholder="your-org">
+            </div>
+            <div class="col-md-4">
+                <label for="ado-project" class="form-label">Project</label>
+                <input type="text" id="ado-project" class="form-control" placeholder="your-project">
+            </div>
+            <div class="col-md-4">
+                <label for="ado-token" class="form-label">Personal Access Token</label>
+                <div class="api-key-input">
+                    <input type="password" id="ado-token" class="form-control" placeholder="Enter PAT">
+                    <button type="button" class="api-key-toggle" onclick="togglePasswordVisibility('ado-token')">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <label for="work-item-type" class="form-label">Work Item Type</label>
+                <select id="work-item-type" class="form-select">
+                    <option value="User Story" selected>User Story</option>
+                    <option value="Task">Task</option>
+                    <option value="Bug">Bug</option>
+                    <option value="Feature">Feature</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label for="months-back" class="form-label">Months Back</label>
+                <select id="months-back" class="form-select">
+                    <option value="6">6 months</option>
+                    <option value="12" selected>12 months</option>
+                    <option value="18">18 months</option>
+                    <option value="24">24 months</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="mt-3">
+            <button type="button" id="test-ado-btn" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-plug"></i> Test Connection
+            </button>
+            <button type="button" id="fetch-ado-btn" class="btn btn-primary">
+                <i class="fas fa-download"></i> Fetch Data
+            </button>
+        </div>
+        
+        <div id="ado-status" class="mt-2"></div>
+    </div>
+</div>
+
+<!-- Step 4: LLM Configuration -->
+<div class="section-card" data-step="4">
+    <div class="section-header">
+        <div class="section-number">4</div>
+        <h3>AI Analysis Configuration</h3>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-4">
+            <label for="llm-provider" class="form-label">LLM Provider</label>
+            <select id="llm-provider" class="form-select">
+                <option value="none">No AI Analysis (Automated Only)</option>
+                {% for provider in llm_providers %}
+                <option value="{{ provider.id }}">{{ provider.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="col-md-4">
+            <label for="llm-model" class="form-label">Model</label>
+            <select id="llm-model" class="form-select">
+                <option value="">Select model...</option>
+            </select>
+        </div>
+        
+        <div class="col-md-4">
+            <label for="llm-api-key" class="form-label">API Key</label>
+            <div class="api-key-input">
+                <input type="password" id="llm-api-key" class="form-control" placeholder="Enter API key (optional)">
+                <button type="button" class="api-key-toggle" onclick="togglePasswordVisibility('llm-api-key')">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </div>
+            <small class="text-muted">Leave empty if using environment variables</small>
+        </div>
+    </div>
+</div>
+
+<!-- Step 5: Output Configuration -->
+<div class="section-card" data-step="5">
+    <div class="section-header">
+        <div class="section-number">5</div>
+        <h3>Output Format</h3>
+    </div>
+    
+    <div class="btn-group w-100" role="group">
+        <input type="radio" class="btn-check" name="output-format" id="markdown-format" value="markdown" checked>
+        <label class="btn btn-outline-primary" for="markdown-format">
+            <i class="fab fa-markdown"></i> Markdown
+        </label>
+        
+        <input type="radio" class="btn-check" name="output-format" id="docx-format" value="docx">
+        <label class="btn btn-outline-primary" for="docx-format">
+            <i class="fas fa-file-word"></i> Word Document
+        </label>
+    </div>
+</div>
+
+<!-- Generate Button -->
+<div class="text-center mt-4">
+    <button type="button" id="generate-btn" class="btn btn-success btn-lg px-5">
+        <i class="fas fa-magic"></i> Generate Performance Review
+    </button>
+</div>
+
+<!-- Progress Indicator -->
+<div class="progress-indicator">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Generating review...</span>
+    </div>
+    <p class="mt-2">Analyzing accomplishments and generating your performance review...</p>
+</div>
+
+<!-- Results Display -->
+<div class="result-display">
+    <div class="section-card">
+        <div class="section-header">
+            <div class="section-number"><i class="fas fa-check"></i></div>
+            <h3>Analysis Complete</h3>
+        </div>
+        <div id="result-content"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // LLM Provider models mapping
+    const modelsByProvider = {{ common_models | tojson }};
+    
+    // File upload handlers
+    document.addEventListener('DOMContentLoaded', function() {
+        setupFileUploads();
+        setupDataSourceToggle();
+        setupLLMProviderChange();
+        setupGenerateButton();
+    });
+    
+    function setupFileUploads() {
+        // Annual criteria upload
+        setupSingleFileUpload('annual-upload-area', 'annual-criteria-file', 'annual-criteria-status', '/api/upload-criteria', 'annual_criteria');
+        
+        // Competency criteria upload  
+        setupSingleFileUpload('competency-upload-area', 'competency-criteria-file', 'competency-criteria-status', '/api/upload-criteria', 'competency_criteria');
+        
+        // CSV accomplishments upload
+        setupSingleFileUpload('csv-upload-area', 'accomplishments-csv-file', 'csv-status', '/api/upload-accomplishments', 'accomplishments_csv');
+    }
+    
+    function setupSingleFileUpload(areaId, fileInputId, statusId, endpoint, fieldName) {
+        const area = document.getElementById(areaId);
+        const fileInput = document.getElementById(fileInputId);
+        const status = document.getElementById(statusId);
+        
+        area.addEventListener('click', () => fileInput.click());
+        
+        area.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            area.classList.add('dragover');
+        });
+        
+        area.addEventListener('dragleave', () => {
+            area.classList.remove('dragover');
+        });
+        
+        area.addEventListener('drop', (e) => {
+            e.preventDefault();
+            area.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                handleFileUpload(fileInput, status, endpoint, fieldName);
+            }
+        });
+        
+        fileInput.addEventListener('change', () => {
+            handleFileUpload(fileInput, status, endpoint, fieldName);
+        });
+    }
+    
+    function handleFileUpload(fileInput, statusDiv, endpoint, fieldName) {
+        const file = fileInput.files[0];
+        if (!file) return;
+        
+        const formData = new FormData();
+        formData.append(fieldName, file);
+        
+        statusDiv.innerHTML = '<div class="text-info"><i class="fas fa-spinner fa-spin"></i> Uploading...</div>';
+        
+        fetch(endpoint, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success || data[fieldName]?.success) {
+                const result = data[fieldName] || data;
+                statusDiv.innerHTML = `<div class="text-success"><i class="fas fa-check"></i> Uploaded successfully (${result.rows || result.sections || 0} items)</div>`;
+                fileInput.parentElement.classList.add('success');
+                
+                // Store file path for later use
+                if (fieldName === 'accomplishments_csv' && result.path) {
+                    window.csvDataFile = result.path;
+                }
+            } else {
+                const error = data.error || data[fieldName]?.error || 'Upload failed';
+                statusDiv.innerHTML = `<div class="text-danger"><i class="fas fa-exclamation-triangle"></i> ${error}</div>`;
+                fileInput.parentElement.classList.add('error');
+            }
+        })
+        .catch(error => {
+            statusDiv.innerHTML = `<div class="text-danger"><i class="fas fa-exclamation-triangle"></i> Upload failed: ${error.message}</div>`;
+            fileInput.parentElement.classList.add('error');
+        });
+    }
+    
+    function setupDataSourceToggle() {
+        const csvRadio = document.getElementById('csv-source');
+        const adoRadio = document.getElementById('ado-source');
+        const csvSection = document.getElementById('csv-section');
+        const adoSection = document.getElementById('ado-section');
+        
+        csvRadio.addEventListener('change', function() {
+            if (this.checked) {
+                csvSection.style.display = 'block';
+                adoSection.style.display = 'none';
+            }
+        });
+        
+        adoRadio.addEventListener('change', function() {
+            if (this.checked) {
+                csvSection.style.display = 'none';
+                adoSection.style.display = 'block';
+            }
+        });
+        
+        // ADO button handlers
+        document.getElementById('test-ado-btn').addEventListener('click', testADOConnection);
+        document.getElementById('fetch-ado-btn').addEventListener('click', fetchADOData);
+    }
+    
+    function setupLLMProviderChange() {
+        const providerSelect = document.getElementById('llm-provider');
+        const modelSelect = document.getElementById('llm-model');
+        
+        providerSelect.addEventListener('change', function() {
+            const provider = this.value;
+            modelSelect.innerHTML = '<option value="">Select model...</option>';
+            
+            if (provider !== 'none' && modelsByProvider[provider]) {
+                modelsByProvider[provider].forEach(model => {
+                    const option = document.createElement('option');
+                    option.value = model;
+                    option.textContent = model;
+                    modelSelect.appendChild(option);
+                });
+            }
+        });
+    }
+    
+    function testADOConnection() {
+        const org = document.getElementById('ado-org').value;
+        const project = document.getElementById('ado-project').value;
+        const token = document.getElementById('ado-token').value;
+        const status = document.getElementById('ado-status');
+        
+        if (!org || !project || !token) {
+            status.innerHTML = '<div class="text-danger"><i class="fas fa-exclamation-triangle"></i> Please fill in all ADO fields</div>';
+            return;
+        }
+        
+        status.innerHTML = '<div class="text-info"><i class="fas fa-spinner fa-spin"></i> Testing connection...</div>';
+        
+        fetch('/api/test-ado-connection', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                ado_org: org,
+                ado_project: project,
+                ado_token: token
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                status.innerHTML = `<div class="text-success"><i class="fas fa-check"></i> Connected successfully (User ID: ${data.user_id})</div>`;
+            } else {
+                status.innerHTML = `<div class="text-danger"><i class="fas fa-exclamation-triangle"></i> Connection failed: ${data.error}</div>`;
+            }
+        })
+        .catch(error => {
+            status.innerHTML = `<div class="text-danger"><i class="fas fa-exclamation-triangle"></i> Connection failed: ${error.message}</div>`;
+        });
+    }
+    
+    function fetchADOData() {
+        const org = document.getElementById('ado-org').value;
+        const project = document.getElementById('ado-project').value;
+        const token = document.getElementById('ado-token').value;
+        const workItemType = document.getElementById('work-item-type').value;
+        const monthsBack = parseInt(document.getElementById('months-back').value);
+        const status = document.getElementById('ado-status');
+        
+        if (!org || !project || !token) {
+            status.innerHTML = '<div class="text-danger"><i class="fas fa-exclamation-triangle"></i> Please fill in all ADO fields</div>';
+            return;
+        }
+        
+        status.innerHTML = '<div class="text-info"><i class="fas fa-spinner fa-spin"></i> Fetching data...</div>';
+        
+        fetch('/api/fetch-ado-data', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                ado_org: org,
+                ado_project: project,
+                ado_token: token,
+                work_item_type: workItemType,
+                months_back: monthsBack
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                status.innerHTML = `<div class="text-success"><i class="fas fa-check"></i> Fetched ${data.work_items_count} work items</div>`;
+                // Store the CSV file path for later use
+                window.adoDataFile = data.csv_file;
+            } else {
+                status.innerHTML = `<div class="text-danger"><i class="fas fa-exclamation-triangle"></i> Fetch failed: ${data.error}</div>`;
+            }
+        })
+        .catch(error => {
+            status.innerHTML = `<div class="text-danger"><i class="fas fa-exclamation-triangle"></i> Fetch failed: ${error.message}</div>`;
+        });
+    }
+    
+    function setupGenerateButton() {
+        document.getElementById('generate-btn').addEventListener('click', generateReview);
+    }
+    
+    function generateReview() {
+        // Gather all form data
+        const reviewType = document.getElementById('review-type').value;
+        const reviewYear = document.getElementById('review-year').value;
+        const dataSource = document.querySelector('input[name="data-source"]:checked').value;
+        const outputFormat = document.querySelector('input[name="output-format"]:checked').value;
+        const llmProvider = document.getElementById('llm-provider').value;
+        const llmModel = document.getElementById('llm-model').value;
+        const apiKey = document.getElementById('llm-api-key').value;
+        
+        // Prepare request data
+        const requestData = {
+            review_type: reviewType,
+            year: parseInt(reviewYear),
+            data_source: dataSource,
+            output_format: outputFormat,
+            llm_provider: llmProvider,
+            llm_model: llmModel,
+            api_key: apiKey
+        };
+        
+        // Add data file based on data source
+        if (dataSource === 'csv' && window.csvDataFile) {
+            requestData.csv_file = window.csvDataFile;
+        } else if (dataSource === 'ado' && window.adoDataFile) {
+            requestData.csv_file = window.adoDataFile;
+        }
+        
+        // Show progress
+        showProgress(true);
+        document.getElementById('generate-btn').disabled = true;
+        
+        // Make request
+        fetch('/api/run-analysis', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(requestData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            showProgress(false);
+            document.getElementById('generate-btn').disabled = false;
+            
+            if (data.success) {
+                const resultContent = `
+                    <div class="alert alert-success">
+                        <h5><i class="fas fa-check-circle"></i> Analysis Complete!</h5>
+                        <p>Your ${reviewType} review for ${reviewYear} has been generated successfully.</p>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <a href="/api/download-result/${data.result_file}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-download"></i> Download ${outputFormat.toUpperCase()} Report
+                        </a>
+                    </div>
+                `;
+                showResult(resultContent, true);
+                showAlert('Performance review generated successfully!', 'success');
+            } else {
+                showAlert(`Analysis failed: ${data.error}`, 'danger');
+            }
+        })
+        .catch(error => {
+            showProgress(false);
+            document.getElementById('generate-btn').disabled = false;
+            showAlert(`Analysis failed: ${error.message}`, 'danger');
+        });
+    }
+    
+    function togglePasswordVisibility(inputId) {
+        const input = document.getElementById(inputId);
+        const button = input.parentElement.querySelector('.api-key-toggle i');
+        
+        if (input.type === 'password') {
+            input.type = 'text';
+            button.className = 'fas fa-eye-slash';
+        } else {
+            input.type = 'password';
+            button.className = 'fas fa-eye';
+        }
+    }
+</script>
+{% endblock %}

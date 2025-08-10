@@ -1,7 +1,7 @@
 # LLM Provider Dependencies
 # Install based on your chosen provider(s)
 
-# OpenAI (GPT-4, GPT-3.5)
+# OpenAI (GPT-4, GPT-3.5) - Also used by RequestyAI unified gateway
 openai>=1.0.0
 
 # Anthropic (Claude)

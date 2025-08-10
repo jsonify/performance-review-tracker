@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 
 class LLMProvider(Enum):
     """Supported LLM providers."""
+    REQUESTYAI = "requestyai"  # Unified provider for all models
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
     GOOGLE = "google"
@@ -83,7 +84,9 @@ class LLMClient:
     def _initialize_client(self):
         """Initialize the appropriate client for the configured provider."""
         try:
-            if self.provider == LLMProvider.OPENAI:
+            if self.provider == LLMProvider.REQUESTYAI:
+                self._initialize_requestyai_client()
+            elif self.provider == LLMProvider.OPENAI:
                 self._initialize_openai_client()
             elif self.provider == LLMProvider.ANTHROPIC:
                 self._initialize_anthropic_client()
@@ -115,6 +118,20 @@ class LLMClient:
             self._client = openai.OpenAI(api_key=self.api_key)
             if not self.model:
                 self.model = "gpt-4o"  # Default to GPT-4o
+        except ImportError:
+            raise LLMClientError("OpenAI library not installed. Run: pip install openai")
+    
+    def _initialize_requestyai_client(self):
+        """Initialize RequestyAI unified client."""
+        try:
+            import openai
+            # RequestyAI uses OpenAI-compatible interface with their gateway
+            self._client = openai.OpenAI(
+                api_key=self.api_key,
+                base_url="https://router.requesty.ai/v1"
+            )
+            if not self.model:
+                self.model = "openai/gpt-4o-mini"  # Default RequestyAI model
         except ImportError:
             raise LLMClientError("OpenAI library not installed. Run: pip install openai")
     
@@ -232,14 +249,24 @@ class LLMClient:
     ) -> str:
         """Create a comprehensive prompt for LLM analysis."""
         
-        # Format accomplishments for the prompt
+        # Import keywords for better mapping guidance
+        try:
+            from .competency_keywords import COMPETENCY_KEYWORDS, map_accomplishments_to_competencies
+        except ImportError:
+            from competency_keywords import COMPETENCY_KEYWORDS, map_accomplishments_to_competencies
+        
+        # Create competency mapping for guidance
+        competency_mapping = map_accomplishments_to_competencies(accomplishments, min_score=0.05)
+        
+        # Format accomplishments for the prompt with more detail
         accomplishments_text = "\n".join([
-            f"**{i+1}. {acc.get('Title', 'Untitled')}**\n"
-            f"Date: {acc.get('Date', 'Unknown')}\n"
-            f"Description: {acc.get('Description', 'No description')}\n"
-            f"Acceptance Criteria: {acc.get('Acceptance Criteria', 'No criteria specified')}\n"
-            f"Impact: {acc.get('Impact', 'Medium')}\n"
-            f"Success Notes: {acc.get('Success Notes', 'Completed successfully')}\n"
+            f"**ACCOMPLISHMENT {i+1}: {acc.get('Title', 'Untitled')}**\n"
+            f"• Date: {acc.get('Date', 'Unknown')}\n"
+            f"• Description: {acc.get('Description', 'No description')}\n"
+            f"• Acceptance Criteria: {acc.get('Acceptance Criteria', 'No criteria specified')}\n"
+            f"• Impact Level: {acc.get('Impact', 'Medium')}\n"
+            f"• Success Notes: {acc.get('Success Notes', 'Completed successfully')}\n"
+            f"• Rating Justification: {acc.get('Rating Justification', 'Not provided')}\n"
             for i, acc in enumerate(accomplishments)
         ])
         
@@ -291,7 +318,20 @@ For each criterion above, provide a comprehensive analysis following this exact 
 Generate a complete analysis covering all {len(criteria)} criteria."""
 
         else:  # competency assessment
-            prompt = f"""You are an AI competency assessment analyst. Analyze the following work accomplishments against the Competency Assessment criteria.
+            # Create keyword mapping guidance for each competency
+            keyword_guidance = "\n".join([
+                f"**{comp_name}**: Look for accomplishments containing keywords like: {', '.join(keywords[:8])}"
+                for comp_name, keywords in COMPETENCY_KEYWORDS.items()
+            ])
+            
+            # Create accomplishment mapping guidance
+            mapping_guidance = "\n".join([
+                f"**{comp_name}**: Most relevant accomplishments appear to be: " + 
+                (", ".join([f"#{i+1}" for i, acc in enumerate(accomplishments) if acc in comp_accs]) if comp_accs else "No direct matches - analyze all accomplishments for this competency")
+                for comp_name, comp_accs in competency_mapping.items()
+            ])
+            
+            prompt = f"""You are an AI competency assessment analyst with expertise in evidence-based evaluation. Analyze the work accomplishments against the Competency Assessment criteria using specific examples and technical details.
 
 ## ACCOMPLISHMENTS TO ANALYZE
 {accomplishments_text}
@@ -299,50 +339,67 @@ Generate a complete analysis covering all {len(criteria)} criteria."""
 ## COMPETENCY ASSESSMENT CRITERIA
 {criteria_text}
 
+## KEYWORD MAPPING GUIDANCE
+Use these keywords to identify relevant accomplishments for each competency:
+{keyword_guidance}
+
+## SUGGESTED ACCOMPLISHMENT MAPPING
+Based on keyword analysis, these accomplishments are most relevant to each competency:
+{mapping_guidance}
+
 ## ANALYSIS REQUIREMENTS
 
-For each competency above, provide a comprehensive analysis following this exact format:
+For EACH competency, provide a comprehensive analysis following this EXACT format:
 
 # [Competency Name]
 
-## Expectations
-[List the specific expectations for this competency from the criteria above]
+## Rating: [1-5] ([Rating Level])
 
-## How I Met This Criterion
-[Identify specific examples from the accomplishments that demonstrate this competency, with details]
+## Expectations Met
+[List specific expectations from the criteria that are demonstrated by the accomplishments]
 
-## Areas for Improvement
-[Based on the competency expectations, identify specific areas for growth]
+## Evidence from Accomplishments  
+[Provide 2-4 SPECIFIC examples from the accomplishments that demonstrate this competency. Include:
+- Accomplishment title and number (e.g., "Accomplishment #3: Fix Invalid Directory Structures")
+- Specific technical details from the description
+- Quantifiable results from Success Notes
+- How this demonstrates the competency expectations]
 
-## Improvement Plan
-[Provide concrete, actionable steps for improvement in this competency]
+## Evidence Analysis
+[Analyze how the evidence supports the assigned rating level. Reference specific accomplishment details that justify the rating.]
 
-## Summary
-[Write a concise paragraph summarizing competency level, examples, areas for improvement, and development plan]
+## Areas for Growth
+[Based on gaps between current evidence and higher rating levels, identify 1-2 specific areas for development]
+
+## Development Recommendations
+[Provide 2-3 concrete, actionable steps to advance to the next competency level]
 
 ## COMPETENCY RATING SCALE:
-1. **Learning** - Beginning to apply the competency with guidance
-2. **Developing** - Building proficiency with occasional support
-3. **Practicing** - Demonstrating consistent competency independently
-4. **Mastering** - Advanced proficiency, able to guide others
-5. **Leading** - Expert level, driving innovation and setting standards
+1. **Learning** - Beginning to apply with guidance (minimal evidence)
+2. **Developing** - Building proficiency with occasional support (some evidence)
+3. **Practicing** - Consistent competency independently (solid evidence)
+4. **Mastering** - Advanced proficiency, guides others (strong evidence + leadership)
+5. **Leading** - Expert level, drives innovation (exceptional evidence + transformation)
 
-## IMPORTANT INSTRUCTIONS:
-- Use only the accomplishments provided above as evidence
-- Reference specific accomplishments by title when giving examples
-- Assign appropriate rating (1-5) based on demonstrated evidence
-- Be specific and concrete in your analysis
-- Focus on demonstrable results from the accomplishments
-- Provide actionable development recommendations
+## CRITICAL INSTRUCTIONS:
+- MUST reference specific accomplishment titles and numbers in evidence
+- MUST include technical details from accomplishment descriptions
+- MUST use quantifiable results from Success Notes when available  
+- MUST differentiate analysis based on the ACTUAL accomplishment content
+- MUST assign ratings based on demonstrated evidence, not assumptions
+- MUST analyze ALL {len(criteria)} competencies even if no obvious matches
+- For competencies without clear matches, explain why evidence is limited
 
-Generate a complete competency assessment covering all {len(criteria)} competencies."""
+Generate analysis covering ALL {len(criteria)} competencies with specific evidence from the {len(accomplishments)} accomplishments provided."""
 
         return prompt
     
     def _call_llm_provider(self, prompt: str) -> str:
         """Call the appropriate LLM provider with the prompt."""
         
-        if self.provider == LLMProvider.OPENAI:
+        if self.provider == LLMProvider.REQUESTYAI:
+            return self._call_requestyai(prompt)
+        elif self.provider == LLMProvider.OPENAI:
             return self._call_openai(prompt)
         elif self.provider == LLMProvider.ANTHROPIC:
             return self._call_anthropic(prompt)
@@ -357,6 +414,19 @@ Generate a complete competency assessment covering all {len(criteria)} competenc
     
     def _call_openai(self, prompt: str) -> str:
         """Call OpenAI API."""
+        response = self._client.chat.completions.create(
+            model=self.model,
+            messages=[
+                {"role": "system", "content": "You are an expert performance review analyst who provides thorough, evidence-based evaluations."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=self.temperature,
+            max_tokens=self.max_tokens
+        )
+        return response.choices[0].message.content
+    
+    def _call_requestyai(self, prompt: str) -> str:
+        """Call RequestyAI unified gateway API."""
         response = self._client.chat.completions.create(
             model=self.model,
             messages=[
@@ -427,19 +497,45 @@ Generate a complete competency assessment covering all {len(criteria)} competenc
     
     def _fallback_to_roo_code(self, accomplishments: List[Dict], review_type: str) -> LLMResponse:
         """Fallback to existing Roo Code integration."""
-        import subprocess
-        
         logger.info("Using Roo Code fallback for analysis")
         
-        # This would call the existing run_roo_code_analysis function
-        # For now, return a placeholder response
-        return LLMResponse(
-            content="Fallback to Roo Code analysis - integration needed",
-            provider="roo_code",
-            model="roo_code",
-            success=False,
-            error_message="Roo Code fallback not fully implemented"
-        )
+        try:
+            # Use the manual analysis since Roo Code subprocess isn't set up for this context
+            try:
+                from .llm_analyzer import generate_manual_analysis
+            except ImportError:
+                from llm_analyzer import generate_manual_analysis
+            
+            # Create a temporary data file for the manual analysis function
+            import tempfile
+            import json
+            
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as temp_file:
+                json.dump(accomplishments, temp_file, indent=2)
+                temp_file_path = temp_file.name
+            
+            try:
+                manual_content = generate_manual_analysis(temp_file_path, review_type)
+                return LLMResponse(
+                    content=manual_content,
+                    provider="roo_code_fallback",
+                    model="manual_analysis",
+                    success=True
+                )
+            finally:
+                # Clean up temp file
+                import os
+                os.unlink(temp_file_path)
+                
+        except Exception as e:
+            logger.error(f"Roo Code fallback failed: {e}")
+            return LLMResponse(
+                content="Analysis fallback failed. Please check the configuration.",
+                provider="roo_code_fallback",
+                model="manual_analysis",
+                success=False,
+                error_message=str(e)
+            )
     
     def test_connection(self) -> bool:
         """Test the connection to the configured LLM provider."""
@@ -460,6 +556,38 @@ Generate a complete competency assessment covering all {len(criteria)} competenc
     def get_supported_models(self) -> List[str]:
         """Get list of supported models for the current provider."""
         model_lists = {
+            LLMProvider.REQUESTYAI: [
+                # OpenAI models via RequestyAI
+                "openai/gpt-4o",
+                "openai/gpt-4o-mini",
+                "openai/gpt-4-turbo",
+                "openai/gpt-3.5-turbo",
+                # Anthropic models via RequestyAI
+                "anthropic/claude-3-5-sonnet-20241022",
+                "anthropic/claude-3-5-haiku-20241022",
+                "anthropic/claude-3-opus-20240229",
+                # Coding-optimized models
+                "coding/claude-4-sonnet",
+                "openai/o1-preview",
+                "openai/o1-mini",
+                # Google models via RequestyAI
+                "google/gemini-1.5-pro",
+                "google/gemini-1.5-flash",
+                "google/gemini-pro",
+                # Meta models via RequestyAI
+                "meta/llama-3.2-90b",
+                "meta/llama-3.1-70b",
+                "meta/llama-3.2-11b",
+                # Mistral models
+                "mistral/mistral-large-2407",
+                "mistral/codestral-latest",
+                # Cohere models
+                "cohere/command-r-plus",
+                "cohere/command-r",
+                # Additional specialized models
+                "deepseek/deepseek-coder",
+                "x-ai/grok-beta"
+            ],
             LLMProvider.OPENAI: ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo"],
             LLMProvider.ANTHROPIC: ["claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022", "claude-3-opus-20240229"],
             LLMProvider.GOOGLE: ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-1.0-pro"],
