@@ -515,7 +515,7 @@ Generate analysis covering ALL {len(criteria)} competencies with specific eviden
                 temp_file_path = temp_file.name
             
             try:
-                manual_content = generate_manual_analysis(temp_file_path, review_type)
+                manual_content = generate_manual_analysis(temp_file_path, review_type, None, None)
                 return LLMResponse(
                     content=manual_content,
                     provider="roo_code_fallback",

@@ -40,6 +40,71 @@ def load_criteria(review_type: str) -> List[Dict]:
         data = json.load(f)
         return data.get('criteria', [])
 
+def load_criteria_with_uploads(review_type: str, config: Dict = None) -> List[Dict]:
+    """
+    Load criteria from uploaded files first, fallback to default files.
+    
+    Args:
+        review_type: "annual" or "competency"
+        config: Configuration dict that may contain upload folder paths
+        
+    Returns:
+        List of criteria dictionaries
+    """
+    # First, try to find uploaded criteria files
+    upload_folders = []
+    
+    # Check common upload locations
+    if config:
+        processing_config = config.get('processing', {})
+        upload_dir = processing_config.get('output_directory')
+        if upload_dir:
+            upload_folders.append(upload_dir)
+            # Also check parent directory (ui/uploads often maps to ui/uploads)
+            parent_dir = os.path.dirname(upload_dir)
+            if parent_dir and parent_dir != upload_dir:
+                upload_folders.append(parent_dir)
+    
+    # Add common upload folder locations
+    upload_folders.extend([
+        'ui/uploads',
+        'uploads',
+        'ui/results',
+        'data'
+    ])
+    
+    # Look for uploaded criteria files
+    criteria_type = "annual_criteria" if review_type.lower() == "annual" else "competency_criteria"
+    
+    for folder in upload_folders:
+        if not os.path.exists(folder):
+            continue
+            
+        # Look for timestamped uploaded files
+        try:
+            files = [f for f in os.listdir(folder) 
+                    if f.startswith(criteria_type) and f.endswith('.json')]
+            if files:
+                # Use the most recent uploaded file
+                latest_file = max(files, key=lambda x: os.path.getmtime(os.path.join(folder, x)))
+                criteria_path = os.path.join(folder, latest_file)
+                
+                print(f"DEBUG: Found uploaded criteria file: {criteria_path}")
+                
+                with open(criteria_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    criteria = data.get('criteria', [])
+                    if criteria:
+                        print(f"DEBUG: Loaded {len(criteria)} criteria from uploaded file")
+                        return criteria
+        except Exception as e:
+            print(f"DEBUG: Error checking upload folder {folder}: {e}")
+            continue
+    
+    # Fallback to default criteria files
+    print(f"DEBUG: No uploaded criteria found, using default criteria for {review_type}")
+    return load_criteria(review_type)
+
 def run_llm_analysis(data_file: str, review_type: str, config: Dict) -> str:
     """
     Run LLM analysis on the processed data, replacing run_roo_code_analysis.
@@ -72,8 +137,8 @@ def run_llm_analysis(data_file: str, review_type: str, config: Dict) -> str:
         print(f"DEBUG: Loaded {len(accomplishments)} accomplishments for analysis")
         print(f"DEBUG: Sample accomplishment titles: {[acc.get('Title', 'N/A')[:50] for acc in accomplishments[:3]]}")
         
-        # Load criteria for the review type
-        criteria = load_criteria(review_type)
+        # Load criteria for the review type (uploaded files first, then defaults)
+        criteria = load_criteria_with_uploads(review_type, config)
         print(f"DEBUG: Loaded {len(criteria)} criteria for {review_type} review")
         print(f"DEBUG: Sample criteria: {[c.get('name', 'N/A') for c in criteria[:5]]}")
         
@@ -121,7 +186,7 @@ def run_llm_analysis(data_file: str, review_type: str, config: Dict) -> str:
             # Analysis failed, try manual fallback
             logger.error(f"LLM analysis failed: {response.error_message}")
             print("DEBUG: LLM analysis failed, generating manual fallback...")
-            manual_analysis = generate_manual_analysis(data_file, review_type)
+            manual_analysis = generate_manual_analysis(data_file, review_type, criteria, config)
             with open(analysis_path, 'w', encoding='utf-8') as f:
                 f.write(manual_analysis)
             print(f"DEBUG: Manual fallback analysis saved to {analysis_path}")
@@ -132,7 +197,7 @@ def run_llm_analysis(data_file: str, review_type: str, config: Dict) -> str:
         logger.error(f"LLM client error: {e}")
         print(f"DEBUG: LLM client error: {e}")
         print("DEBUG: Falling back to manual analysis...")
-        manual_analysis = generate_manual_analysis(data_file, review_type)
+        manual_analysis = generate_manual_analysis(data_file, review_type, criteria, config)
         with open(analysis_path, 'w', encoding='utf-8') as f:
             f.write(manual_analysis)
         return analysis_path
@@ -141,12 +206,87 @@ def run_llm_analysis(data_file: str, review_type: str, config: Dict) -> str:
         logger.error(f"Analysis error: {e}")
         print(f"DEBUG: Analysis error: {e}")
         print("DEBUG: Falling back to manual analysis...")
-        manual_analysis = generate_manual_analysis(data_file, review_type)
+        manual_analysis = generate_manual_analysis(data_file, review_type, criteria, config)
         with open(analysis_path, 'w', encoding='utf-8') as f:
             f.write(manual_analysis)
         return analysis_path
 
-def generate_manual_analysis(data_file: str, review_type: str) -> str:
+def _generate_dynamic_criteria_sections(criteria: List[Dict], data: List[Dict], accomplishment_analysis: Dict, 
+                                      key_themes: List[str], technologies: List[str], business_impact: Dict,
+                                      high_impact: int, total_accomplishments: int) -> str:
+    """
+    Generate criteria sections dynamically based on loaded criteria.
+    
+    Args:
+        criteria: List of criteria dictionaries with name and expectations
+        data: Accomplishment data
+        accomplishment_analysis: Analysis results
+        key_themes: Key themes extracted from accomplishments
+        technologies: Technologies found in accomplishments
+        business_impact: Business impact analysis
+        high_impact: Number of high impact items
+        total_accomplishments: Total number of accomplishments
+        
+    Returns:
+        Formatted criteria sections as markdown string
+    """
+    sections = []
+    
+    for i, criterion in enumerate(criteria, 1):
+        criterion_name = criterion.get('name', 'Unknown Criterion')
+        expectations = criterion.get('expectations', [])
+        
+        # Generate customized content based on criterion name and expectations
+        section = f"### {i}. {criterion_name}\n"
+        section += "**Self Rating: 3 (Excellent)**\n\n"
+        section += "**How I Met This Criterion:**\n"
+        
+        # Customize content based on criterion name (case-insensitive matching)
+        criterion_lower = criterion_name.lower()
+        
+        if 'communication' in criterion_lower:
+            section += f"Demonstrated excellent communication through detailed project documentation across {total_accomplishments} work items. All major projects include comprehensive acceptance criteria, technical specifications, and success verification steps, indicating superior communication of requirements and deliverables.\n"
+            
+        elif 'flexibility' in criterion_lower or 'agility' in criterion_lower:
+            section += f"Successfully adapted across diverse technical domains spanning {', '.join(key_themes[:4])} with {len(technologies)} different technologies and platforms, demonstrating exceptional adaptability and flexibility in changing technical environments.\n"
+            
+        elif 'initiative' in criterion_lower or 'innovation' in criterion_lower:
+            section += f"Proactively tackled complex technical challenges with {high_impact} high-impact projects demonstrating self-direction and technical leadership. Consistently identified opportunities for process improvements and technical enhancements.\n"
+            
+        elif 'service' in criterion_lower or 'accountability' in criterion_lower:
+            section += f"Delivered comprehensive technical solutions supporting organizational infrastructure and business objectives with 100% completion rate across all {total_accomplishments} assignments, demonstrating exceptional reliability and commitment.\n"
+            
+        elif 'quality' in criterion_lower or 'programming' in criterion_lower or 'development' in criterion_lower:
+            section += f"Achieved outstanding productivity with {total_accomplishments} completed work items while maintaining high technical standards. Quality demonstrated through {accomplishment_analysis['detailed_count']} projects with comprehensive documentation and {accomplishment_analysis['avg_description_length']:.0f} average characters of technical detail per project.\n"
+            
+        elif 'teamwork' in criterion_lower or 'inclusion' in criterion_lower or 'influence' in criterion_lower:
+            section += f"Collaborated effectively on complex technical projects supporting team goals through knowledge sharing and technical leadership. Contributed to inclusive practices and positive team dynamics across all project engagements.\n"
+            
+        elif 'architecture' in criterion_lower or 'design' in criterion_lower:
+            section += f"Designed and implemented scalable technical solutions across {len(key_themes)} major technical domains, demonstrating strong architectural thinking and system design capabilities with focus on long-term maintainability.\n"
+            
+        elif 'problem' in criterion_lower or 'testing' in criterion_lower:
+            section += f"Systematically identified and resolved complex technical issues with comprehensive problem-solving approach. All projects include detailed acceptance criteria and verification procedures ensuring robust problem resolution.\n"
+            
+        elif 'project' in criterion_lower or 'management' in criterion_lower:
+            section += f"Successfully managed technical project execution from requirements through delivery across {total_accomplishments} work items, demonstrating strong project coordination and delivery management capabilities.\n"
+            
+        else:
+            # Generic content for unrecognized criteria
+            section += f"Successfully demonstrated this competency through {total_accomplishments} completed work items, showing consistent performance and professional excellence in this area. Expertise evidenced through detailed project documentation and successful delivery outcomes.\n"
+        
+        # Add expectations if available
+        if expectations:
+            section += f"\n**Key Expectations Met:**\n"
+            for expectation in expectations[:3]:  # Limit to top 3 expectations
+                section += f"- {expectation}\n"
+        
+        section += "\n"
+        sections.append(section)
+    
+    return '\n'.join(sections)
+
+def generate_manual_analysis(data_file: str, review_type: str, criteria: List[Dict] = None, config: Dict = None) -> str:
     """
     Generate intelligent manual analysis when LLM analysis fails.
     Uses keyword analysis and content extraction to provide meaningful insights.
@@ -154,10 +294,17 @@ def generate_manual_analysis(data_file: str, review_type: str) -> str:
     Args:
         data_file: Path to processed JSON data
         review_type: Type of review
+        criteria: Optional list of criteria dictionaries to use instead of defaults
+        config: Optional configuration dict for finding uploaded criteria
         
     Returns:
         Manual analysis content as markdown string
     """
+    # Load criteria if not provided
+    if criteria is None:
+        criteria = load_criteria_with_uploads(review_type, config)
+        print(f"DEBUG: generate_manual_analysis loaded {len(criteria)} criteria")
+    
     # Load the processed data
     with open(data_file, 'r') as f:
         data = json.load(f)
@@ -216,68 +363,7 @@ Successfully completed **{total_accomplishments} work items** during the review 
 
 ## Criterion Analysis
 
-### 1. Communication
-**Self Rating: 3 (Excellent)**
-
-**How I Met This Criterion:**
-Demonstrated exceptional technical communication through detailed project documentation. Notable examples include:
-
-{_format_specific_accomplishments(top_accomplishments[:2], 'communication')}
-
-All {accomplishment_analysis['detailed_count']} complex projects include comprehensive acceptance criteria, technical specifications, and success verification steps, indicating superior communication of technical requirements and deliverables.
-
-### 2. Flexibility
-**Self Rating: 3 (Excellent)**
-
-**How I Met This Criterion:**
-Successfully adapted across diverse technical domains spanning {', '.join(key_themes[:4])}. Worked with {len(technologies)} different technologies and platforms, demonstrating exceptional adaptability:
-
-{_format_specific_accomplishments(top_accomplishments[:2], 'flexibility')}
-
-### 3. Initiative
-**Self Rating: 3 (Excellent)**
-
-**How I Met This Criterion:**
-Proactively tackled complex technical challenges with {high_impact} high-impact projects demonstrating self-direction and technical leadership. Examples of initiative include:
-
-{_format_specific_accomplishments([acc for acc in top_accomplishments if 'high' in acc.get('title', '').lower()][:2], 'initiative')}
-
-### 4. Member Service
-**Self Rating: 3 (Excellent)**
-
-**How I Met This Criterion:**
-Delivered comprehensive technical solutions supporting organizational infrastructure and business objectives. Service excellence demonstrated through:
-
-{_format_business_impact_examples(business_impact, data)}
-
-### 5. Personal Credibility
-**Self Rating: 3 (Excellent)**
-
-**How I Met This Criterion:**
-Demonstrated exceptional reliability with 100% completion rate across all {total_accomplishments} technical assignments. Credibility established through:
-
-- Comprehensive technical documentation for all major projects
-- {accomplishment_analysis['detailed_count']} projects with detailed acceptance criteria and verification steps
-- Consistent delivery of complex technical solutions requiring specialized expertise
-
-### 6. Quality and Quantity of Work
-**Self Rating: 3 (Excellent)**
-
-**How I Met This Criterion:**
-Achieved outstanding productivity with {total_accomplishments} completed work items while maintaining high technical standards. Quality indicators:
-
-- {accomplishment_analysis['detailed_count']} projects with comprehensive technical documentation
-- Average of {accomplishment_analysis['avg_description_length']:.0f} characters of technical detail per project
-- {high_impact} high-impact technical deliverables providing significant organizational value
-- Expertise demonstrated across {len(key_themes)} major technical domains
-
-### 7. Teamwork
-**Self Rating: 3 (Excellent)**
-
-**How I Met This Criterion:**
-Collaborated effectively on complex technical projects supporting team goals through knowledge sharing and technical leadership. Examples include:
-
-{_format_specific_accomplishments(top_accomplishments[:2], 'teamwork')}
+{_generate_dynamic_criteria_sections(criteria, data, accomplishment_analysis, key_themes, technologies, business_impact, high_impact, total_accomplishments)}
 
 ## Overall Summary
 
@@ -314,59 +400,9 @@ Successfully completed **{total_accomplishments} work items** during the assessm
 
 ## Competency Analysis
 
-Based on {total_accomplishments} completed work items, this assessment evaluates performance across 13 professional competency areas:
+Based on {total_accomplishments} completed work items, this assessment evaluates performance across {len(criteria)} professional competency areas:
 
-### Programming/Software Development
-**Rating: 3 (Practicing)**
-Demonstrated consistent application of programming and development skills across multiple work items with independent execution and quality deliverables.
-
-### Solution Architecture  
-**Rating: 2 (Developing)**
-Applied architectural thinking to technical solutions with growing proficiency in system design and integration approaches.
-
-### Systems Design
-**Rating: 2 (Developing)**
-Contributed to system design initiatives with increasing understanding of scalability and integration requirements.
-
-### Project Management
-**Rating: 3 (Practicing)**
-Successfully managed {total_accomplishments} work items from initiation through completion, demonstrating effective project execution skills.
-
-### Requirements Definition
-**Rating: 3 (Practicing)**
-Consistently delivered work items meeting defined acceptance criteria, showing strong requirements analysis and implementation capabilities.
-
-### Testing
-**Rating: 2 (Developing)**
-Applied testing practices and validation approaches with growing proficiency in quality assurance methodologies.
-
-### Problem Management
-**Rating: 3 (Practicing)**
-Effectively resolved technical challenges across {total_accomplishments} work items, demonstrating systematic problem-solving abilities.
-
-### Innovation
-**Rating: 2 (Developing)**
-Contributed creative solutions and process improvements with increasing confidence in innovative approaches.
-
-### Release/Deployment
-**Rating: 2 (Developing)**
-Participated in deployment activities with growing understanding of release management and production considerations.
-
-### Accountability
-**Rating: 4 (Mastering)**
-Demonstrated exceptional accountability with 100% completion rate across all assigned work items and consistent follow-through on commitments.
-
-### Influence
-**Rating: 2 (Developing)**
-Building influence through reliable delivery and technical contributions, with opportunities for expanded leadership impact.
-
-### Agility
-**Rating: 3 (Practicing)**
-Successfully adapted to changing requirements and priorities across diverse work items, maintaining effectiveness during transitions.
-
-### Inclusion
-**Rating: 2 (Developing)**
-Contributed to team success through collaborative execution and knowledge sharing opportunities.
+{_generate_dynamic_criteria_sections(criteria, data, accomplishment_analysis, key_themes, technologies, business_impact, high_impact, total_accomplishments)}
 
 ## Overall Assessment
 
