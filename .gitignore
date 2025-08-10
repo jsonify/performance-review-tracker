@@ -76,3 +76,7 @@ config.json
 
 # Handoff Manager
 handoffs/0-system/chat-history/
+ui/results/performance_review_*.md
+ui/uploads/accomplishments_*.csv
+ui/uploads/
+ui/results/

@@ -8,22 +8,33 @@ The Performance Review Tracker now supports direct integration with multiple LLM
 
 ## Supported Providers
 
-### 1. OpenAI (Recommended)
+### 1. RequestyAI Unified Gateway (🌟 Recommended)
+- **Models**: All major models from OpenAI, Anthropic, Google, Meta, Mistral, Cohere
+- **Best for**: Production use, cost optimization, maximum reliability
+- **Benefits**: 
+  - Single API key for all providers
+  - Up to 40% cost savings
+  - Intelligent routing and fallback
+  - 99.99% uptime SLA
+- **Cost**: Optimized pricing across all providers
+- **Setup**: Sign up at [app.requesty.ai](https://app.requesty.ai)
+
+### 2. OpenAI
 - **Models**: GPT-4o, GPT-4o-mini, GPT-4-turbo, GPT-3.5-turbo
 - **Best for**: High-quality analysis, reliable performance
 - **Cost**: Pay-per-use API pricing
 
-### 2. Anthropic Claude
+### 3. Anthropic Claude
 - **Models**: Claude-3.5-Sonnet, Claude-3.5-Haiku, Claude-3-Opus
 - **Best for**: Detailed analysis, complex reasoning
 - **Cost**: Pay-per-use API pricing
 
-### 3. Google Gemini  
+### 4. Google Gemini  
 - **Models**: Gemini-1.5-Pro, Gemini-1.5-Flash, Gemini-1.0-Pro
 - **Best for**: Cost-effective analysis
 - **Cost**: Generous free tier, then pay-per-use
 
-### 4. Azure OpenAI
+### 5. Azure OpenAI
 - **Models**: GPT-4o, GPT-4-turbo, GPT-35-turbo
 - **Best for**: Enterprise deployments, compliance requirements
 - **Cost**: Enterprise pricing

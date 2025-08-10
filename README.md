@@ -81,9 +81,9 @@ Create a `config.json` file in the project root with the following structure:
         ]
     },
     "llm_integration": {
-        "provider": "roo_code",
-        "api_key": "",
-        "model": "",
+        "provider": "requestyai",
+        "api_key": "your_requestyai_api_key_here",
+        "model": "openai/gpt-4o-mini",
         "fallback_to_roo": true,
         "options": {
             "temperature": 0.7,
@@ -101,8 +101,15 @@ Create a `config.json` file in the project root with the following structure:
 
 **Configuration Sections:**
 - **azure_devops**: Required for ADO integration
-- **llm_integration**: Required for AI analysis (set to "roo_code" for current system)
+- **llm_integration**: Required for AI analysis. Use `"requestyai"` for the unified gateway
 - **processing**: Optional processing settings (defaults applied if missing)
+
+**RequestyAI Configuration:**
+To use RequestyAI as your unified LLM provider:
+1. Sign up at [app.requesty.ai](https://app.requesty.ai) and get your API key
+2. Set `"provider": "requestyai"` in your config
+3. Choose from any supported model: `openai/gpt-4o`, `anthropic/claude-3-5-sonnet-20241022`, `google/gemini-1.5-pro`, etc.
+4. Use a single API key to access all providers and models
 
 ### Quick Configuration Setup
 
@@ -197,15 +204,23 @@ python src/main.py --source hybrid --file data/backup.csv --type competency --fo
 
 ### Analysis Options
 
-#### 1. Automated Python System
+#### 1. RequestyAI Unified Gateway (Recommended) 🌟
+Access to multiple LLM providers through a single API key and unified interface:
+
+- **Providers**: OpenAI, Anthropic, Google, Meta, Mistral, Cohere
+- **Benefits**: Cost optimization (up to 40% savings), intelligent routing, 99.99% uptime SLA
+- **Models**: All major models including GPT-4o, Claude 3.5 Sonnet, Gemini 1.5 Pro
+- **Best for**: Production use, cost-conscious users, maximum reliability
+
+#### 2. Individual Provider Integration
+Direct integration with specific providers (OpenAI, Anthropic, Google, etc.):
+
+Best for: Users with existing API relationships, specific model requirements
+
+#### 3. Automated Python System (No AI)
 Fast, reliable processing using keyword analysis and statistical scoring:
 
-Best for: Batch processing, consistent results, quick assessments
-
-#### 2. AI-Assisted Analysis  
-Advanced analysis with nuanced insights (requires compatible AI tools):
-
-Best for: Detailed insights, strategic recommendations, complex scenarios
+Best for: Batch processing, consistent results, quick assessments without AI costs
 
 ### Azure DevOps Standalone Usage
 

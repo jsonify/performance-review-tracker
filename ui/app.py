@@ -102,6 +102,7 @@ def get_year_options():
 def get_llm_providers():
     """Get available LLM providers."""
     return [
+        {'id': 'requestyai', 'name': 'RequestyAI (Unified Gateway - All Models)', 'recommended': True},
         {'id': 'openai', 'name': 'OpenAI (GPT-3.5, GPT-4)'},
         {'id': 'anthropic', 'name': 'Anthropic (Claude)'},
         {'id': 'google', 'name': 'Google (Gemini)'},
@@ -114,6 +115,32 @@ def get_llm_providers():
 def get_common_models():
     """Get common model options by provider."""
     return {
+        'requestyai': [
+            # Most Popular Models
+            'openai/gpt-4o',
+            'openai/gpt-4o-mini', 
+            'anthropic/claude-3-5-sonnet-20241022',
+            'coding/claude-4-sonnet',
+            # Coding & Reasoning Models
+            'openai/o1-preview',
+            'openai/o1-mini',
+            'mistral/codestral-latest',
+            'deepseek/deepseek-coder',
+            # Other Popular Options
+            'anthropic/claude-3-5-haiku-20241022',
+            'google/gemini-1.5-pro',
+            'google/gemini-1.5-flash',
+            'openai/gpt-4-turbo',
+            'openai/gpt-3.5-turbo',
+            'anthropic/claude-3-opus-20240229',
+            'meta/llama-3.2-90b',
+            'meta/llama-3.1-70b',
+            'meta/llama-3.2-11b',
+            'mistral/mistral-large-2407',
+            'cohere/command-r-plus',
+            'cohere/command-r',
+            'x-ai/grok-beta'
+        ],
         'openai': ['gpt-4', 'gpt-4-turbo', 'gpt-3.5-turbo'],
         'anthropic': ['claude-3-opus', 'claude-3-sonnet', 'claude-3-haiku'],
         'google': ['gemini-pro', 'gemini-pro-vision'],

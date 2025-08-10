@@ -515,7 +515,7 @@ def _extract_technologies(data: List[Dict]) -> List[str]:
         if category == 'Versions':
             versions = re.findall(patterns, all_text)
             if versions:
-                found_technologies.extend([f"Version {v}" for v in set(versions)[:5]])
+                found_technologies.extend([f"Version {v}" for v in list(set(versions))[:5]])
         else:
             for pattern in patterns:
                 if pattern in all_text:
@@ -658,11 +658,11 @@ def validate_llm_config(config: Dict) -> List[str]:
     provider = llm_config.get("provider", "").lower()
     if not provider:
         issues.append("LLM provider not specified")
-    elif provider not in ["openai", "anthropic", "google", "azure_openai", "ollama", "roo_code"]:
+    elif provider not in ["requestyai", "openai", "anthropic", "google", "azure_openai", "ollama", "roo_code"]:
         issues.append(f"Unsupported LLM provider: {provider}")
     
     # Check provider-specific requirements
-    if provider in ["openai", "anthropic", "google"]:
+    if provider in ["requestyai", "openai", "anthropic", "google"]:
         if not llm_config.get("api_key"):
             issues.append(f"API key required for {provider}")
     
@@ -674,7 +674,7 @@ def validate_llm_config(config: Dict) -> List[str]:
     
     # Check model specification
     model = llm_config.get("model", "")
-    if not model and provider != "roo_code":
+    if not model and provider not in ["roo_code"]:
         issues.append(f"Model not specified for {provider}")
     
     return issues

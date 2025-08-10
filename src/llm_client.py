@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 
 class LLMProvider(Enum):
     """Supported LLM providers."""
+    REQUESTYAI = "requestyai"  # Unified provider for all models
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
     GOOGLE = "google"
@@ -83,7 +84,9 @@ class LLMClient:
     def _initialize_client(self):
         """Initialize the appropriate client for the configured provider."""
         try:
-            if self.provider == LLMProvider.OPENAI:
+            if self.provider == LLMProvider.REQUESTYAI:
+                self._initialize_requestyai_client()
+            elif self.provider == LLMProvider.OPENAI:
                 self._initialize_openai_client()
             elif self.provider == LLMProvider.ANTHROPIC:
                 self._initialize_anthropic_client()
@@ -115,6 +118,20 @@ class LLMClient:
             self._client = openai.OpenAI(api_key=self.api_key)
             if not self.model:
                 self.model = "gpt-4o"  # Default to GPT-4o
+        except ImportError:
+            raise LLMClientError("OpenAI library not installed. Run: pip install openai")
+    
+    def _initialize_requestyai_client(self):
+        """Initialize RequestyAI unified client."""
+        try:
+            import openai
+            # RequestyAI uses OpenAI-compatible interface with their gateway
+            self._client = openai.OpenAI(
+                api_key=self.api_key,
+                base_url="https://router.requesty.ai/v1"
+            )
+            if not self.model:
+                self.model = "openai/gpt-4o-mini"  # Default RequestyAI model
         except ImportError:
             raise LLMClientError("OpenAI library not installed. Run: pip install openai")
     
@@ -380,7 +397,9 @@ Generate analysis covering ALL {len(criteria)} competencies with specific eviden
     def _call_llm_provider(self, prompt: str) -> str:
         """Call the appropriate LLM provider with the prompt."""
         
-        if self.provider == LLMProvider.OPENAI:
+        if self.provider == LLMProvider.REQUESTYAI:
+            return self._call_requestyai(prompt)
+        elif self.provider == LLMProvider.OPENAI:
             return self._call_openai(prompt)
         elif self.provider == LLMProvider.ANTHROPIC:
             return self._call_anthropic(prompt)
@@ -395,6 +414,19 @@ Generate analysis covering ALL {len(criteria)} competencies with specific eviden
     
     def _call_openai(self, prompt: str) -> str:
         """Call OpenAI API."""
+        response = self._client.chat.completions.create(
+            model=self.model,
+            messages=[
+                {"role": "system", "content": "You are an expert performance review analyst who provides thorough, evidence-based evaluations."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=self.temperature,
+            max_tokens=self.max_tokens
+        )
+        return response.choices[0].message.content
+    
+    def _call_requestyai(self, prompt: str) -> str:
+        """Call RequestyAI unified gateway API."""
         response = self._client.chat.completions.create(
             model=self.model,
             messages=[
@@ -524,6 +556,38 @@ Generate analysis covering ALL {len(criteria)} competencies with specific eviden
     def get_supported_models(self) -> List[str]:
         """Get list of supported models for the current provider."""
         model_lists = {
+            LLMProvider.REQUESTYAI: [
+                # OpenAI models via RequestyAI
+                "openai/gpt-4o",
+                "openai/gpt-4o-mini",
+                "openai/gpt-4-turbo",
+                "openai/gpt-3.5-turbo",
+                # Anthropic models via RequestyAI
+                "anthropic/claude-3-5-sonnet-20241022",
+                "anthropic/claude-3-5-haiku-20241022",
+                "anthropic/claude-3-opus-20240229",
+                # Coding-optimized models
+                "coding/claude-4-sonnet",
+                "openai/o1-preview",
+                "openai/o1-mini",
+                # Google models via RequestyAI
+                "google/gemini-1.5-pro",
+                "google/gemini-1.5-flash",
+                "google/gemini-pro",
+                # Meta models via RequestyAI
+                "meta/llama-3.2-90b",
+                "meta/llama-3.1-70b",
+                "meta/llama-3.2-11b",
+                # Mistral models
+                "mistral/mistral-large-2407",
+                "mistral/codestral-latest",
+                # Cohere models
+                "cohere/command-r-plus",
+                "cohere/command-r",
+                # Additional specialized models
+                "deepseek/deepseek-coder",
+                "x-ai/grok-beta"
+            ],
             LLMProvider.OPENAI: ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo"],
             LLMProvider.ANTHROPIC: ["claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022", "claude-3-opus-20240229"],
             LLMProvider.GOOGLE: ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-1.0-pro"],
