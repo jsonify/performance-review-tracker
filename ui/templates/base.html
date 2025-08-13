@@ -204,6 +204,14 @@
             font-style: italic;
             color: #6c757d !important;
             cursor: default;
+            background-color: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+            margin-top: 0.25rem;
+        }
+        
+        .model-controls .dropdown-item.text-muted:hover {
+            background-color: #f8f9fa !important;
+            color: #6c757d !important;
         }
         
         .model-controls .dropdown-header {
@@ -217,6 +225,27 @@
         
         .model-controls .dropdown-divider {
             margin: 0.25rem 0;
+        }
+        
+        /* Model dropdown badges */
+        .model-controls .dropdown-item .badge {
+            font-size: 0.625rem;
+            padding: 0.125rem 0.375rem;
+            margin-left: 0.5rem;
+        }
+        
+        /* Clear button visibility */
+        #clear-model-btn {
+            display: none;
+        }
+        
+        .model-controls .dropdown-item.active {
+            background-color: #0d6efd;
+            color: white;
+        }
+        
+        .model-controls .dropdown-item strong {
+            font-weight: 600;
         }
         
         /* Criteria input styling */
@@ -370,6 +399,498 @@
             color: #dc3545;
             font-size: 0.875rem;
         }
+
+        /* Workflow Selection Styling */
+        .workflow-selection {
+            padding: 2rem 0;
+        }
+        
+        .workflow-intro h2 {
+            font-weight: 300;
+            color: white;
+            margin-bottom: 1rem;
+        }
+        
+        .workflow-intro .lead {
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .workflow-card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            height: 100%;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 3px solid transparent;
+        }
+        
+        .workflow-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 16px 48px rgba(0,0,0,0.2);
+        }
+        
+        .workflow-card[data-workflow="competency"]:hover {
+            border-color: #0d6efd;
+        }
+        
+        .workflow-card[data-workflow="annual"]:hover {
+            border-color: #198754;
+        }
+        
+        .workflow-icon {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+            color: #6c757d;
+        }
+        
+        .workflow-card[data-workflow="competency"] .workflow-icon {
+            color: #0d6efd;
+        }
+        
+        .workflow-card[data-workflow="annual"] .workflow-icon {
+            color: #198754;
+        }
+        
+        .workflow-card h3 {
+            color: #495057;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+        
+        .workflow-card p {
+            color: #6c757d;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+        
+        .workflow-features {
+            list-style: none;
+            padding: 0;
+            margin: 1.5rem 0;
+        }
+        
+        .workflow-features li {
+            padding: 0.5rem 0;
+            color: #495057;
+            font-size: 0.9rem;
+        }
+        
+        .workflow-features li:before {
+            content: "✓";
+            color: #198754;
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+        
+        /* Progress Header Styling */
+        .progress-header {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .workflow-badge .badge {
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+        }
+        
+        .progress-container {
+            position: relative;
+            padding: 1rem 0;
+        }
+        
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .progress-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+        }
+        
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #e9ecef;
+            color: #6c757d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .progress-step.active .step-circle {
+            background: #0d6efd;
+            color: white;
+        }
+        
+        .progress-step.completed .step-circle {
+            background: #198754;
+            color: white;
+        }
+        
+        .step-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+            font-weight: 500;
+        }
+        
+        .progress-step.active .step-label {
+            color: #0d6efd;
+            font-weight: 600;
+        }
+        
+        .progress-step.completed .step-label {
+            color: #198754;
+            font-weight: 600;
+        }
+        
+        .progress-line {
+            position: absolute;
+            top: 20px;
+            left: 40px;
+            right: 40px;
+            height: 2px;
+            background: #e9ecef;
+            z-index: 1;
+        }
+        
+        /* Step Styling */
+        .workflow-step {
+            margin-top: 2rem;
+        }
+        
+        .step-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .sidebar-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+        
+        .step-header h4 {
+            color: #495057;
+            margin-bottom: 0.5rem;
+        }
+        
+        .step-header p {
+            color: #6c757d;
+            margin-bottom: 0;
+        }
+        
+        .step-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .step-actions .btn {
+            flex: 1;
+        }
+        
+        /* Data Source Cards */
+        .data-source-options {
+            margin: 2rem 0;
+        }
+        
+        .data-source-card {
+            position: relative;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+        
+        .data-source-card input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .data-source-label {
+            display: block;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0;
+        }
+        
+        .data-source-card:hover {
+            border-color: #0d6efd;
+            background-color: rgba(13, 110, 253, 0.05);
+        }
+        
+        .data-source-card input[type="radio"]:checked + .data-source-label {
+            background: #0d6efd;
+            color: white;
+        }
+        
+        .data-source-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: #6c757d;
+        }
+        
+        .data-source-card input[type="radio"]:checked + .data-source-label .data-source-icon {
+            color: white;
+        }
+        
+        .data-source-label h5 {
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .data-source-label p {
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .data-source-label small {
+            opacity: 0.8;
+        }
+        
+        .data-config-section {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+        
+        /* Generation Summary */
+        .generation-summary {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1.5rem;
+            border: 1px solid #dee2e6;
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+        }
+        
+        .summary-label {
+            font-weight: 500;
+            color: #6c757d;
+        }
+        
+        .summary-value {
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        /* Enhanced Upload Areas */
+        .upload-area {
+            border: 2px dashed #dee2e6;
+            border-radius: 12px;
+            padding: 3rem 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: #fafbfc;
+        }
+        
+        .upload-area:hover, .upload-area.dragover {
+            border-color: #0d6efd;
+            background-color: rgba(13, 110, 253, 0.05);
+            transform: scale(1.02);
+        }
+        
+        .upload-area h5 {
+            color: #495057;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .upload-area p {
+            color: #6c757d;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Progress Content Styling */
+        .progress-content {
+            padding: 1rem 0;
+        }
+        
+        .progress-stage h5 {
+            color: #495057;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .progress-stages .badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .progress-stages .badge.bg-primary {
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        
+        /* Result Summary Styling */
+        .result-summary {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1.5rem;
+            border: 1px solid #dee2e6;
+        }
+        
+        .summary-card {
+            background: white;
+            border-radius: 6px;
+            padding: 1rem;
+            border: 1px solid #e9ecef;
+            height: 100%;
+        }
+        
+        .summary-card h6 {
+            color: #495057;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.25rem 0;
+            border-bottom: 1px solid #f1f3f4;
+        }
+        
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+        
+        .detail-label {
+            font-weight: 500;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .detail-value {
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.9rem;
+        }
+        
+        /* Report Content Styling */
+        .report-content-section {
+            border-top: 2px solid #e9ecef;
+            padding-top: 1.5rem;
+        }
+        
+        .report-content {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1.5rem;
+            max-height: 500px;
+            overflow-y: auto;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .report-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .report-actions .btn {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+        }
+        
+        /* Copy button feedback */
+        .btn-copy-success {
+            background-color: #198754 !important;
+            border-color: #198754 !important;
+            color: white !important;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .step-actions {
+                flex-direction: column;
+            }
+            
+            .workflow-card {
+                margin-bottom: 1rem;
+            }
+            
+            .progress-steps {
+                flex-wrap: wrap;
+                gap: 1rem;
+            }
+            
+            .progress-step {
+                flex: none;
+                min-width: 80px;
+            }
+            
+            .progress-line {
+                display: none;
+            }
+            
+            .report-actions {
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+            
+            .report-actions .btn {
+                font-size: 0.8rem;
+                padding: 0.25rem 0.5rem;
+            }
+            
+            .progress-stages .col-3 {
+                margin-bottom: 0.25rem;
+            }
+        }
     </style>
     
     {% block extra_head %}{% endblock %}
@@ -430,8 +951,10 @@
         function showResult(content = '', show = true) {
             const result = document.querySelector('.result-display');
             if (result) {
-                if (show && content) {
-                    result.innerHTML = content;
+                if (show) {
+                    if (content) {
+                        result.innerHTML = content;
+                    }
                     result.classList.add('show');
                 } else {
                     result.classList.remove('show');

@@ -93,10 +93,34 @@ def load_criteria_with_uploads(review_type: str, config: Dict = None) -> List[Di
                 
                 with open(criteria_path, 'r', encoding='utf-8') as f:
                     data = json.load(f)
+                    
+                    # Check for standard format first: {"criteria": [...]}
                     criteria = data.get('criteria', [])
                     if criteria:
-                        print(f"DEBUG: Loaded {len(criteria)} criteria from uploaded file")
+                        print(f"DEBUG: Loaded {len(criteria)} criteria from uploaded file (standard format)")
                         return criteria
+                    
+                    # Check for alternative format: {"Name": {"description": "...", "weight": ...}}
+                    # Convert to standard format
+                    if isinstance(data, dict) and not data.get('criteria'):
+                        converted_criteria = []
+                        for name, details in data.items():
+                            if isinstance(details, dict):
+                                criterion = {
+                                    "name": name,
+                                    "expectations": []
+                                }
+                                # Convert description to expectations if available
+                                if 'description' in details:
+                                    criterion["expectations"] = [details['description']]
+                                # Add weight if available
+                                if 'weight' in details:
+                                    criterion["weight"] = details['weight']
+                                converted_criteria.append(criterion)
+                        
+                        if converted_criteria:
+                            print(f"DEBUG: Loaded {len(converted_criteria)} criteria from uploaded file (converted format)")
+                            return converted_criteria
         except Exception as e:
             print(f"DEBUG: Error checking upload folder {folder}: {e}")
             continue

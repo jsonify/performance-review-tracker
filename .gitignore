@@ -76,6 +76,8 @@ config.json
 
 # Handoff Manager
 handoffs/0-system/chat-history/
+
+# Misc
 ui/results/performance_review_*.md
 ui/uploads/accomplishments_*.csv
 ui/uploads/
@@ -84,3 +86,5 @@ data/ado_*.csv
 data/proof*.csv
 data/analyzed_annual.md
 data/processed_annual.json
+
+ui/secure_storage/

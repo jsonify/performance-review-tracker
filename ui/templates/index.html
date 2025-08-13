@@ -8,470 +8,952 @@
     <p>Generate professional performance reviews with AI-powered analysis</p>
 </div>
 
-<!-- Step 1: Review Criteria Configuration -->
-<div class="section-card" data-step="1">
-    <div class="section-header">
-        <div class="section-number">1</div>
-        <h3>Review Criteria Configuration</h3>
-    </div>
-    
-    <!-- Annual Review Criteria Section -->
-    <div class="criteria-section mb-4">
-        <h5 class="mb-3"><i class="fas fa-calendar-alt"></i> Annual Review Criteria</h5>
-        
-        <!-- Annual Review Toggle -->
-        <div class="mb-3">
-            <div class="btn-group w-100" role="group">
-                <input type="radio" class="btn-check" name="annual-input-method" id="annual-upload-method" value="upload" checked>
-                <label class="btn btn-outline-primary" for="annual-upload-method">
-                    <i class="fas fa-upload"></i> Upload JSON File
-                </label>
+<!-- Workflow Selection Screen -->
+<div id="workflow-selection" class="workflow-selection">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="workflow-intro text-center mb-5">
+                <h2>Choose Your Review Type</h2>
+                <p class="lead">Select the type of performance review you'd like to generate</p>
+            </div>
+            
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="workflow-card" data-workflow="competency">
+                        <div class="workflow-icon">
+                            <i class="fas fa-cogs"></i>
+                        </div>
+                        <h3>Competency Assessment</h3>
+                        <p>Evaluate performance across 13 professional competency areas with detailed skill-level analysis and development recommendations.</p>
+                        <ul class="workflow-features">
+                            <li>13 professional competency areas</li>
+                            <li>5-point skill level assessment</li>
+                            <li>Evidence-based ratings</li>
+                            <li>Development gap analysis</li>
+                        </ul>
+                        <button class="btn btn-primary btn-lg w-100" onclick="selectWorkflow('competency')">
+                            <i class="fas fa-arrow-right"></i> Start Competency Assessment
+                        </button>
+                    </div>
+                </div>
                 
-                <input type="radio" class="btn-check" name="annual-input-method" id="annual-manual-method" value="manual">
-                <label class="btn btn-outline-primary" for="annual-manual-method">
-                    <i class="fas fa-edit"></i> Enter Manually
-                </label>
-            </div>
-        </div>
-        
-        <!-- Annual Review Upload Section -->
-        <div id="annual-upload-section" class="criteria-input-section">
-            <div class="upload-area" id="annual-upload-area">
-                <input type="file" id="annual-criteria-file" accept=".json" style="display: none;">
-                <i class="fas fa-upload fa-2x mb-2"></i>
-                <p class="mb-0">Click or drag to upload annual review criteria</p>
-                <small class="text-muted">JSON format required</small>
-            </div>
-            <div id="annual-criteria-status" class="mt-2"></div>
-        </div>
-        
-        <!-- Annual Review Manual Entry Section -->
-        <div id="annual-manual-section" class="criteria-input-section" style="display: none;">
-            <!-- Form for adding new criteria -->
-            <div class="criteria-form mb-4">
-                <h6 class="mb-3"><i class="fas fa-plus-circle"></i> Add Annual Review Criteria</h6>
-                <div class="row">
-                    <div class="col-md-4">
-                        <label for="annual-section-name" class="form-label">Section Name</label>
-                        <input type="text" id="annual-section-name" class="form-control" 
-                               placeholder="e.g., Leadership, Innovation">
-                    </div>
-                    <div class="col-md-5">
-                        <label for="annual-section-description" class="form-label">Description</label>
-                        <input type="text" id="annual-section-description" class="form-control" 
-                               placeholder="e.g., Demonstrates leadership capabilities">
-                    </div>
-                    <div class="col-md-2">
-                        <label for="annual-section-weight" class="form-label">Weight (%)</label>
-                        <input type="number" id="annual-section-weight" class="form-control" 
-                               placeholder="20" min="1" max="100">
-                    </div>
-                    <div class="col-md-1">
-                        <label class="form-label">&nbsp;</label>
-                        <button type="button" id="add-annual-criteria-btn" class="btn btn-success w-100">
-                            <i class="fas fa-plus"></i>
+                <div class="col-md-6">
+                    <div class="workflow-card" data-workflow="annual">
+                        <div class="workflow-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <h3>Annual Review</h3>
+                        <p>Generate comprehensive annual performance reviews with customizable criteria, goal achievement analysis, and career progression insights.</p>
+                        <ul class="workflow-features">
+                            <li>Customizable review criteria</li>
+                            <li>Goal achievement tracking</li>
+                            <li>Career progression analysis</li>
+                            <li>Professional summary</li>
+                        </ul>
+                        <button class="btn btn-success btn-lg w-100" onclick="selectWorkflow('annual')">
+                            <i class="fas fa-arrow-right"></i> Start Annual Review
                         </button>
                     </div>
                 </div>
             </div>
-            
-            <!-- Display entered criteria -->
-            <div class="entered-criteria mb-4">
-                <h6 class="mb-3"><i class="fas fa-list"></i> Entered Criteria</h6>
-                <div id="annual-criteria-display" class="criteria-display">
-                    <div class="text-muted text-center py-3">
-                        <i class="fas fa-info-circle"></i> No criteria entered yet. Add some above to get started.
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Save button -->
-            <div class="text-end mb-3">
-                <button type="button" id="save-annual-btn" class="btn btn-primary">
-                    <i class="fas fa-save"></i> Save All Criteria
-                </button>
-            </div>
-            
-            <div id="annual-manual-status" class="mt-2"></div>
         </div>
     </div>
-    
-    <!-- Competency Criteria Section -->
-    <div class="criteria-section">
-        <h5 class="mb-3"><i class="fas fa-cogs"></i> Competency Criteria</h5>
-        
-        <!-- Competency Toggle -->
-        <div class="mb-3">
-            <div class="btn-group w-100" role="group">
-                <input type="radio" class="btn-check" name="competency-input-method" id="competency-upload-method" value="upload" checked>
-                <label class="btn btn-outline-primary" for="competency-upload-method">
-                    <i class="fas fa-upload"></i> Upload JSON File
-                </label>
-                
-                <input type="radio" class="btn-check" name="competency-input-method" id="competency-manual-method" value="manual">
-                <label class="btn btn-outline-primary" for="competency-manual-method">
-                    <i class="fas fa-edit"></i> Enter Manually
-                </label>
+</div>
+
+<!-- Main Workflow Screen -->
+<div id="main-workflow" class="main-workflow" style="display: none;">
+    <!-- Progress Header -->
+    <div class="progress-header mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h2 id="workflow-title"></h2>
+                <div class="workflow-badge">
+                    <span id="workflow-type-badge" class="badge"></span>
+                </div>
+            </div>
+            <div class="col-md-6 text-end">
+                <button class="btn btn-outline-secondary" onclick="resetWorkflow()">
+                    <i class="fas fa-arrow-left"></i> Change Review Type
+                </button>
             </div>
         </div>
         
-        <!-- Competency Upload Section -->
-        <div id="competency-upload-section" class="criteria-input-section">
-            <div class="upload-area" id="competency-upload-area">
-                <input type="file" id="competency-criteria-file" accept=".json" style="display: none;">
-                <i class="fas fa-upload fa-2x mb-2"></i>
-                <p class="mb-0">Click or drag to upload competency criteria</p>
-                <small class="text-muted">JSON format required</small>
+        <!-- Progress Bar -->
+        <div class="progress-container mt-3">
+            <div class="progress-steps">
+                <div class="progress-step" data-step="criteria">
+                    <div class="step-circle">1</div>
+                    <span class="step-label">Criteria</span>
+                </div>
+                <div class="progress-step" data-step="data">
+                    <div class="step-circle">2</div>
+                    <span class="step-label">Data Source</span>
+                </div>
+                <div class="progress-step" data-step="ai">
+                    <div class="step-circle">3</div>
+                    <span class="step-label">AI Analysis</span>
+                </div>
+                <div class="progress-step" data-step="generate">
+                    <div class="step-circle">4</div>
+                    <span class="step-label">Generate</span>
+                </div>
             </div>
-            <div id="competency-criteria-status" class="mt-2"></div>
+            <div class="progress-line"></div>
         </div>
-        
-        <!-- Competency Manual Entry Section -->
-        <div id="competency-manual-section" class="criteria-input-section" style="display: none;">
-            <!-- Form for adding new competency -->
-            <div class="criteria-form mb-4">
-                <h6 class="mb-3"><i class="fas fa-plus-circle"></i> Add Competency Area</h6>
-                
-                <!-- Competency Name and Description -->
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <label for="competency-name" class="form-label">Competency Name</label>
-                        <input type="text" id="competency-name" class="form-control" 
-                               placeholder="e.g., Programming, Problem Management">
+    </div>
+
+    <!-- Step 1: Criteria Configuration -->
+    <div class="workflow-step" id="step-criteria">
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="step-card">
+                    <div class="step-header">
+                        <h4 id="criteria-title"></h4>
+                        <p id="criteria-description"></p>
                     </div>
-                    <div class="col-md-8">
-                        <label for="competency-description" class="form-label">Description</label>
-                        <input type="text" id="competency-description" class="form-control" 
-                               placeholder="e.g., Software development and coding skills">
+                    
+                    <div class="criteria-tabs">
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li class="nav-item">
+                                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#upload-tab">
+                                    <i class="fas fa-upload"></i> Upload File
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#manual-tab">
+                                    <i class="fas fa-edit"></i> Enter Manually
+                                </button>
+                            </li>
+                        </ul>
+                        
+                        <div class="tab-content">
+                            <!-- Upload Tab -->
+                            <div class="tab-pane fade show active" id="upload-tab">
+                                <div class="upload-area" id="criteria-upload-area">
+                                    <input type="file" id="criteria-file" accept=".json" style="display: none;">
+                                    <i class="fas fa-upload fa-3x mb-3"></i>
+                                    <h5>Upload Criteria File</h5>
+                                    <p>Click or drag to upload your criteria JSON file</p>
+                                    <small class="text-muted">JSON format required</small>
+                                </div>
+                                <div id="criteria-upload-status" class="mt-3"></div>
+                            </div>
+                            
+                            <!-- Manual Tab -->
+                            <div class="tab-pane fade" id="manual-tab">
+                                <div id="manual-criteria-form">
+                                    <!-- Dynamic form content based on workflow type -->
+                                </div>
+                                <div id="criteria-manual-status" class="mt-3"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                
-                <!-- Level Definitions -->
-                <div class="level-definitions mb-3">
-                    <label class="form-label">Level Definitions (1-5 scale)</label>
-                    <div class="row g-2">
-                        <div class="col-md-2">
-                            <label class="form-label small">Level 1 (Learning)</label>
-                            <input type="text" id="competency-level-1" class="form-control form-control-sm" 
-                                   placeholder="Beginning to apply">
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="sidebar-card">
+                    <h5><i class="fas fa-info-circle"></i> About This Step</h5>
+                    <div id="criteria-help"></div>
+                    
+                    <div class="step-actions mt-4">
+                        <button class="btn btn-primary" onclick="nextStep()" id="criteria-next-btn" disabled>
+                            Next: Data Source <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 2: Data Source -->
+    <div class="workflow-step" id="step-data" style="display: none;">
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="step-card">
+                    <div class="step-header">
+                        <h4>Choose Your Data Source</h4>
+                        <p>Select how you want to provide your accomplishment data</p>
+                    </div>
+                    
+                    <div class="data-source-options">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="data-source-card" data-source="csv">
+                                    <input type="radio" name="data-source" id="csv-source" value="csv" checked>
+                                    <label for="csv-source" class="data-source-label">
+                                        <div class="data-source-icon">
+                                            <i class="fas fa-file-csv"></i>
+                                        </div>
+                                        <h5>CSV Upload</h5>
+                                        <p>Upload a CSV file with your accomplishments</p>
+                                        <small class="text-muted">Requires Date and Title columns</small>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="data-source-card" data-source="ado">
+                                    <input type="radio" name="data-source" id="ado-source" value="ado">
+                                    <label for="ado-source" class="data-source-label">
+                                        <div class="data-source-icon">
+                                            <i class="fas fa-cloud"></i>
+                                        </div>
+                                        <h5>Azure DevOps</h5>
+                                        <p>Import directly from Azure DevOps work items</p>
+                                        <small class="text-muted">Requires organization access</small>
+                                    </label>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-2">
-                            <label class="form-label small">Level 2 (Developing)</label>
-                            <input type="text" id="competency-level-2" class="form-control form-control-sm" 
-                                   placeholder="Building proficiency">
+                    </div>
+                    
+                    <!-- CSV Section -->
+                    <div id="csv-config" class="data-config-section">
+                        <div class="upload-area" id="csv-upload-area">
+                            <input type="file" id="accomplishments-csv-file" accept=".csv" style="display: none;">
+                            <i class="fas fa-file-csv fa-3x mb-3"></i>
+                            <h5>Upload Accomplishments</h5>
+                            <p>Click or drag to upload your accomplishments CSV</p>
+                            <small class="text-muted">Minimum required: Date and Title columns</small>
                         </div>
-                        <div class="col-md-2">
-                            <label class="form-label small">Level 3 (Practicing)</label>
-                            <input type="text" id="competency-level-3" class="form-control form-control-sm" 
-                                   placeholder="Consistent competency">
+                        <div id="csv-status" class="mt-3"></div>
+                    </div>
+                    
+                    <!-- ADO Section -->
+                    <div id="ado-config" class="data-config-section" style="display: none;">
+                        <div class="ado-form">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="ado-org" class="form-label">Organization</label>
+                                    <input type="text" id="ado-org" class="form-control" placeholder="your-org">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="ado-project" class="form-label">Project</label>
+                                    <input type="text" id="ado-project" class="form-control" placeholder="your-project">
+                                </div>
+                                <div class="col-12">
+                                    <label for="ado-token" class="form-label">Personal Access Token</label>
+                                    <div class="api-key-input">
+                                        <input type="password" id="ado-token" class="form-control" placeholder="Enter your PAT">
+                                        <button type="button" class="api-key-toggle" onclick="togglePasswordVisibility('ado-token')">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="work-item-type" class="form-label">Work Item Type</label>
+                                    <select id="work-item-type" class="form-select">
+                                        <option value="User Story" selected>User Story</option>
+                                        <option value="Task">Task</option>
+                                        <option value="Bug">Bug</option>
+                                        <option value="Feature">Feature</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="months-back" class="form-label">Time Range</label>
+                                    <select id="months-back" class="form-select">
+                                        <option value="6">Last 6 months</option>
+                                        <option value="12" selected>Last 12 months</option>
+                                        <option value="18">Last 18 months</option>
+                                        <option value="24">Last 24 months</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="ado-actions mt-3">
+                                <button type="button" id="test-ado-btn" class="btn btn-outline-secondary me-2">
+                                    <i class="fas fa-plug"></i> Test Connection
+                                </button>
+                                <button type="button" id="fetch-ado-btn" class="btn btn-primary">
+                                    <i class="fas fa-download"></i> Fetch Data
+                                </button>
+                            </div>
                         </div>
-                        <div class="col-md-2">
-                            <label class="form-label small">Level 4 (Mastering)</label>
-                            <input type="text" id="competency-level-4" class="form-control form-control-sm" 
-                                   placeholder="Advanced proficiency">
+                        <div id="ado-status" class="mt-3"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="sidebar-card">
+                    <h5><i class="fas fa-info-circle"></i> Data Requirements</h5>
+                    <div class="data-help">
+                        <h6>CSV Format:</h6>
+                        <ul>
+                            <li><strong>Date:</strong> When the accomplishment occurred</li>
+                            <li><strong>Title:</strong> Brief description</li>
+                            <li><strong>Description:</strong> Detailed explanation (optional)</li>
+                            <li><strong>Impact:</strong> Business impact level (optional)</li>
+                        </ul>
+                        
+                        <h6 class="mt-3">Azure DevOps:</h6>
+                        <ul>
+                            <li>Requires organization access</li>
+                            <li>PAT with "Work Items (Read)" permission</li>
+                            <li>Automatically imports closed work items</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="step-actions mt-4">
+                        <button class="btn btn-outline-secondary me-2" onclick="prevStep()">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </button>
+                        <button class="btn btn-primary" onclick="nextStep()" id="data-next-btn" disabled>
+                            Next: AI Analysis <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 3: AI Analysis -->
+    <div class="workflow-step" id="step-ai" style="display: none;">
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="step-card">
+                    <div class="step-header">
+                        <h4>AI Analysis Configuration</h4>
+                        <p>Configure AI-powered analysis or use automated processing</p>
+                    </div>
+                    
+                    <div class="ai-options">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="llm-provider" class="form-label">AI Provider</label>
+                                <select id="llm-provider" class="form-select">
+                                    <option value="none">No AI (Automated Only)</option>
+                                    {% for provider in llm_providers %}
+                                    <option value="{{ provider.id }}" {% if provider.recommended %}selected{% endif %}>{{ provider.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label for="llm-model" class="form-label">Model</label>
+                                <div class="model-input-group">
+                                    <input type="text" id="llm-model-input" class="form-control" placeholder="Select or enter model">
+                                    <div class="model-controls">
+                                        <button type="button" id="clear-model-btn" class="btn btn-sm btn-outline-secondary" title="Clear">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                        <div class="dropdown">
+                                            <button type="button" id="model-dropdown-btn" class="btn btn-sm btn-outline-primary dropdown-toggle" title="Browse models" data-bs-toggle="dropdown">
+                                                <i class="fas fa-chevron-down"></i>
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-end" id="model-dropdown-menu">
+                                                <!-- Available Models -->
+                                                <li><h6 class="dropdown-header"><i class="fas fa-brain"></i> Available Models</h6></li>
+                                                <li><a class="dropdown-item" href="#" data-model="google/gemini-2.5-pro"><strong>Gemini 2.5 Pro</strong> <span class="badge bg-primary">Latest</span></a></li>
+                                                <li><a class="dropdown-item" href="#" data-model="coding/claude-4-sonnet"><strong>Claude 4 Sonnet</strong> <span class="badge bg-success">Coding</span></a></li>
+                                                <li><a class="dropdown-item" href="#" data-model="deepinfra/deepseek-ai/DeepSeek-R1"><strong>DeepSeek R1</strong> <span class="badge bg-info">Reasoning</span></a></li>
+                                                <li><a class="dropdown-item" href="#" data-model="openai/gpt-5"><strong>GPT-5</strong> <span class="badge bg-warning">Preview</span></a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item text-muted" href="#" style="cursor: default;"><i class="fas fa-info-circle"></i> You can also type a custom model name above</a></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <select id="llm-model" class="form-select" style="display: none;"></select>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label for="llm-api-key" class="form-label">API Key</label>
+                                <div class="api-key-input">
+                                    <input type="password" id="llm-api-key" class="form-control" placeholder="Enter API key (optional)">
+                                    <button type="button" class="api-key-toggle" onclick="togglePasswordVisibility('llm-api-key')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                                <div class="api-key-status mt-2">
+                                    <div id="stored-key-status" class="text-muted small"></div>
+                                    <div class="btn-group-sm mt-1">
+                                        <button type="button" id="store-key-btn" class="btn btn-sm btn-outline-success" style="display: none;">
+                                            <i class="fas fa-save"></i> Store Key
+                                        </button>
+                                        <button type="button" id="delete-key-btn" class="btn btn-sm btn-outline-danger" style="display: none;">
+                                            <i class="fas fa-trash"></i> Delete Key
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-2">
-                            <label class="form-label small">Level 5 (Leading)</label>
-                            <input type="text" id="competency-level-5" class="form-control form-control-sm" 
-                                   placeholder="Expert level">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="sidebar-card">
+                    <h5><i class="fas fa-info-circle"></i> AI Analysis</h5>
+                    <div class="ai-help">
+                        <h6>Automated Processing:</h6>
+                        <ul>
+                            <li>Fast keyword-based analysis</li>
+                            <li>Statistical impact scoring</li>
+                            <li>Consistent results</li>
+                        </ul>
+                        
+                        <h6 class="mt-3">AI-Enhanced Analysis:</h6>
+                        <ul>
+                            <li>Nuanced accomplishment interpretation</li>
+                            <li>Strategic insights and recommendations</li>
+                            <li>Professional narrative generation</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="step-actions mt-4">
+                        <button class="btn btn-outline-secondary me-2" onclick="prevStep()">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </button>
+                        <button class="btn btn-primary" onclick="nextStep()" id="ai-next-btn">
+                            Next: Generate <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 4: Generate -->
+    <div class="workflow-step" id="step-generate" style="display: none;">
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="step-card">
+                    <div class="step-header">
+                        <h4>Generate Your Review</h4>
+                        <p>Configure output format and generate your performance review</p>
+                    </div>
+                    
+                    <div class="generate-options">
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Review Year</label>
+                                <select id="review-year" class="form-select">
+                                    {% for year in year_options %}
+                                    <option value="{{ year }}" {% if year == current_year %}selected{% endif %}>{{ year }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">Output Format</label>
+                                <div class="btn-group w-100" role="group">
+                                    <input type="radio" class="btn-check" name="output-format" id="markdown-format" value="markdown" checked>
+                                    <label class="btn btn-outline-primary" for="markdown-format">
+                                        <i class="fab fa-markdown"></i> Markdown
+                                    </label>
+                                    
+                                    <input type="radio" class="btn-check" name="output-format" id="docx-format" value="docx">
+                                    <label class="btn btn-outline-primary" for="docx-format">
+                                        <i class="fas fa-file-word"></i> Word
+                                    </label>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-2">
-                            <label class="form-label small">&nbsp;</label>
-                            <button type="button" id="add-competency-btn" class="btn btn-success w-100 btn-sm">
-                                <i class="fas fa-plus"></i> Add
+                        
+                        <div class="generation-summary">
+                            <h5>Review Summary</h5>
+                            <div class="summary-grid">
+                                <div class="summary-item">
+                                    <span class="summary-label">Review Type:</span>
+                                    <span class="summary-value" id="summary-type"></span>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="summary-label">Data Source:</span>
+                                    <span class="summary-value" id="summary-data"></span>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="summary-label">AI Analysis:</span>
+                                    <span class="summary-value" id="summary-ai"></span>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="summary-label">Year:</span>
+                                    <span class="summary-value" id="summary-year"></span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="generate-action text-center mt-4">
+                            <button type="button" id="generate-btn" class="btn btn-success btn-lg px-5">
+                                <i class="fas fa-magic"></i> Generate Performance Review
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
             
-            <!-- Display entered competencies -->
-            <div class="entered-criteria mb-4">
-                <h6 class="mb-3"><i class="fas fa-list"></i> Entered Competencies</h6>
-                <div id="competency-criteria-display" class="criteria-display">
-                    <div class="text-muted text-center py-3">
-                        <i class="fas fa-info-circle"></i> No competencies entered yet. Add some above to get started.
+            <div class="col-lg-4">
+                <div class="sidebar-card">
+                    <h5><i class="fas fa-check-circle"></i> Ready to Generate</h5>
+                    <div class="generate-help">
+                        <p>Your performance review will include:</p>
+                        <ul id="generate-features"></ul>
                     </div>
-                </div>
-            </div>
-            
-            <!-- Save button -->
-            <div class="text-end mb-3">
-                <button type="button" id="save-competency-btn" class="btn btn-primary">
-                    <i class="fas fa-save"></i> Save All Competencies
-                </button>
-            </div>
-            
-            <div id="competency-manual-status" class="mt-2"></div>
-        </div>
-    </div>
-</div>
-
-<!-- Step 2: Review Configuration -->
-<div class="section-card" data-step="2">
-    <div class="section-header">
-        <div class="section-number">2</div>
-        <h3>Review Configuration</h3>
-    </div>
-    
-    <div class="row">
-        <div class="col-md-6">
-            <label for="review-type" class="form-label">Review Type</label>
-            <select id="review-type" class="form-select">
-                <option value="competency" selected>Competency Assessment</option>
-                <option value="annual">Annual Review</option>
-            </select>
-        </div>
-        
-        <div class="col-md-6">
-            <label for="review-year" class="form-label">Review Year</label>
-            <select id="review-year" class="form-select">
-                {% for year in year_options %}
-                <option value="{{ year }}" {% if year == current_year %}selected{% endif %}>{{ year }}</option>
-                {% endfor %}
-            </select>
-        </div>
-    </div>
-</div>
-
-<!-- Step 3: Data Source -->
-<div class="section-card" data-step="3">
-    <div class="section-header">
-        <div class="section-number">3</div>
-        <h3>Data Source</h3>
-    </div>
-    
-    <!-- Data Source Selection -->
-    <div class="mb-3">
-        <label class="form-label">Choose Data Source</label>
-        <div class="btn-group w-100" role="group">
-            <input type="radio" class="btn-check" name="data-source" id="csv-source" value="csv" checked>
-            <label class="btn btn-outline-primary" for="csv-source">
-                <i class="fas fa-file-csv"></i> CSV Upload
-            </label>
-            
-            <input type="radio" class="btn-check" name="data-source" id="ado-source" value="ado">
-            <label class="btn btn-outline-primary" for="ado-source">
-                <i class="fas fa-cloud"></i> Azure DevOps
-            </label>
-        </div>
-    </div>
-    
-    <!-- CSV Upload Section -->
-    <div id="csv-section" class="data-source-section">
-        <label class="form-label">Accomplishments CSV File</label>
-        <div class="upload-area" id="csv-upload-area">
-            <input type="file" id="accomplishments-csv-file" accept=".csv" style="display: none;">
-            <i class="fas fa-file-csv fa-2x mb-2"></i>
-            <p class="mb-0">Click or drag to upload accomplishments CSV</p>
-            <small class="text-muted">Requires Date and Title columns minimum</small>
-        </div>
-        <div id="csv-status" class="mt-2"></div>
-    </div>
-    
-    <!-- Azure DevOps Section -->
-    <div id="ado-section" class="data-source-section" style="display: none;">
-        <div class="row">
-            <div class="col-md-4">
-                <label for="ado-org" class="form-label">Organization</label>
-                <input type="text" id="ado-org" class="form-control" placeholder="your-org">
-            </div>
-            <div class="col-md-4">
-                <label for="ado-project" class="form-label">Project</label>
-                <input type="text" id="ado-project" class="form-control" placeholder="your-project">
-            </div>
-            <div class="col-md-4">
-                <label for="ado-token" class="form-label">Personal Access Token</label>
-                <div class="api-key-input">
-                    <input type="password" id="ado-token" class="form-control" placeholder="Enter PAT">
-                    <button type="button" class="api-key-toggle" onclick="togglePasswordVisibility('ado-token')">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-        
-        <div class="row mt-3">
-            <div class="col-md-6">
-                <label for="work-item-type" class="form-label">Work Item Type</label>
-                <select id="work-item-type" class="form-select">
-                    <option value="User Story" selected>User Story</option>
-                    <option value="Task">Task</option>
-                    <option value="Bug">Bug</option>
-                    <option value="Feature">Feature</option>
-                </select>
-            </div>
-            <div class="col-md-6">
-                <label for="months-back" class="form-label">Months Back</label>
-                <select id="months-back" class="form-select">
-                    <option value="6">6 months</option>
-                    <option value="12" selected>12 months</option>
-                    <option value="18">18 months</option>
-                    <option value="24">24 months</option>
-                </select>
-            </div>
-        </div>
-        
-        <div class="mt-3">
-            <button type="button" id="test-ado-btn" class="btn btn-outline-secondary me-2">
-                <i class="fas fa-plug"></i> Test Connection
-            </button>
-            <button type="button" id="fetch-ado-btn" class="btn btn-primary">
-                <i class="fas fa-download"></i> Fetch Data
-            </button>
-        </div>
-        
-        <div id="ado-status" class="mt-2"></div>
-    </div>
-</div>
-
-<!-- Step 4: LLM Configuration -->
-<div class="section-card" data-step="4">
-    <div class="section-header">
-        <div class="section-number">4</div>
-        <h3>AI Analysis Configuration</h3>
-    </div>
-    
-    <div class="row">
-        <div class="col-md-4">
-            <label for="llm-provider" class="form-label">LLM Provider</label>
-            <select id="llm-provider" class="form-select">
-                <option value="none">No AI Analysis (Automated Only)</option>
-                {% for provider in llm_providers %}
-                <option value="{{ provider.id }}" {% if provider.recommended %}selected{% endif %}>{{ provider.name }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        
-        <div class="col-md-4">
-            <label for="llm-model" class="form-label">Model</label>
-            <div class="model-input-group">
-                <input type="text" id="llm-model-input" class="form-control" placeholder="Enter model name or select from dropdown">
-                <div class="model-controls">
-                    <button type="button" id="clear-model-btn" class="btn btn-sm btn-outline-secondary" title="Clear model">
-                        <i class="fas fa-times"></i>
-                    </button>
-                    <div class="dropdown">
-                        <button type="button" id="model-dropdown-btn" class="btn btn-sm btn-outline-primary dropdown-toggle" aria-expanded="false" title="Select from models">
-                            <i class="fas fa-chevron-down"></i>
+                    
+                    <div class="step-actions mt-4">
+                        <button class="btn btn-outline-secondary" onclick="prevStep()">
+                            <i class="fas fa-arrow-left"></i> Back
                         </button>
-                        <ul class="dropdown-menu dropdown-menu-end" id="model-dropdown-menu">
-                            <li><h6 class="dropdown-header">Common Models</h6></li>
-                            <!-- Common models populated by JavaScript -->
-                            <li><hr class="dropdown-divider"></li>
-                            <li><h6 class="dropdown-header">Previously Used</h6></li>
-                            <!-- Previously used models populated by JavaScript -->
-                        </ul>
                     </div>
                 </div>
             </div>
-            <select id="llm-model" class="form-select" style="display: none;">
-                <option value="">Select model...</option>
-            </select>
-        </div>
-        
-        <div class="col-md-4">
-            <label for="llm-api-key" class="form-label">API Key</label>
-            <div class="api-key-input">
-                <input type="password" id="llm-api-key" class="form-control" placeholder="Enter API key (optional)">
-                <button type="button" class="api-key-toggle" onclick="togglePasswordVisibility('llm-api-key')">
-                    <i class="fas fa-eye"></i>
-                </button>
-            </div>
-            <div class="mt-2">
-                <div id="stored-key-status" class="text-muted small"></div>
-                <div class="btn-group-sm mt-1">
-                    <button type="button" id="store-key-btn" class="btn btn-sm btn-outline-success" style="display: none;">
-                        <i class="fas fa-save"></i> Store Key
-                    </button>
-                    <button type="button" id="delete-key-btn" class="btn btn-sm btn-outline-danger" style="display: none;">
-                        <i class="fas fa-trash"></i> Delete Stored Key
-                    </button>
-                </div>
-            </div>
-            <small class="text-muted">Leave empty to use stored key or environment variables</small>
         </div>
     </div>
-</div>
-
-<!-- Step 5: Output Configuration -->
-<div class="section-card" data-step="5">
-    <div class="section-header">
-        <div class="section-number">5</div>
-        <h3>Output Format</h3>
-    </div>
-    
-    <div class="btn-group w-100" role="group">
-        <input type="radio" class="btn-check" name="output-format" id="markdown-format" value="markdown" checked>
-        <label class="btn btn-outline-primary" for="markdown-format">
-            <i class="fab fa-markdown"></i> Markdown
-        </label>
-        
-        <input type="radio" class="btn-check" name="output-format" id="docx-format" value="docx">
-        <label class="btn btn-outline-primary" for="docx-format">
-            <i class="fas fa-file-word"></i> Word Document
-        </label>
-    </div>
-</div>
-
-<!-- Generate Button -->
-<div class="text-center mt-4">
-    <button type="button" id="generate-btn" class="btn btn-success btn-lg px-5">
-        <i class="fas fa-magic"></i> Generate Performance Review
-    </button>
 </div>
 
 <!-- Progress Indicator -->
 <div class="progress-indicator">
-    <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Generating review...</span>
+    <div class="section-card">
+        <div class="section-header">
+            <div class="section-number"><i class="fas fa-cog fa-spin"></i></div>
+            <h3>Generating Your Review</h3>
+        </div>
+        <div class="progress-content">
+            <div class="progress-stage mb-3">
+                <h5 id="current-stage">Initializing...</h5>
+                <p id="stage-message" class="text-muted">Starting analysis...</p>
+            </div>
+            <div class="progress mb-3" style="height: 8px;">
+                <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                     role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            <div class="progress-stages small text-muted">
+                <div class="row">
+                    <div class="col-3"><span id="stage-init" class="badge bg-secondary">Initializing</span></div>
+                    <div class="col-3"><span id="stage-config" class="badge bg-secondary">Configuration</span></div>
+                    <div class="col-3"><span id="stage-processing" class="badge bg-secondary">Processing</span></div>
+                    <div class="col-3"><span id="stage-finalizing" class="badge bg-secondary">Finalizing</span></div>
+                </div>
+            </div>
+        </div>
     </div>
-    <p class="mt-2">Analyzing accomplishments and generating your performance review...</p>
 </div>
 
 <!-- Results Display -->
 <div class="result-display">
     <div class="section-card">
         <div class="section-header">
-            <div class="section-number"><i class="fas fa-check"></i></div>
-            <h3>Analysis Complete</h3>
+            <div class="section-number"><i class="fas fa-check-circle text-success"></i></div>
+            <h3>Performance Review Generated</h3>
+            <div class="ms-auto">
+                <button type="button" class="btn btn-outline-primary" onclick="generateAnotherReview()">
+                    <i class="fas fa-plus"></i> Generate Another Review
+                </button>
+            </div>
         </div>
-        <div id="result-content"></div>
+        <div id="result-content">
+            <!-- Summary Section -->
+            <div id="result-summary" class="result-summary mb-4">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="summary-card">
+                            <h6><i class="fas fa-info-circle"></i> Review Details</h6>
+                            <div id="review-details">
+                                <div class="detail-item">
+                                    <span class="detail-label">Type:</span>
+                                    <span id="summary-review-type" class="detail-value">-</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Year:</span>
+                                    <span id="summary-review-year" class="detail-value">-</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Data Source:</span>
+                                    <span id="summary-data-source" class="detail-value">-</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Format:</span>
+                                    <span id="summary-format" class="detail-value">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="summary-card">
+                            <h6><i class="fas fa-robot"></i> AI Analysis</h6>
+                            <div id="ai-details">
+                                <div class="detail-item">
+                                    <span class="detail-label">Provider:</span>
+                                    <span id="summary-llm-provider" class="detail-value">-</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Model:</span>
+                                    <span id="summary-llm-model" class="detail-value">-</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">File Size:</span>
+                                    <span id="summary-file-size" class="detail-value">-</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Generated:</span>
+                                    <span id="summary-generated-at" class="detail-value">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Report Content Section -->
+            <div id="report-content-section" class="report-content-section">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5><i class="fas fa-file-alt"></i> Report Content</h5>
+                    <div class="report-actions">
+                        <button type="button" id="copy-report-btn" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-copy"></i> Copy to Clipboard
+                        </button>
+                        <button type="button" id="download-report-btn" class="btn btn-primary btn-sm">
+                            <i class="fas fa-download"></i> Download Report
+                        </button>
+                    </div>
+                </div>
+                <div id="report-content" class="report-content">
+                    <!-- Report content will be loaded here -->
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
-    // LLM Provider models mapping
+    // Global variables
     const modelsByProvider = {{ common_models | tojson }};
-    
-    // File upload handlers
+    let currentWorkflow = null;
+    let currentStep = 'criteria';
+    let stepData = {};
+
+    // Initialize app
     document.addEventListener('DOMContentLoaded', function() {
-        setupFileUploads();
-        setupDataSourceToggle();
-        setupLLMProviderChange();
-        setupGenerateButton();
+        initializeWorkflow();
     });
-    
-    function setupFileUploads() {
-        // Annual criteria upload
-        setupSingleFileUpload('annual-upload-area', 'annual-criteria-file', 'annual-criteria-status', '/api/upload-criteria', 'annual_criteria');
-        
-        // Competency criteria upload  
-        setupSingleFileUpload('competency-upload-area', 'competency-criteria-file', 'competency-criteria-status', '/api/upload-criteria', 'competency_criteria');
-        
-        // CSV accomplishments upload
-        setupSingleFileUpload('csv-upload-area', 'accomplishments-csv-file', 'csv-status', '/api/upload-accomplishments', 'accomplishments_csv');
-        
-        // Setup criteria input method toggles
-        setupCriteriaInputToggles();
-        
-        // Setup manual criteria handlers
-        setupManualCriteriaHandlers();
+
+    function initializeWorkflow() {
+        // Show workflow selection screen initially
+        document.getElementById('workflow-selection').style.display = 'block';
+        document.getElementById('main-workflow').style.display = 'none';
     }
-    
-    function setupSingleFileUpload(areaId, fileInputId, statusId, endpoint, fieldName) {
+
+    // Workflow Selection Functions
+    function selectWorkflow(workflowType) {
+        currentWorkflow = workflowType;
+        showMainWorkflow();
+        setupWorkflowContent();
+        setupEventHandlers();
+        setActiveStep('criteria');
+    }
+
+    function resetWorkflow() {
+        // Reset global state
+        currentWorkflow = null;
+        currentStep = 'criteria';
+        stepData = {};
+        
+        // Show workflow selection
+        document.getElementById('workflow-selection').style.display = 'block';
+        document.getElementById('main-workflow').style.display = 'none';
+        
+        // Clear any stored data
+        window.csvDataFile = null;
+        window.adoDataFile = null;
+        window.criteriaFile = null;
+    }
+
+    function showMainWorkflow() {
+        document.getElementById('workflow-selection').style.display = 'none';
+        document.getElementById('main-workflow').style.display = 'block';
+        
+        // Update workflow title and badge
+        const title = currentWorkflow === 'competency' ? 'Competency Assessment' : 'Annual Review';
+        const badgeClass = currentWorkflow === 'competency' ? 'bg-primary' : 'bg-success';
+        
+        document.getElementById('workflow-title').textContent = title;
+        document.getElementById('workflow-type-badge').textContent = title;
+        document.getElementById('workflow-type-badge').className = `badge ${badgeClass}`;
+    }
+
+    function setupWorkflowContent() {
+        // Setup criteria step content based on workflow type
+        const criteriaTitle = document.getElementById('criteria-title');
+        const criteriaDescription = document.getElementById('criteria-description');
+        const criteriaHelp = document.getElementById('criteria-help');
+        
+        if (currentWorkflow === 'competency') {
+            criteriaTitle.textContent = 'Competency Criteria Configuration';
+            criteriaDescription.textContent = 'Define the competency areas and skill levels for your assessment';
+            criteriaHelp.innerHTML = `
+                <p>Competency assessments evaluate performance across professional skill areas.</p>
+                <h6>What you'll need:</h6>
+                <ul>
+                    <li>13 competency areas (Programming, Architecture, etc.)</li>
+                    <li>5-point rating scale definitions</li>
+                    <li>Evidence-based evaluation criteria</li>
+                </ul>
+                <p class="text-muted small">You can upload a JSON file or enter criteria manually.</p>
+            `;
+        } else {
+            criteriaTitle.textContent = 'Annual Review Criteria Configuration';
+            criteriaDescription.textContent = 'Define the evaluation criteria and goals for your annual review';
+            criteriaHelp.innerHTML = `
+                <p>Annual reviews assess overall performance and goal achievement.</p>
+                <h6>What you'll need:</h6>
+                <ul>
+                    <li>Performance evaluation sections</li>
+                    <li>Goal achievement criteria</li>
+                    <li>Optional: Section weightings</li>
+                </ul>
+                <p class="text-muted small">You can upload a JSON file or enter criteria manually.</p>
+            `;
+        }
+        
+        // Setup manual criteria form
+        setupManualCriteriaForm();
+    }
+
+    function setupManualCriteriaForm() {
+        const formContainer = document.getElementById('manual-criteria-form');
+        
+        if (currentWorkflow === 'competency') {
+            formContainer.innerHTML = `
+                <div class="mb-4">
+                    <h6 class="mb-3"><i class="fas fa-plus-circle"></i> Add Competency Area</h6>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="competency-name" class="form-label">Competency Name</label>
+                            <input type="text" id="competency-name" class="form-control" 
+                                   placeholder="e.g., Programming, Problem Management">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="competency-description" class="form-label">Description</label>
+                            <input type="text" id="competency-description" class="form-control" 
+                                   placeholder="e.g., Software development and coding skills">
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <label class="form-label">Level Definitions (1-5 scale)</label>
+                        <div class="row g-2">
+                            <div class="col">
+                                <label class="form-label small">Level 1 (Learning)</label>
+                                <input type="text" id="competency-level-1" class="form-control form-control-sm" 
+                                       placeholder="Beginning to apply">
+                            </div>
+                            <div class="col">
+                                <label class="form-label small">Level 2 (Developing)</label>
+                                <input type="text" id="competency-level-2" class="form-control form-control-sm" 
+                                       placeholder="Building proficiency">
+                            </div>
+                            <div class="col">
+                                <label class="form-label small">Level 3 (Practicing)</label>
+                                <input type="text" id="competency-level-3" class="form-control form-control-sm" 
+                                       placeholder="Consistent competency">
+                            </div>
+                            <div class="col">
+                                <label class="form-label small">Level 4 (Mastering)</label>
+                                <input type="text" id="competency-level-4" class="form-control form-control-sm" 
+                                       placeholder="Advanced proficiency">
+                            </div>
+                            <div class="col">
+                                <label class="form-label small">Level 5 (Leading)</label>
+                                <input type="text" id="competency-level-5" class="form-control form-control-sm" 
+                                       placeholder="Expert level">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <button type="button" id="add-competency-btn" class="btn btn-success">
+                            <i class="fas fa-plus"></i> Add Competency
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="criteria-display mb-3">
+                    <h6><i class="fas fa-list"></i> Added Competencies</h6>
+                    <div id="competency-criteria-display" class="border rounded p-3 bg-light">
+                        <div class="text-muted text-center py-3">
+                            <i class="fas fa-info-circle"></i> No competencies added yet.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-end">
+                    <button type="button" id="save-competency-btn" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save All Competencies
+                    </button>
+                </div>
+            `;
+        } else {
+            formContainer.innerHTML = `
+                <div class="mb-4">
+                    <h6 class="mb-3"><i class="fas fa-plus-circle"></i> Add Review Section</h6>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label for="annual-section-name" class="form-label">Section Name</label>
+                            <input type="text" id="annual-section-name" class="form-control" 
+                                   placeholder="e.g., Leadership, Innovation">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="annual-section-description" class="form-label">Description</label>
+                            <input type="text" id="annual-section-description" class="form-control" 
+                                   placeholder="e.g., Demonstrates leadership capabilities">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="annual-section-weight" class="form-label">Weight (%)</label>
+                            <input type="number" id="annual-section-weight" class="form-control" 
+                                   placeholder="20" min="1" max="100">
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <button type="button" id="add-annual-criteria-btn" class="btn btn-success">
+                            <i class="fas fa-plus"></i> Add Section
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="criteria-display mb-3">
+                    <h6><i class="fas fa-list"></i> Added Sections</h6>
+                    <div id="annual-criteria-display" class="border rounded p-3 bg-light">
+                        <div class="text-muted text-center py-3">
+                            <i class="fas fa-info-circle"></i> No sections added yet.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-end">
+                    <button type="button" id="save-annual-btn" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save All Sections
+                    </button>
+                </div>
+            `;
+        }
+        
+        // Initialize storage arrays
+        window.annualCriteriaList = [];
+        window.competencyCriteriaList = [];
+    }
+
+    function setupEventHandlers() {
+        // Criteria upload handler
+        setupCriteriaUpload();
+        
+        // Manual criteria handlers
+        setupManualCriteriaHandlers();
+        
+        // Data source handlers
+        setupDataSourceHandlers();
+        
+        // LLM configuration handlers
+        setupLLMHandlers();
+        
+        // Generate button handler
+        setupGenerateHandler();
+    }
+
+    function setupCriteriaUpload() {
+        const uploadArea = document.getElementById('criteria-upload-area');
+        const fileInput = document.getElementById('criteria-file');
+        const statusDiv = document.getElementById('criteria-upload-status');
+        
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                handleCriteriaUpload(fileInput, statusDiv);
+            }
+        });
+        
+        fileInput.addEventListener('change', () => {
+            handleCriteriaUpload(fileInput, statusDiv);
+        });
+    }
+
+    function handleCriteriaUpload(fileInput, statusDiv) {
+        const file = fileInput.files[0];
+        if (!file) return;
+        
+        const formData = new FormData();
+        const fieldName = currentWorkflow === 'competency' ? 'competency_criteria' : 'annual_criteria';
+        formData.append(fieldName, file);
+        
+        statusDiv.innerHTML = '<div class="alert alert-info"><i class="fas fa-spinner fa-spin"></i> Uploading...</div>';
+        
+        fetch('/api/upload-criteria', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            const result = data[fieldName];
+            if (result && result.success) {
+                statusDiv.innerHTML = `<div class="alert alert-success"><i class="fas fa-check"></i> Uploaded successfully (${result.sections || 0} items)</div>`;
+                window.criteriaFile = result.path;
+                enableNextButton('criteria');
+            } else {
+                const error = result?.error || data.error || 'Upload failed';
+                statusDiv.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> ${error}</div>`;
+            }
+        })
+        .catch(error => {
+            statusDiv.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> Upload failed: ${error.message}</div>`;
+        });
+    }
+
+    function setupManualCriteriaHandlers() {
+        // Add event listeners based on workflow type
+        if (currentWorkflow === 'competency') {
+            document.getElementById('add-competency-btn').addEventListener('click', addCompetencyCriteria);
+            document.getElementById('save-competency-btn').addEventListener('click', () => saveCriteriaFromForm('competency'));
+        } else {
+            document.getElementById('add-annual-criteria-btn').addEventListener('click', addAnnualCriteria);
+            document.getElementById('save-annual-btn').addEventListener('click', () => saveCriteriaFromForm('annual'));
+        }
+    }
+
+    function setupDataSourceHandlers() {
+        // Data source radio buttons
+        const csvRadio = document.getElementById('csv-source');
+        const adoRadio = document.getElementById('ado-source');
+        
+        csvRadio.addEventListener('change', function() {
+            if (this.checked) {
+                document.getElementById('csv-config').style.display = 'block';
+                document.getElementById('ado-config').style.display = 'none';
+            }
+        });
+        
+        adoRadio.addEventListener('change', function() {
+            if (this.checked) {
+                document.getElementById('csv-config').style.display = 'none';
+                document.getElementById('ado-config').style.display = 'block';
+            }
+        });
+        
+        // CSV upload
+        setupFileUpload('csv-upload-area', 'accomplishments-csv-file', 'csv-status', '/api/upload-accomplishments', 'accomplishments_csv');
+        
+        // ADO handlers
+        document.getElementById('test-ado-btn').addEventListener('click', testADOConnection);
+        document.getElementById('fetch-ado-btn').addEventListener('click', fetchADOData);
+    }
+
+    function setupFileUpload(areaId, fileInputId, statusId, endpoint, fieldName) {
         const area = document.getElementById(areaId);
         const fileInput = document.getElementById(fileInputId);
         const status = document.getElementById(statusId);
@@ -501,7 +983,7 @@
             handleFileUpload(fileInput, status, endpoint, fieldName);
         });
     }
-    
+
     function handleFileUpload(fileInput, statusDiv, endpoint, fieldName) {
         const file = fileInput.files[0];
         if (!file) return;
@@ -509,7 +991,7 @@
         const formData = new FormData();
         formData.append(fieldName, file);
         
-        statusDiv.innerHTML = '<div class="text-info"><i class="fas fa-spinner fa-spin"></i> Uploading...</div>';
+        statusDiv.innerHTML = '<div class="alert alert-info"><i class="fas fa-spinner fa-spin"></i> Uploading...</div>';
         
         fetch(endpoint, {
             method: 'POST',
@@ -519,194 +1001,150 @@
         .then(data => {
             if (data.success || data[fieldName]?.success) {
                 const result = data[fieldName] || data;
-                statusDiv.innerHTML = `<div class="text-success"><i class="fas fa-check"></i> Uploaded successfully (${result.rows || result.sections || 0} items)</div>`;
-                fileInput.parentElement.classList.add('success');
+                statusDiv.innerHTML = `<div class="alert alert-success"><i class="fas fa-check"></i> Uploaded successfully (${result.rows || result.sections || 0} items)</div>`;
                 
-                // Store file path for later use
                 if (fieldName === 'accomplishments_csv' && result.path) {
                     window.csvDataFile = result.path;
+                    enableNextButton('data');
                 }
             } else {
                 const error = data.error || data[fieldName]?.error || 'Upload failed';
-                statusDiv.innerHTML = `<div class="text-danger"><i class="fas fa-exclamation-triangle"></i> ${error}</div>`;
-                fileInput.parentElement.classList.add('error');
+                statusDiv.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> ${error}</div>`;
             }
         })
         .catch(error => {
-            statusDiv.innerHTML = `<div class="text-danger"><i class="fas fa-exclamation-triangle"></i> Upload failed: ${error.message}</div>`;
-            fileInput.parentElement.classList.add('error');
+            statusDiv.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> Upload failed: ${error.message}</div>`;
         });
     }
-    
-    function setupDataSourceToggle() {
-        const csvRadio = document.getElementById('csv-source');
-        const adoRadio = document.getElementById('ado-source');
-        const csvSection = document.getElementById('csv-section');
-        const adoSection = document.getElementById('ado-section');
-        
-        csvRadio.addEventListener('change', function() {
-            if (this.checked) {
-                csvSection.style.display = 'block';
-                adoSection.style.display = 'none';
-            }
-        });
-        
-        adoRadio.addEventListener('change', function() {
-            if (this.checked) {
-                csvSection.style.display = 'none';
-                adoSection.style.display = 'block';
-            }
-        });
-        
-        // ADO button handlers
-        document.getElementById('test-ado-btn').addEventListener('click', testADOConnection);
-        document.getElementById('fetch-ado-btn').addEventListener('click', fetchADOData);
+
+    function setupLLMHandlers() {
+        setupLLMProviderChange();
+        setupModelDropdown();
+        setupModelClear();
     }
-    
-    function setupCriteriaInputToggles() {
-        // Annual Review toggles
-        const annualUploadRadio = document.getElementById('annual-upload-method');
-        const annualManualRadio = document.getElementById('annual-manual-method');
-        const annualUploadSection = document.getElementById('annual-upload-section');
-        const annualManualSection = document.getElementById('annual-manual-section');
-        
-        annualUploadRadio.addEventListener('change', function() {
-            if (this.checked) {
-                annualUploadSection.style.display = 'block';
-                annualManualSection.style.display = 'none';
-            }
-        });
-        
-        annualManualRadio.addEventListener('change', function() {
-            if (this.checked) {
-                annualUploadSection.style.display = 'none';
-                annualManualSection.style.display = 'block';
-            }
-        });
-        
-        // Competency toggles
-        const competencyUploadRadio = document.getElementById('competency-upload-method');
-        const competencyManualRadio = document.getElementById('competency-manual-method');
-        const competencyUploadSection = document.getElementById('competency-upload-section');
-        const competencyManualSection = document.getElementById('competency-manual-section');
-        
-        competencyUploadRadio.addEventListener('change', function() {
-            if (this.checked) {
-                competencyUploadSection.style.display = 'block';
-                competencyManualSection.style.display = 'none';
-            }
-        });
-        
-        competencyManualRadio.addEventListener('change', function() {
-            if (this.checked) {
-                competencyUploadSection.style.display = 'none';
-                competencyManualSection.style.display = 'block';
-            }
-        });
+
+    function setupGenerateHandler() {
+        document.getElementById('generate-btn').addEventListener('click', generateReview);
     }
-    
-    function setupManualCriteriaHandlers() {
-        // Annual criteria handlers
-        document.getElementById('add-annual-criteria-btn').addEventListener('click', addAnnualCriteria);
-        document.getElementById('save-annual-btn').addEventListener('click', () => saveCriteriaFromForm('annual'));
-        
-        // Competency criteria handlers
-        document.getElementById('add-competency-btn').addEventListener('click', addCompetencyCriteria);
-        document.getElementById('save-competency-btn').addEventListener('click', () => saveCriteriaFromForm('competency'));
-        
-        // Initialize empty criteria storage
-        window.annualCriteriaList = [];
-        window.competencyCriteriaList = [];
-    }
-    
-    function addAnnualCriteria() {
-        const name = document.getElementById('annual-section-name').value.trim();
-        const description = document.getElementById('annual-section-description').value.trim();
-        const weight = document.getElementById('annual-section-weight').value;
-        
-        // Validation
-        if (!name) {
-            showValidationError('annual-section-name', 'Section name is required');
-            return;
+
+    // Step Navigation Functions
+    function nextStep() {
+        const stepOrder = ['criteria', 'data', 'ai', 'generate'];
+        const currentIndex = stepOrder.indexOf(currentStep);
+        if (currentIndex < stepOrder.length - 1) {
+            const nextStepName = stepOrder[currentIndex + 1];
+            setActiveStep(nextStepName);
         }
-        
-        if (!description) {
-            showValidationError('annual-section-description', 'Description is required');
-            return;
-        }
-        
-        // Check for duplicates
-        if (window.annualCriteriaList.find(item => item.name.toLowerCase() === name.toLowerCase())) {
-            showValidationError('annual-section-name', 'Section name already exists');
-            return;
-        }
-        
-        // Clear any validation errors
-        clearValidationErrors(['annual-section-name', 'annual-section-description']);
-        
-        // Add to list
-        const criteria = {
-            name: name,
-            description: description,
-            weight: weight ? parseInt(weight) : null
-        };
-        
-        window.annualCriteriaList.push(criteria);
-        
-        // Clear form
-        document.getElementById('annual-section-name').value = '';
-        document.getElementById('annual-section-description').value = '';
-        document.getElementById('annual-section-weight').value = '';
-        
-        // Update display
-        updateAnnualCriteriaDisplay();
-        
-        showAlert(`Added "${name}" to annual criteria`, 'success');
     }
-    
+
+    function prevStep() {
+        const stepOrder = ['criteria', 'data', 'ai', 'generate'];
+        const currentIndex = stepOrder.indexOf(currentStep);
+        if (currentIndex > 0) {
+            const prevStepName = stepOrder[currentIndex - 1];
+            setActiveStep(prevStepName);
+        }
+    }
+
+    function setActiveStep(stepName) {
+        // Hide all steps
+        document.querySelectorAll('.workflow-step').forEach(step => {
+            step.style.display = 'none';
+        });
+        
+        // Show current step
+        document.getElementById(`step-${stepName}`).style.display = 'block';
+        
+        // Update progress indicators
+        updateProgressIndicators(stepName);
+        
+        // Update current step
+        currentStep = stepName;
+        
+        // Update generate summary if on generate step
+        if (stepName === 'generate') {
+            updateGenerateSummary();
+        }
+    }
+
+    function updateProgressIndicators(activeStep) {
+        const steps = ['criteria', 'data', 'ai', 'generate'];
+        const activeIndex = steps.indexOf(activeStep);
+        
+        steps.forEach((step, index) => {
+            const progressStep = document.querySelector(`[data-step="${step}"]`);
+            progressStep.classList.remove('active', 'completed');
+            
+            if (index < activeIndex) {
+                progressStep.classList.add('completed');
+            } else if (index === activeIndex) {
+                progressStep.classList.add('active');
+            }
+        });
+    }
+
+    function enableNextButton(stepName) {
+        const button = document.getElementById(`${stepName}-next-btn`);
+        if (button) {
+            button.disabled = false;
+        }
+    }
+
+    function updateGenerateSummary() {
+        // Update summary values
+        document.getElementById('summary-type').textContent = currentWorkflow === 'competency' ? 'Competency Assessment' : 'Annual Review';
+        
+        const dataSource = document.querySelector('input[name="data-source"]:checked')?.value || 'csv';
+        document.getElementById('summary-data').textContent = dataSource === 'csv' ? 'CSV Upload' : 'Azure DevOps';
+        
+        const aiProvider = document.getElementById('llm-provider')?.value || 'none';
+        document.getElementById('summary-ai').textContent = aiProvider === 'none' ? 'Automated Only' : aiProvider;
+        
+        const year = document.getElementById('review-year')?.value || new Date().getFullYear();
+        document.getElementById('summary-year').textContent = year;
+        
+        // Update features list
+        const featuresList = document.getElementById('generate-features');
+        if (currentWorkflow === 'competency') {
+            featuresList.innerHTML = `
+                <li>13 professional competency areas</li>
+                <li>5-point skill level assessment</li>
+                <li>Evidence-based ratings</li>
+                <li>Development recommendations</li>
+                <li>Professional formatting</li>
+            `;
+        } else {
+            featuresList.innerHTML = `
+                <li>Customizable review criteria</li>
+                <li>Goal achievement analysis</li>
+                <li>Performance summary</li>
+                <li>Career progression insights</li>
+                <li>Professional formatting</li>
+            `;
+        }
+    }
+
+    // Manual Criteria Functions (simplified versions of the original)
     function addCompetencyCriteria() {
         const name = document.getElementById('competency-name').value.trim();
         const description = document.getElementById('competency-description').value.trim();
+        
+        if (!name || !description) {
+            showAlert('Please fill in competency name and description', 'warning');
+            return;
+        }
         
         const levels = {};
         for (let i = 1; i <= 5; i++) {
             const levelValue = document.getElementById(`competency-level-${i}`).value.trim();
             if (!levelValue) {
-                showValidationError(`competency-level-${i}`, `Level ${i} definition is required`);
+                showAlert(`Please fill in Level ${i} definition`, 'warning');
                 return;
             }
             levels[i.toString()] = levelValue;
         }
         
-        // Validation
-        if (!name) {
-            showValidationError('competency-name', 'Competency name is required');
-            return;
-        }
-        
-        if (!description) {
-            showValidationError('competency-description', 'Description is required');
-            return;
-        }
-        
-        // Check for duplicates
-        if (window.competencyCriteriaList.find(item => item.name.toLowerCase() === name.toLowerCase())) {
-            showValidationError('competency-name', 'Competency name already exists');
-            return;
-        }
-        
-        // Clear any validation errors
-        clearValidationErrors(['competency-name', 'competency-description', 
-                               'competency-level-1', 'competency-level-2', 'competency-level-3', 
-                               'competency-level-4', 'competency-level-5']);
-        
-        // Add to list
-        const competency = {
-            name: name,
-            description: description,
-            levels: levels
-        };
-        
+        const competency = { name, description, levels };
         window.competencyCriteriaList.push(competency);
         
         // Clear form
@@ -716,106 +1154,78 @@
             document.getElementById(`competency-level-${i}`).value = '';
         }
         
-        // Update display
         updateCompetencyCriteriaDisplay();
-        
         showAlert(`Added "${name}" competency`, 'success');
     }
-    
-    function showValidationError(fieldId, message) {
-        const field = document.getElementById(fieldId);
-        field.classList.add('is-invalid');
+
+    function addAnnualCriteria() {
+        const name = document.getElementById('annual-section-name').value.trim();
+        const description = document.getElementById('annual-section-description').value.trim();
+        const weight = document.getElementById('annual-section-weight').value;
         
-        // Remove existing error message
-        const existingError = field.parentElement.querySelector('.invalid-feedback');
-        if (existingError) {
-            existingError.remove();
-        }
-        
-        // Add new error message
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'invalid-feedback';
-        errorDiv.textContent = message;
-        field.parentElement.appendChild(errorDiv);
-    }
-    
-    function clearValidationErrors(fieldIds) {
-        fieldIds.forEach(fieldId => {
-            const field = document.getElementById(fieldId);
-            field.classList.remove('is-invalid');
-            const errorDiv = field.parentElement.querySelector('.invalid-feedback');
-            if (errorDiv) {
-                errorDiv.remove();
-            }
-        });
-    }
-    
-    function updateAnnualCriteriaDisplay() {
-        const displayDiv = document.getElementById('annual-criteria-display');
-        
-        if (window.annualCriteriaList.length === 0) {
-            displayDiv.innerHTML = '<div class="text-muted text-center py-3"><i class="fas fa-info-circle"></i> No criteria entered yet. Add some above to get started.</div>';
+        if (!name || !description) {
+            showAlert('Please fill in section name and description', 'warning');
             return;
         }
         
-        displayDiv.innerHTML = window.annualCriteriaList.map((criteria, index) => `
-            <div class="criteria-item">
-                <div class="criteria-content">
-                    <h6>${criteria.name}</h6>
-                    <div class="description">${criteria.description}</div>
-                    ${criteria.weight ? `<div class="weight">Weight: ${criteria.weight}%</div>` : ''}
-                </div>
-                <div class="criteria-actions">
-                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="editAnnualCriteria(${index})">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteAnnualCriteria(${index})">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            </div>
-        `).join('');
+        const criteria = { name, description, weight: weight ? parseInt(weight) : null };
+        window.annualCriteriaList.push(criteria);
+        
+        // Clear form
+        document.getElementById('annual-section-name').value = '';
+        document.getElementById('annual-section-description').value = '';
+        document.getElementById('annual-section-weight').value = '';
+        
+        updateAnnualCriteriaDisplay();
+        showAlert(`Added "${name}" section`, 'success');
     }
-    
+
     function updateCompetencyCriteriaDisplay() {
         const displayDiv = document.getElementById('competency-criteria-display');
         
         if (window.competencyCriteriaList.length === 0) {
-            displayDiv.innerHTML = '<div class="text-muted text-center py-3"><i class="fas fa-info-circle"></i> No competencies entered yet. Add some above to get started.</div>';
+            displayDiv.innerHTML = '<div class="text-muted text-center py-3"><i class="fas fa-info-circle"></i> No competencies added yet.</div>';
             return;
         }
         
         displayDiv.innerHTML = window.competencyCriteriaList.map((competency, index) => `
-            <div class="criteria-item">
-                <div class="criteria-content">
-                    <h6>${competency.name}</h6>
-                    <div class="description">${competency.description}</div>
-                    <div class="levels">
-                        ${Object.entries(competency.levels).map(([level, desc]) => 
-                            `<span class="level-badge">${level}: ${desc}</span>`
-                        ).join('')}
-                    </div>
+            <div class="border rounded p-2 mb-2 bg-white">
+                <h6 class="mb-1">${competency.name}</h6>
+                <p class="text-muted small mb-1">${competency.description}</p>
+                <div class="d-flex gap-1 flex-wrap">
+                    ${Object.entries(competency.levels).map(([level, desc]) => 
+                        `<span class="badge bg-secondary">${level}: ${desc}</span>`
+                    ).join('')}
                 </div>
-                <div class="criteria-actions">
-                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="editCompetencyCriteria(${index})">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteCompetencyCriteria(${index})">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
+                <button type="button" class="btn btn-sm btn-outline-danger mt-1" onclick="deleteCompetencyCriteria(${index})">
+                    <i class="fas fa-trash"></i> Remove
+                </button>
             </div>
         `).join('');
     }
-    
-    function deleteAnnualCriteria(index) {
-        if (confirm(`Delete "${window.annualCriteriaList[index].name}" from annual criteria?`)) {
-            window.annualCriteriaList.splice(index, 1);
-            updateAnnualCriteriaDisplay();
-            showAlert('Annual criteria deleted', 'info');
+
+    function updateAnnualCriteriaDisplay() {
+        const displayDiv = document.getElementById('annual-criteria-display');
+        
+        if (window.annualCriteriaList.length === 0) {
+            displayDiv.innerHTML = '<div class="text-muted text-center py-3"><i class="fas fa-info-circle"></i> No sections added yet.</div>';
+            return;
         }
+        
+        displayDiv.innerHTML = window.annualCriteriaList.map((criteria, index) => `
+            <div class="border rounded p-2 mb-2 bg-white d-flex justify-content-between align-items-start">
+                <div>
+                    <h6 class="mb-1">${criteria.name}</h6>
+                    <p class="text-muted small mb-0">${criteria.description}</p>
+                    ${criteria.weight ? `<span class="badge bg-primary">Weight: ${criteria.weight}%</span>` : ''}
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteAnnualCriteria(${index})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `).join('');
     }
-    
+
     function deleteCompetencyCriteria(index) {
         if (confirm(`Delete "${window.competencyCriteriaList[index].name}" competency?`)) {
             window.competencyCriteriaList.splice(index, 1);
@@ -823,299 +1233,182 @@
             showAlert('Competency deleted', 'info');
         }
     }
-    
-    function editAnnualCriteria(index) {
-        const criteria = window.annualCriteriaList[index];
-        document.getElementById('annual-section-name').value = criteria.name;
-        document.getElementById('annual-section-description').value = criteria.description;
-        document.getElementById('annual-section-weight').value = criteria.weight || '';
-        
-        // Delete the original and let user re-add it
-        deleteAnnualCriteria(index);
+
+    function deleteAnnualCriteria(index) {
+        if (confirm(`Delete "${window.annualCriteriaList[index].name}" section?`)) {
+            window.annualCriteriaList.splice(index, 1);
+            updateAnnualCriteriaDisplay();
+            showAlert('Section deleted', 'info');
+        }
     }
-    
-    function editCompetencyCriteria(index) {
-        const competency = window.competencyCriteriaList[index];
-        document.getElementById('competency-name').value = competency.name;
-        document.getElementById('competency-description').value = competency.description;
-        
-        Object.entries(competency.levels).forEach(([level, desc]) => {
-            document.getElementById(`competency-level-${level}`).value = desc;
-        });
-        
-        // Delete the original and let user re-add it
-        deleteCompetencyCriteria(index);
-    }
-    
+
     function saveCriteriaFromForm(type) {
-        const statusId = type === 'annual' ? 'annual-manual-status' : 'competency-manual-status';
-        const statusDiv = document.getElementById(statusId);
         const criteriaList = type === 'annual' ? window.annualCriteriaList : window.competencyCriteriaList;
+        const statusDiv = document.getElementById('criteria-manual-status');
         
         if (criteriaList.length === 0) {
-            statusDiv.innerHTML = '<div class="text-warning"><i class="fas fa-exclamation-triangle"></i> No criteria entered. Please add some criteria first.</div>';
+            statusDiv.innerHTML = '<div class="alert alert-warning">No criteria entered. Please add some criteria first.</div>';
             return;
         }
         
-        try {
-            // Convert form data to JSON structure
-            const criteriaData = {};
-            
-            if (type === 'annual') {
-                criteriaList.forEach(criteria => {
-                    criteriaData[criteria.name] = {
-                        description: criteria.description
-                    };
-                    if (criteria.weight) {
-                        criteriaData[criteria.name].weight = criteria.weight;
-                    }
-                });
-            } else {
-                criteriaList.forEach(competency => {
-                    criteriaData[competency.name] = {
-                        description: competency.description,
-                        levels: competency.levels
-                    };
-                });
-            }
-            
-            // Create a FormData object to send to the existing API
-            const formData = new FormData();
-            const fieldName = type === 'annual' ? 'annual_criteria' : 'competency_criteria';
-            
-            // Create a blob with the JSON data and add it as a file
-            const jsonBlob = new Blob([JSON.stringify(criteriaData, null, 2)], { type: 'application/json' });
-            const fileName = `${type}_criteria_form_${new Date().toISOString().slice(0, 19).replace(/[:]/g, '-')}.json`;
-            
-            formData.append(fieldName, jsonBlob, fileName);
-            
-            statusDiv.innerHTML = '<div class="text-info"><i class="fas fa-spinner fa-spin"></i> Saving criteria...</div>';
-            
-            fetch('/api/upload-criteria', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                const result = data[fieldName];
-                if (result && result.success) {
-                    statusDiv.innerHTML = `<div class="text-success"><i class="fas fa-check"></i> Criteria saved successfully (${criteriaList.length} items)</div>`;
-                    
-                    // Store file path for later use (similar to file upload)
-                    if (type === 'annual') {
-                        window.annualCriteriaFile = result.path;
-                    } else {
-                        window.competencyCriteriaFile = result.path;
-                    }
-                    
-                    showAlert(`${type === 'annual' ? 'Annual' : 'Competency'} criteria saved successfully!`, 'success');
-                } else {
-                    const error = result?.error || data.error || 'Save failed';
-                    statusDiv.innerHTML = `<div class="text-danger"><i class="fas fa-exclamation-triangle"></i> ${error}</div>`;
+        const criteriaData = {};
+        
+        if (type === 'annual') {
+            criteriaList.forEach(criteria => {
+                criteriaData[criteria.name] = {
+                    description: criteria.description
+                };
+                if (criteria.weight) {
+                    criteriaData[criteria.name].weight = criteria.weight;
                 }
-            })
-            .catch(error => {
-                statusDiv.innerHTML = `<div class="text-danger"><i class="fas fa-exclamation-triangle"></i> Save failed: ${error.message}</div>`;
             });
-            
-        } catch (error) {
-            statusDiv.innerHTML = `<div class="text-danger"><i class="fas fa-exclamation-triangle"></i> Error: ${error.message}</div>`;
+        } else {
+            criteriaList.forEach(competency => {
+                criteriaData[competency.name] = {
+                    description: competency.description,
+                    levels: competency.levels
+                };
+            });
         }
+        
+        const formData = new FormData();
+        const fieldName = type === 'annual' ? 'annual_criteria' : 'competency_criteria';
+        const jsonBlob = new Blob([JSON.stringify(criteriaData, null, 2)], { type: 'application/json' });
+        const fileName = `${type}_criteria_form_${new Date().toISOString().slice(0, 19).replace(/[:]/g, '-')}.json`;
+        
+        formData.append(fieldName, jsonBlob, fileName);
+        
+        statusDiv.innerHTML = '<div class="alert alert-info"><i class="fas fa-spinner fa-spin"></i> Saving criteria...</div>';
+        
+        fetch('/api/upload-criteria', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            const result = data[fieldName];
+            if (result && result.success) {
+                statusDiv.innerHTML = `<div class="alert alert-success"><i class="fas fa-check"></i> Criteria saved successfully (${criteriaList.length} items)</div>`;
+                window.criteriaFile = result.path;
+                enableNextButton('criteria');
+                showAlert(`${type === 'annual' ? 'Annual' : 'Competency'} criteria saved successfully!`, 'success');
+            } else {
+                const error = result?.error || data.error || 'Save failed';
+                statusDiv.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> ${error}</div>`;
+            }
+        })
+        .catch(error => {
+            statusDiv.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> Save failed: ${error.message}</div>`;
+        });
     }
-    
+
+    // Enhanced LLM Provider Setup with Model Dropdown
     function setupLLMProviderChange() {
         const providerSelect = document.getElementById('llm-provider');
-        const modelSelect = document.getElementById('llm-model'); // Hidden select (for backward compatibility)
         const modelInput = document.getElementById('llm-model-input');
-        const clearModelBtn = document.getElementById('clear-model-btn');
-        
-        // Initialize previously used models storage
-        let previouslyUsedModels = JSON.parse(localStorage.getItem('previouslyUsedModels') || '[]');
         
         providerSelect.addEventListener('change', function() {
             const provider = this.value;
-            modelSelect.innerHTML = '<option value="">Select model...</option>';
-            modelInput.value = ''; // Clear the input when provider changes
             
-            if (provider !== 'none' && modelsByProvider[provider]) {
-                modelsByProvider[provider].forEach(model => {
-                    const option = document.createElement('option');
-                    option.value = model;
-                    option.textContent = model;
-                    modelSelect.appendChild(option);
-                });
+            // Only clear model if switching to/from 'none'
+            if (provider === 'none') {
+                modelInput.value = '';
+            } else if (modelInput.value === '' && modelsByProvider[provider]) {
+                // Set default model only if input is empty
+                const defaultModel = modelsByProvider[provider][0];
+                modelInput.value = defaultModel;
             }
             
-            // Update the dropdown menu
-            updateModelDropdown(provider);
-            
-            // Check for stored key when provider changes
             checkStoredKey(provider);
         });
         
-        // Clear model button handler
-        clearModelBtn.addEventListener('click', function() {
-            modelInput.value = '';
-            modelSelect.value = '';
-        });
-        
-        // Setup dropdown button handler
-        const dropdownBtn = document.getElementById('model-dropdown-btn');
-        const dropdownMenu = document.getElementById('model-dropdown-menu');
-        
-        // Toggle dropdown on button click
-        dropdownBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const isOpen = dropdownMenu.classList.contains('show');
-            
-            // Close all other dropdowns
-            document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
-                menu.classList.remove('show');
-            });
-            
-            // Toggle this dropdown
-            if (!isOpen) {
-                dropdownMenu.classList.add('show');
-            }
-        });
-        
-        // Close dropdown when clicking outside
-        document.addEventListener('click', function(e) {
-            if (!dropdownBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
-                dropdownMenu.classList.remove('show');
-            }
-        });
-        
-        // Model input change handler - sync with hidden select
-        modelInput.addEventListener('input', function() {
-            modelSelect.value = this.value;
-            
-            // Save to previously used models when user types something substantial
-            if (this.value.trim() && this.value.length > 3 && !previouslyUsedModels.includes(this.value)) {
-                previouslyUsedModels.unshift(this.value);
-                // Keep only last 10 previously used models
-                previouslyUsedModels = previouslyUsedModels.slice(0, 10);
-                localStorage.setItem('previouslyUsedModels', JSON.stringify(previouslyUsedModels));
-                
-                // Update dropdown with new previously used models
-                const provider = providerSelect.value;
-                updateModelDropdown(provider);
-            }
-        });
-        
-        // Setup key storage button handlers
+        // Setup API key storage handlers
         document.getElementById('store-key-btn').addEventListener('click', storeApiKey);
         document.getElementById('delete-key-btn').addEventListener('click', deleteStoredKey);
-        
-        // Update key display when API key field changes
         document.getElementById('llm-api-key').addEventListener('input', updateKeyButtons);
         
-        // Initialize default provider models and check for stored key
+        // Initialize
         const initialProvider = providerSelect.value;
-        if (initialProvider !== 'none') {
-            // Populate models for initially selected provider
-            if (modelsByProvider[initialProvider]) {
-                modelsByProvider[initialProvider].forEach(model => {
-                    const option = document.createElement('option');
-                    option.value = model;
-                    option.textContent = model;
-                    modelSelect.appendChild(option);
-                });
-                // Select a default model if available
-                if (modelsByProvider[initialProvider].length > 0) {
-                    const defaultModel = modelsByProvider[initialProvider][0];
-                    modelSelect.value = defaultModel;
-                    modelInput.value = defaultModel;
-                }
-            }
-            updateModelDropdown(initialProvider);
-            checkStoredKey(initialProvider);
-        } else {
-            updateModelDropdown('none');
+        if (initialProvider !== 'none' && modelsByProvider[initialProvider] && modelInput.value === '') {
+            modelInput.value = modelsByProvider[initialProvider][0];
         }
+        checkStoredKey(initialProvider);
     }
-    
-    function updateModelDropdown(provider) {
-        const dropdown = document.getElementById('model-dropdown-menu');
-        const previouslyUsedModels = JSON.parse(localStorage.getItem('previouslyUsedModels') || '[]');
-        
-        // Clear existing content
-        dropdown.innerHTML = '';
-        
-        // Add common models section if provider is selected
-        if (provider !== 'none' && modelsByProvider[provider]) {
-            const commonHeader = document.createElement('li');
-            commonHeader.innerHTML = '<h6 class="dropdown-header">Common Models</h6>';
-            dropdown.appendChild(commonHeader);
-            
-            modelsByProvider[provider].forEach(model => {
-                const li = document.createElement('li');
-                const a = document.createElement('a');
-                a.className = 'dropdown-item';
-                a.href = '#';
-                a.textContent = model;
-                a.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    selectModel(model);
-                });
-                li.appendChild(a);
-                dropdown.appendChild(li);
-            });
-            
-            // Add divider if we have previously used models
-            if (previouslyUsedModels.length > 0) {
-                const divider = document.createElement('li');
-                divider.innerHTML = '<hr class="dropdown-divider">';
-                dropdown.appendChild(divider);
-            }
-        }
-        
-        // Add previously used models section
-        if (previouslyUsedModels.length > 0) {
-            const prevHeader = document.createElement('li');
-            prevHeader.innerHTML = '<h6 class="dropdown-header">Previously Used</h6>';
-            dropdown.appendChild(prevHeader);
-            
-            previouslyUsedModels.forEach(model => {
-                const li = document.createElement('li');
-                const a = document.createElement('a');
-                a.className = 'dropdown-item';
-                a.href = '#';
-                a.textContent = model;
-                a.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    selectModel(model);
-                });
-                li.appendChild(a);
-                dropdown.appendChild(li);
-            });
-        }
-        
-        // Show empty state if no models available
-        if (dropdown.children.length === 0) {
-            const li = document.createElement('li');
-            const span = document.createElement('span');
-            span.className = 'dropdown-item text-muted';
-            span.textContent = 'No models available';
-            li.appendChild(span);
-            dropdown.appendChild(li);
-        }
-    }
-    
-    function selectModel(model) {
+
+    // Setup Model Dropdown Selection
+    function setupModelDropdown() {
+        const modelDropdownItems = document.querySelectorAll('#model-dropdown-menu .dropdown-item');
         const modelInput = document.getElementById('llm-model-input');
-        const modelSelect = document.getElementById('llm-model');
-        const dropdownMenu = document.getElementById('model-dropdown-menu');
         
-        modelInput.value = model;
-        modelSelect.value = model;
+        modelDropdownItems.forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                const selectedModel = this.getAttribute('data-model');
+                
+                // Skip if this is the info item (no data-model attribute)
+                if (!selectedModel) {
+                    return;
+                }
+                
+                modelInput.value = selectedModel;
+                
+                // Close dropdown
+                const dropdown = bootstrap.Dropdown.getInstance(document.getElementById('model-dropdown-btn'));
+                if (dropdown) {
+                    dropdown.hide();
+                }
+                
+                // Show visual feedback
+                this.classList.add('active');
+                setTimeout(() => this.classList.remove('active'), 200);
+            });
+        });
         
-        // Close the dropdown
-        dropdownMenu.classList.remove('show');
+        // Highlight selected model in dropdown when opened
+        document.getElementById('model-dropdown-btn').addEventListener('show.bs.dropdown', function() {
+            const currentModel = modelInput.value;
+            modelDropdownItems.forEach(item => {
+                const itemModel = item.getAttribute('data-model');
+                if (itemModel === currentModel) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+        });
     }
-    
+
+    // Setup Model Clear Button
+    function setupModelClear() {
+        const clearBtn = document.getElementById('clear-model-btn');
+        const modelInput = document.getElementById('llm-model-input');
+        
+        clearBtn.addEventListener('click', function() {
+            modelInput.value = '';
+            modelInput.focus();
+            
+            // Visual feedback
+            this.classList.add('btn-outline-danger');
+            setTimeout(() => this.classList.remove('btn-outline-danger'), 200);
+        });
+        
+        // Show/hide clear button based on input content
+        function updateClearButtonVisibility() {
+            if (modelInput.value.trim()) {
+                clearBtn.style.display = 'inline-block';
+            } else {
+                clearBtn.style.display = 'none';
+            }
+        }
+        
+        modelInput.addEventListener('input', updateClearButtonVisibility);
+        modelInput.addEventListener('change', updateClearButtonVisibility);
+        
+        // Initialize visibility
+        updateClearButtonVisibility();
+    }
+
+    // ADO Functions (keeping core functionality)
     function testADOConnection() {
         const org = document.getElementById('ado-org').value;
         const project = document.getElementById('ado-project').value;
@@ -1123,34 +1416,30 @@
         const status = document.getElementById('ado-status');
         
         if (!org || !project || !token) {
-            status.innerHTML = '<div class="text-danger"><i class="fas fa-exclamation-triangle"></i> Please fill in all ADO fields</div>';
+            status.innerHTML = '<div class="alert alert-danger">Please fill in all ADO fields</div>';
             return;
         }
         
-        status.innerHTML = '<div class="text-info"><i class="fas fa-spinner fa-spin"></i> Testing connection...</div>';
+        status.innerHTML = '<div class="alert alert-info"><i class="fas fa-spinner fa-spin"></i> Testing connection...</div>';
         
         fetch('/api/test-ado-connection', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                ado_org: org,
-                ado_project: project,
-                ado_token: token
-            })
+            body: JSON.stringify({ ado_org: org, ado_project: project, ado_token: token })
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                status.innerHTML = `<div class="text-success"><i class="fas fa-check"></i> Connected successfully (User ID: ${data.user_id})</div>`;
+                status.innerHTML = `<div class="alert alert-success"><i class="fas fa-check"></i> Connected successfully (User ID: ${data.user_id})</div>`;
             } else {
-                status.innerHTML = `<div class="text-danger"><i class="fas fa-exclamation-triangle"></i> Connection failed: ${data.error}</div>`;
+                status.innerHTML = `<div class="alert alert-danger">Connection failed: ${data.error}</div>`;
             }
         })
         .catch(error => {
-            status.innerHTML = `<div class="text-danger"><i class="fas fa-exclamation-triangle"></i> Connection failed: ${error.message}</div>`;
+            status.innerHTML = `<div class="alert alert-danger">Connection failed: ${error.message}</div>`;
         });
     }
-    
+
     function fetchADOData() {
         const org = document.getElementById('ado-org').value;
         const project = document.getElementById('ado-project').value;
@@ -1159,54 +1448,41 @@
         const monthsBack = parseInt(document.getElementById('months-back').value);
         const status = document.getElementById('ado-status');
         
-        if (!org || !project || !token) {
-            status.innerHTML = '<div class="text-danger"><i class="fas fa-exclamation-triangle"></i> Please fill in all ADO fields</div>';
-            return;
-        }
-        
-        status.innerHTML = '<div class="text-info"><i class="fas fa-spinner fa-spin"></i> Fetching data...</div>';
+        status.innerHTML = '<div class="alert alert-info"><i class="fas fa-spinner fa-spin"></i> Fetching data...</div>';
         
         fetch('/api/fetch-ado-data', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
-                ado_org: org,
-                ado_project: project,
-                ado_token: token,
-                work_item_type: workItemType,
-                months_back: monthsBack
+                ado_org: org, ado_project: project, ado_token: token,
+                work_item_type: workItemType, months_back: monthsBack
             })
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                status.innerHTML = `<div class="text-success"><i class="fas fa-check"></i> Fetched ${data.work_items_count} work items</div>`;
-                // Store the CSV file path for later use
+                status.innerHTML = `<div class="alert alert-success"><i class="fas fa-check"></i> Fetched ${data.work_items_count} work items</div>`;
                 window.adoDataFile = data.csv_file;
+                enableNextButton('data');
             } else {
-                status.innerHTML = `<div class="text-danger"><i class="fas fa-exclamation-triangle"></i> Fetch failed: ${data.error}</div>`;
+                status.innerHTML = `<div class="alert alert-danger">Fetch failed: ${data.error}</div>`;
             }
         })
         .catch(error => {
-            status.innerHTML = `<div class="text-danger"><i class="fas fa-exclamation-triangle"></i> Fetch failed: ${error.message}</div>`;
+            status.innerHTML = `<div class="alert alert-danger">Fetch failed: ${error.message}</div>`;
         });
     }
-    
-    function setupGenerateButton() {
-        document.getElementById('generate-btn').addEventListener('click', generateReview);
-    }
-    
+
+    // Generate Review Function with Live Progress
     function generateReview() {
-        // Gather all form data
-        const reviewType = document.getElementById('review-type').value;
+        const reviewType = currentWorkflow;
         const reviewYear = document.getElementById('review-year').value;
         const dataSource = document.querySelector('input[name="data-source"]:checked').value;
         const outputFormat = document.querySelector('input[name="output-format"]:checked').value;
         const llmProvider = document.getElementById('llm-provider').value;
-        const llmModel = document.getElementById('llm-model-input').value || document.getElementById('llm-model').value;
+        const llmModel = document.getElementById('llm-model-input').value;
         const apiKey = document.getElementById('llm-api-key').value;
         
-        // Prepare request data
         const requestData = {
             review_type: reviewType,
             year: parseInt(reviewYear),
@@ -1224,11 +1500,13 @@
             requestData.csv_file = window.adoDataFile;
         }
         
-        // Show progress
+        // Show progress and start tracking
         showProgress(true);
         document.getElementById('generate-btn').disabled = true;
+        let currentJobId = null;
+        let progressInterval = null;
         
-        // Make request
+        // Start the analysis
         fetch('/api/run-analysis', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
@@ -1236,24 +1514,19 @@
         })
         .then(response => response.json())
         .then(data => {
-            showProgress(false);
-            document.getElementById('generate-btn').disabled = false;
-            
             if (data.success) {
-                const resultContent = `
-                    <div class="alert alert-success">
-                        <h5><i class="fas fa-check-circle"></i> Analysis Complete!</h5>
-                        <p>Your ${reviewType} review for ${reviewYear} has been generated successfully.</p>
-                    </div>
-                    <div class="d-grid gap-2">
-                        <a href="/api/download-result/${data.result_file}" class="btn btn-primary btn-lg">
-                            <i class="fas fa-download"></i> Download ${outputFormat.toUpperCase()} Report
-                        </a>
-                    </div>
-                `;
-                showResult(resultContent, true);
-                showAlert('Performance review generated successfully!', 'success');
+                currentJobId = data.job_id;
+                
+                // Start progress polling
+                progressInterval = setInterval(() => {
+                    updateProgressDisplay(currentJobId);
+                }, 1000);
+                
+                // Wait for completion and then display results
+                waitForCompletion(currentJobId, data, progressInterval);
             } else {
+                showProgress(false);
+                document.getElementById('generate-btn').disabled = false;
                 showAlert(`Analysis failed: ${data.error}`, 'danger');
             }
         })
@@ -1264,6 +1537,221 @@
         });
     }
     
+    // Update Progress Display
+    function updateProgressDisplay(jobId) {
+        fetch(`/api/get-progress/${jobId}`)
+        .then(response => response.json())
+        .then(progress => {
+            // Update progress bar
+            const progressBar = document.getElementById('progress-bar');
+            progressBar.style.width = `${progress.percentage}%`;
+            progressBar.setAttribute('aria-valuenow', progress.percentage);
+            
+            // Update stage information
+            document.getElementById('current-stage').textContent = formatStageName(progress.stage);
+            document.getElementById('stage-message').textContent = progress.message;
+            
+            // Update stage badges
+            updateStageBadges(progress.stage);
+        })
+        .catch(error => {
+            console.error('Error fetching progress:', error);
+        });
+    }
+    
+    // Format Stage Name
+    function formatStageName(stage) {
+        const stageNames = {
+            'initializing': 'Initializing Analysis',
+            'configuration': 'Configuring Settings',
+            'preparation': 'Preparing Data',
+            'processing': 'Processing Data',
+            'executing': 'Running Analysis',
+            'finalizing': 'Generating Report',
+            'completed': 'Analysis Complete',
+            'error': 'Error Occurred'
+        };
+        return stageNames[stage] || stage;
+    }
+    
+    // Update Stage Badges
+    function updateStageBadges(currentStage) {
+        const stageOrder = ['initializing', 'configuration', 'processing', 'finalizing'];
+        const stageMap = {
+            'initializing': 'stage-init',
+            'configuration': 'stage-config', 
+            'preparation': 'stage-config',
+            'processing': 'stage-processing',
+            'executing': 'stage-processing',
+            'finalizing': 'stage-finalizing',
+            'completed': 'stage-finalizing'
+        };
+        
+        // Reset all badges
+        stageOrder.forEach(stage => {
+            const badge = document.getElementById(`stage-${stage === 'initializing' ? 'init' : stage === 'configuration' ? 'config' : stage}`);
+            if (badge) {
+                badge.className = 'badge bg-secondary';
+            }
+        });
+        
+        // Update current stage
+        const currentBadgeId = stageMap[currentStage];
+        if (currentBadgeId) {
+            const badge = document.getElementById(currentBadgeId);
+            if (badge) {
+                badge.className = 'badge bg-primary';
+            }
+        }
+        
+        // Mark completed stages
+        const currentIndex = stageOrder.indexOf(currentStage);
+        if (currentIndex > 0) {
+            for (let i = 0; i < currentIndex; i++) {
+                const stage = stageOrder[i];
+                const badge = document.getElementById(`stage-${stage === 'initializing' ? 'init' : stage === 'configuration' ? 'config' : stage}`);
+                if (badge) {
+                    badge.className = 'badge bg-success';
+                }
+            }
+        }
+    }
+    
+    // Wait for Completion
+    function waitForCompletion(jobId, responseData, progressInterval) {
+        const checkCompletion = () => {
+            fetch(`/api/get-progress/${jobId}`)
+            .then(response => response.json())
+            .then(progress => {
+                if (progress.stage === 'completed' || progress.percentage >= 100) {
+                    // Stop progress polling
+                    clearInterval(progressInterval);
+                    
+                    // Hide progress and show results
+                    setTimeout(() => {
+                        showProgress(false);
+                        displayResults(responseData);
+                        document.getElementById('generate-btn').disabled = false;
+                    }, 1000);
+                } else if (progress.stage === 'error') {
+                    clearInterval(progressInterval);
+                    showProgress(false);
+                    document.getElementById('generate-btn').disabled = false;
+                    showAlert(`Analysis failed: ${progress.message}`, 'danger');
+                } else {
+                    // Continue checking
+                    setTimeout(checkCompletion, 2000);
+                }
+            })
+            .catch(error => {
+                clearInterval(progressInterval);
+                showProgress(false);
+                document.getElementById('generate-btn').disabled = false;
+                showAlert(`Analysis monitoring failed: ${error.message}`, 'danger');
+            });
+        };
+        
+        // Start checking for completion
+        setTimeout(checkCompletion, 2000);
+    }
+    
+    // Display Results
+    function displayResults(data) {
+        if (!data.success) {
+            showAlert(`Analysis failed: ${data.error}`, 'danger');
+            return;
+        }
+        
+        const metadata = data.metadata || {};
+        
+        // Update summary information
+        document.getElementById('summary-review-type').textContent = metadata.review_type || 'Unknown';
+        document.getElementById('summary-review-year').textContent = metadata.year || 'Unknown';
+        document.getElementById('summary-data-source').textContent = (metadata.data_source || 'Unknown').toUpperCase();
+        document.getElementById('summary-format').textContent = (metadata.output_format || 'Unknown').toUpperCase();
+        
+        // Update AI details
+        document.getElementById('summary-llm-provider').textContent = metadata.llm_provider || 'Automated Only';
+        document.getElementById('summary-llm-model').textContent = metadata.llm_model || 'N/A';
+        document.getElementById('summary-file-size').textContent = formatFileSize(metadata.file_size || 0);
+        document.getElementById('summary-generated-at').textContent = formatDateTime(metadata.generated_at);
+        
+        // Load and display report content
+        loadReportContent(data.result_file);
+        
+        // Setup download button
+        const downloadBtn = document.getElementById('download-report-btn');
+        downloadBtn.onclick = () => {
+            window.open(`/api/download-result/${data.result_file}`, '_blank');
+        };
+        
+        // Hide the main workflow and show results
+        document.getElementById('main-workflow').style.display = 'none';
+        showResult('', true);
+        showAlert('Performance review generated successfully!', 'success');
+    }
+    
+    // Load Report Content
+    function loadReportContent(filename) {
+        fetch(`/api/get-result-content/${filename}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('report-content').textContent = data.content;
+                setupCopyButton(data.content);
+            } else {
+                document.getElementById('report-content').textContent = 'Error loading report content.';
+            }
+        })
+        .catch(error => {
+            document.getElementById('report-content').textContent = 'Failed to load report content.';
+            console.error('Error loading report content:', error);
+        });
+    }
+    
+    // Setup Copy Button
+    function setupCopyButton(content) {
+        const copyBtn = document.getElementById('copy-report-btn');
+        copyBtn.onclick = () => {
+            navigator.clipboard.writeText(content).then(() => {
+                // Show success feedback
+                const originalHTML = copyBtn.innerHTML;
+                copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                copyBtn.classList.add('btn-copy-success');
+                
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalHTML;
+                    copyBtn.classList.remove('btn-copy-success');
+                }, 2000);
+                
+                showAlert('Report content copied to clipboard!', 'success');
+            }).catch(err => {
+                showAlert('Failed to copy to clipboard', 'warning');
+                console.error('Copy failed:', err);
+            });
+        };
+    }
+    
+    // Utility Functions
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    function formatDateTime(isoString) {
+        if (!isoString) return 'Unknown';
+        try {
+            const date = new Date(isoString);
+            return date.toLocaleString();
+        } catch (e) {
+            return 'Invalid date';
+        }
+    }
+
+    // Utility Functions (simplified versions)
     function checkStoredKey(provider) {
         const statusDiv = document.getElementById('stored-key-status');
         const storeBtn = document.getElementById('store-key-btn');
@@ -1281,127 +1769,84 @@
         .then(data => {
             if (data.has_key) {
                 statusDiv.innerHTML = `<i class="fas fa-key text-success"></i> Stored key: ${data.key_preview}`;
-                if (data.model) {
-                    statusDiv.innerHTML += ` (Model: ${data.model})`;
-                }
                 storeBtn.style.display = 'none';
                 deleteBtn.style.display = 'inline-block';
-                
-                // Clear the API key field since we have a stored one
                 document.getElementById('llm-api-key').value = '';
-                
-                // Populate the model field if we have a stored model
                 if (data.model) {
                     document.getElementById('llm-model-input').value = data.model;
-                    document.getElementById('llm-model').value = data.model;
                 }
             } else {
                 statusDiv.textContent = 'No stored key found';
                 updateKeyButtons();
             }
         })
-        .catch(error => {
-            console.error('Error checking stored key:', error);
+        .catch(() => {
             statusDiv.textContent = 'Error checking stored key';
             updateKeyButtons();
         });
     }
-    
+
     function updateKeyButtons() {
         const apiKeyField = document.getElementById('llm-api-key');
         const provider = document.getElementById('llm-provider').value;
         const storeBtn = document.getElementById('store-key-btn');
-        const deleteBtn = document.getElementById('delete-key-btn');
         
-        if (provider === 'none' || !provider) {
+        if (provider === 'none' || !provider || !apiKeyField.value.trim()) {
             storeBtn.style.display = 'none';
-            deleteBtn.style.display = 'none';
-            return;
-        }
-        
-        if (apiKeyField.value.trim()) {
-            storeBtn.style.display = 'inline-block';
         } else {
-            storeBtn.style.display = 'none';
+            storeBtn.style.display = 'inline-block';
         }
     }
-    
+
     function storeApiKey() {
         const provider = document.getElementById('llm-provider').value;
         const apiKey = document.getElementById('llm-api-key').value.trim();
-        const model = document.getElementById('llm-model-input').value || document.getElementById('llm-model').value;
-        const statusDiv = document.getElementById('stored-key-status');
+        const model = document.getElementById('llm-model-input').value;
         
-        if (!provider || provider === 'none') {
-            showAlert('Please select a provider first', 'warning');
+        if (!provider || provider === 'none' || !apiKey) {
+            showAlert('Please select a provider and enter an API key', 'warning');
             return;
         }
-        
-        if (!apiKey) {
-            showAlert('Please enter an API key to store', 'warning');
-            return;
-        }
-        
-        statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Storing key...';
         
         fetch('/api/store-api-key', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                provider: provider,
-                api_key: apiKey,
-                model: model
-            })
+            body: JSON.stringify({ provider, api_key: apiKey, model })
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
                 showAlert(data.message, 'success');
-                checkStoredKey(provider); // Refresh the display
+                checkStoredKey(provider);
             } else {
                 showAlert(`Failed to store key: ${data.error}`, 'danger');
-                statusDiv.textContent = 'Error storing key';
             }
         })
         .catch(error => {
             showAlert(`Failed to store key: ${error.message}`, 'danger');
-            statusDiv.textContent = 'Error storing key';
         });
     }
-    
+
     function deleteStoredKey() {
         const provider = document.getElementById('llm-provider').value;
-        const statusDiv = document.getElementById('stored-key-status');
         
-        if (!provider || provider === 'none') {
-            return;
-        }
+        if (!confirm(`Delete stored API key for ${provider}?`)) return;
         
-        if (!confirm(`Delete stored API key for ${provider}?`)) {
-            return;
-        }
-        
-        statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting key...';
-        
-        fetch(`/api/delete-api-key/${provider}`, {
-            method: 'DELETE'
-        })
+        fetch(`/api/delete-api-key/${provider}`, { method: 'DELETE' })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
                 showAlert(data.message, 'success');
-                checkStoredKey(provider); // Refresh the display
+                checkStoredKey(provider);
             } else {
                 showAlert(`Failed to delete key: ${data.error}`, 'danger');
-                statusDiv.textContent = 'Error deleting key';
             }
         })
         .catch(error => {
             showAlert(`Failed to delete key: ${error.message}`, 'danger');
-            statusDiv.textContent = 'Error deleting key';
         });
     }
-    
+
     function togglePasswordVisibility(inputId) {
         const input = document.getElementById(inputId);
         const button = input.parentElement.querySelector('.api-key-toggle i');
@@ -1413,6 +1858,21 @@
             input.type = 'password';
             button.className = 'fas fa-eye';
         }
+    }
+    
+    function generateAnotherReview() {
+        // Hide results and show the main workflow
+        document.querySelector('.result-display').classList.remove('show');
+        document.getElementById('main-workflow').style.display = 'block';
+        
+        // Go back to the generate step (last step)
+        setActiveStep('generate');
+        
+        // Re-enable the generate button
+        document.getElementById('generate-btn').disabled = false;
+        
+        // Show success message
+        showAlert('Ready to generate another performance review!', 'info');
     }
 </script>
 {% endblock %}
