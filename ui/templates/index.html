@@ -8,16 +8,34 @@
     <p>Generate professional performance reviews with AI-powered analysis</p>
 </div>
 
-<!-- Step 1: Criteria Upload -->
+<!-- Step 1: Review Criteria Configuration -->
 <div class="section-card" data-step="1">
     <div class="section-header">
         <div class="section-number">1</div>
-        <h3>Upload Review Criteria</h3>
+        <h3>Review Criteria Configuration</h3>
     </div>
     
-    <div class="row">
-        <div class="col-md-6">
-            <label class="form-label">Annual Review Criteria (JSON)</label>
+    <!-- Annual Review Criteria Section -->
+    <div class="criteria-section mb-4">
+        <h5 class="mb-3"><i class="fas fa-calendar-alt"></i> Annual Review Criteria</h5>
+        
+        <!-- Annual Review Toggle -->
+        <div class="mb-3">
+            <div class="btn-group w-100" role="group">
+                <input type="radio" class="btn-check" name="annual-input-method" id="annual-upload-method" value="upload" checked>
+                <label class="btn btn-outline-primary" for="annual-upload-method">
+                    <i class="fas fa-upload"></i> Upload JSON File
+                </label>
+                
+                <input type="radio" class="btn-check" name="annual-input-method" id="annual-manual-method" value="manual">
+                <label class="btn btn-outline-primary" for="annual-manual-method">
+                    <i class="fas fa-edit"></i> Enter Manually
+                </label>
+            </div>
+        </div>
+        
+        <!-- Annual Review Upload Section -->
+        <div id="annual-upload-section" class="criteria-input-section">
             <div class="upload-area" id="annual-upload-area">
                 <input type="file" id="annual-criteria-file" accept=".json" style="display: none;">
                 <i class="fas fa-upload fa-2x mb-2"></i>
@@ -27,8 +45,78 @@
             <div id="annual-criteria-status" class="mt-2"></div>
         </div>
         
-        <div class="col-md-6">
-            <label class="form-label">Competency Criteria (JSON)</label>
+        <!-- Annual Review Manual Entry Section -->
+        <div id="annual-manual-section" class="criteria-input-section" style="display: none;">
+            <!-- Form for adding new criteria -->
+            <div class="criteria-form mb-4">
+                <h6 class="mb-3"><i class="fas fa-plus-circle"></i> Add Annual Review Criteria</h6>
+                <div class="row">
+                    <div class="col-md-4">
+                        <label for="annual-section-name" class="form-label">Section Name</label>
+                        <input type="text" id="annual-section-name" class="form-control" 
+                               placeholder="e.g., Leadership, Innovation">
+                    </div>
+                    <div class="col-md-5">
+                        <label for="annual-section-description" class="form-label">Description</label>
+                        <input type="text" id="annual-section-description" class="form-control" 
+                               placeholder="e.g., Demonstrates leadership capabilities">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="annual-section-weight" class="form-label">Weight (%)</label>
+                        <input type="number" id="annual-section-weight" class="form-control" 
+                               placeholder="20" min="1" max="100">
+                    </div>
+                    <div class="col-md-1">
+                        <label class="form-label">&nbsp;</label>
+                        <button type="button" id="add-annual-criteria-btn" class="btn btn-success w-100">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Display entered criteria -->
+            <div class="entered-criteria mb-4">
+                <h6 class="mb-3"><i class="fas fa-list"></i> Entered Criteria</h6>
+                <div id="annual-criteria-display" class="criteria-display">
+                    <div class="text-muted text-center py-3">
+                        <i class="fas fa-info-circle"></i> No criteria entered yet. Add some above to get started.
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Save button -->
+            <div class="text-end mb-3">
+                <button type="button" id="save-annual-btn" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Save All Criteria
+                </button>
+            </div>
+            
+            <div id="annual-manual-status" class="mt-2"></div>
+        </div>
+    </div>
+    
+    <!-- Competency Criteria Section -->
+    <div class="criteria-section">
+        <h5 class="mb-3"><i class="fas fa-cogs"></i> Competency Criteria</h5>
+        
+        <!-- Competency Toggle -->
+        <div class="mb-3">
+            <div class="btn-group w-100" role="group">
+                <input type="radio" class="btn-check" name="competency-input-method" id="competency-upload-method" value="upload" checked>
+                <label class="btn btn-outline-primary" for="competency-upload-method">
+                    <i class="fas fa-upload"></i> Upload JSON File
+                </label>
+                
+                <input type="radio" class="btn-check" name="competency-input-method" id="competency-manual-method" value="manual">
+                <label class="btn btn-outline-primary" for="competency-manual-method">
+                    <i class="fas fa-edit"></i> Enter Manually
+                </label>
+            </div>
+        </div>
+        
+        <!-- Competency Upload Section -->
+        <div id="competency-upload-section" class="criteria-input-section">
             <div class="upload-area" id="competency-upload-area">
                 <input type="file" id="competency-criteria-file" accept=".json" style="display: none;">
                 <i class="fas fa-upload fa-2x mb-2"></i>
@@ -36,6 +124,85 @@
                 <small class="text-muted">JSON format required</small>
             </div>
             <div id="competency-criteria-status" class="mt-2"></div>
+        </div>
+        
+        <!-- Competency Manual Entry Section -->
+        <div id="competency-manual-section" class="criteria-input-section" style="display: none;">
+            <!-- Form for adding new competency -->
+            <div class="criteria-form mb-4">
+                <h6 class="mb-3"><i class="fas fa-plus-circle"></i> Add Competency Area</h6>
+                
+                <!-- Competency Name and Description -->
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="competency-name" class="form-label">Competency Name</label>
+                        <input type="text" id="competency-name" class="form-control" 
+                               placeholder="e.g., Programming, Problem Management">
+                    </div>
+                    <div class="col-md-8">
+                        <label for="competency-description" class="form-label">Description</label>
+                        <input type="text" id="competency-description" class="form-control" 
+                               placeholder="e.g., Software development and coding skills">
+                    </div>
+                </div>
+                
+                <!-- Level Definitions -->
+                <div class="level-definitions mb-3">
+                    <label class="form-label">Level Definitions (1-5 scale)</label>
+                    <div class="row g-2">
+                        <div class="col-md-2">
+                            <label class="form-label small">Level 1 (Learning)</label>
+                            <input type="text" id="competency-level-1" class="form-control form-control-sm" 
+                                   placeholder="Beginning to apply">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small">Level 2 (Developing)</label>
+                            <input type="text" id="competency-level-2" class="form-control form-control-sm" 
+                                   placeholder="Building proficiency">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small">Level 3 (Practicing)</label>
+                            <input type="text" id="competency-level-3" class="form-control form-control-sm" 
+                                   placeholder="Consistent competency">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small">Level 4 (Mastering)</label>
+                            <input type="text" id="competency-level-4" class="form-control form-control-sm" 
+                                   placeholder="Advanced proficiency">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small">Level 5 (Leading)</label>
+                            <input type="text" id="competency-level-5" class="form-control form-control-sm" 
+                                   placeholder="Expert level">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small">&nbsp;</label>
+                            <button type="button" id="add-competency-btn" class="btn btn-success w-100 btn-sm">
+                                <i class="fas fa-plus"></i> Add
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Display entered competencies -->
+            <div class="entered-criteria mb-4">
+                <h6 class="mb-3"><i class="fas fa-list"></i> Entered Competencies</h6>
+                <div id="competency-criteria-display" class="criteria-display">
+                    <div class="text-muted text-center py-3">
+                        <i class="fas fa-info-circle"></i> No competencies entered yet. Add some above to get started.
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Save button -->
+            <div class="text-end mb-3">
+                <button type="button" id="save-competency-btn" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Save All Competencies
+                </button>
+            </div>
+            
+            <div id="competency-manual-status" class="mt-2"></div>
         </div>
     </div>
 </div>
@@ -178,7 +345,27 @@
         
         <div class="col-md-4">
             <label for="llm-model" class="form-label">Model</label>
-            <select id="llm-model" class="form-select">
+            <div class="model-input-group">
+                <input type="text" id="llm-model-input" class="form-control" placeholder="Enter model name or select from dropdown">
+                <div class="model-controls">
+                    <button type="button" id="clear-model-btn" class="btn btn-sm btn-outline-secondary" title="Clear model">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <div class="dropdown">
+                        <button type="button" id="model-dropdown-btn" class="btn btn-sm btn-outline-primary dropdown-toggle" aria-expanded="false" title="Select from models">
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" id="model-dropdown-menu">
+                            <li><h6 class="dropdown-header">Common Models</h6></li>
+                            <!-- Common models populated by JavaScript -->
+                            <li><hr class="dropdown-divider"></li>
+                            <li><h6 class="dropdown-header">Previously Used</h6></li>
+                            <!-- Previously used models populated by JavaScript -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <select id="llm-model" class="form-select" style="display: none;">
                 <option value="">Select model...</option>
             </select>
         </div>
@@ -276,6 +463,12 @@
         
         // CSV accomplishments upload
         setupSingleFileUpload('csv-upload-area', 'accomplishments-csv-file', 'csv-status', '/api/upload-accomplishments', 'accomplishments_csv');
+        
+        // Setup criteria input method toggles
+        setupCriteriaInputToggles();
+        
+        // Setup manual criteria handlers
+        setupManualCriteriaHandlers();
     }
     
     function setupSingleFileUpload(areaId, fileInputId, statusId, endpoint, fieldName) {
@@ -370,13 +563,379 @@
         document.getElementById('fetch-ado-btn').addEventListener('click', fetchADOData);
     }
     
+    function setupCriteriaInputToggles() {
+        // Annual Review toggles
+        const annualUploadRadio = document.getElementById('annual-upload-method');
+        const annualManualRadio = document.getElementById('annual-manual-method');
+        const annualUploadSection = document.getElementById('annual-upload-section');
+        const annualManualSection = document.getElementById('annual-manual-section');
+        
+        annualUploadRadio.addEventListener('change', function() {
+            if (this.checked) {
+                annualUploadSection.style.display = 'block';
+                annualManualSection.style.display = 'none';
+            }
+        });
+        
+        annualManualRadio.addEventListener('change', function() {
+            if (this.checked) {
+                annualUploadSection.style.display = 'none';
+                annualManualSection.style.display = 'block';
+            }
+        });
+        
+        // Competency toggles
+        const competencyUploadRadio = document.getElementById('competency-upload-method');
+        const competencyManualRadio = document.getElementById('competency-manual-method');
+        const competencyUploadSection = document.getElementById('competency-upload-section');
+        const competencyManualSection = document.getElementById('competency-manual-section');
+        
+        competencyUploadRadio.addEventListener('change', function() {
+            if (this.checked) {
+                competencyUploadSection.style.display = 'block';
+                competencyManualSection.style.display = 'none';
+            }
+        });
+        
+        competencyManualRadio.addEventListener('change', function() {
+            if (this.checked) {
+                competencyUploadSection.style.display = 'none';
+                competencyManualSection.style.display = 'block';
+            }
+        });
+    }
+    
+    function setupManualCriteriaHandlers() {
+        // Annual criteria handlers
+        document.getElementById('add-annual-criteria-btn').addEventListener('click', addAnnualCriteria);
+        document.getElementById('save-annual-btn').addEventListener('click', () => saveCriteriaFromForm('annual'));
+        
+        // Competency criteria handlers
+        document.getElementById('add-competency-btn').addEventListener('click', addCompetencyCriteria);
+        document.getElementById('save-competency-btn').addEventListener('click', () => saveCriteriaFromForm('competency'));
+        
+        // Initialize empty criteria storage
+        window.annualCriteriaList = [];
+        window.competencyCriteriaList = [];
+    }
+    
+    function addAnnualCriteria() {
+        const name = document.getElementById('annual-section-name').value.trim();
+        const description = document.getElementById('annual-section-description').value.trim();
+        const weight = document.getElementById('annual-section-weight').value;
+        
+        // Validation
+        if (!name) {
+            showValidationError('annual-section-name', 'Section name is required');
+            return;
+        }
+        
+        if (!description) {
+            showValidationError('annual-section-description', 'Description is required');
+            return;
+        }
+        
+        // Check for duplicates
+        if (window.annualCriteriaList.find(item => item.name.toLowerCase() === name.toLowerCase())) {
+            showValidationError('annual-section-name', 'Section name already exists');
+            return;
+        }
+        
+        // Clear any validation errors
+        clearValidationErrors(['annual-section-name', 'annual-section-description']);
+        
+        // Add to list
+        const criteria = {
+            name: name,
+            description: description,
+            weight: weight ? parseInt(weight) : null
+        };
+        
+        window.annualCriteriaList.push(criteria);
+        
+        // Clear form
+        document.getElementById('annual-section-name').value = '';
+        document.getElementById('annual-section-description').value = '';
+        document.getElementById('annual-section-weight').value = '';
+        
+        // Update display
+        updateAnnualCriteriaDisplay();
+        
+        showAlert(`Added "${name}" to annual criteria`, 'success');
+    }
+    
+    function addCompetencyCriteria() {
+        const name = document.getElementById('competency-name').value.trim();
+        const description = document.getElementById('competency-description').value.trim();
+        
+        const levels = {};
+        for (let i = 1; i <= 5; i++) {
+            const levelValue = document.getElementById(`competency-level-${i}`).value.trim();
+            if (!levelValue) {
+                showValidationError(`competency-level-${i}`, `Level ${i} definition is required`);
+                return;
+            }
+            levels[i.toString()] = levelValue;
+        }
+        
+        // Validation
+        if (!name) {
+            showValidationError('competency-name', 'Competency name is required');
+            return;
+        }
+        
+        if (!description) {
+            showValidationError('competency-description', 'Description is required');
+            return;
+        }
+        
+        // Check for duplicates
+        if (window.competencyCriteriaList.find(item => item.name.toLowerCase() === name.toLowerCase())) {
+            showValidationError('competency-name', 'Competency name already exists');
+            return;
+        }
+        
+        // Clear any validation errors
+        clearValidationErrors(['competency-name', 'competency-description', 
+                               'competency-level-1', 'competency-level-2', 'competency-level-3', 
+                               'competency-level-4', 'competency-level-5']);
+        
+        // Add to list
+        const competency = {
+            name: name,
+            description: description,
+            levels: levels
+        };
+        
+        window.competencyCriteriaList.push(competency);
+        
+        // Clear form
+        document.getElementById('competency-name').value = '';
+        document.getElementById('competency-description').value = '';
+        for (let i = 1; i <= 5; i++) {
+            document.getElementById(`competency-level-${i}`).value = '';
+        }
+        
+        // Update display
+        updateCompetencyCriteriaDisplay();
+        
+        showAlert(`Added "${name}" competency`, 'success');
+    }
+    
+    function showValidationError(fieldId, message) {
+        const field = document.getElementById(fieldId);
+        field.classList.add('is-invalid');
+        
+        // Remove existing error message
+        const existingError = field.parentElement.querySelector('.invalid-feedback');
+        if (existingError) {
+            existingError.remove();
+        }
+        
+        // Add new error message
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'invalid-feedback';
+        errorDiv.textContent = message;
+        field.parentElement.appendChild(errorDiv);
+    }
+    
+    function clearValidationErrors(fieldIds) {
+        fieldIds.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            field.classList.remove('is-invalid');
+            const errorDiv = field.parentElement.querySelector('.invalid-feedback');
+            if (errorDiv) {
+                errorDiv.remove();
+            }
+        });
+    }
+    
+    function updateAnnualCriteriaDisplay() {
+        const displayDiv = document.getElementById('annual-criteria-display');
+        
+        if (window.annualCriteriaList.length === 0) {
+            displayDiv.innerHTML = '<div class="text-muted text-center py-3"><i class="fas fa-info-circle"></i> No criteria entered yet. Add some above to get started.</div>';
+            return;
+        }
+        
+        displayDiv.innerHTML = window.annualCriteriaList.map((criteria, index) => `
+            <div class="criteria-item">
+                <div class="criteria-content">
+                    <h6>${criteria.name}</h6>
+                    <div class="description">${criteria.description}</div>
+                    ${criteria.weight ? `<div class="weight">Weight: ${criteria.weight}%</div>` : ''}
+                </div>
+                <div class="criteria-actions">
+                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="editAnnualCriteria(${index})">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteAnnualCriteria(${index})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    function updateCompetencyCriteriaDisplay() {
+        const displayDiv = document.getElementById('competency-criteria-display');
+        
+        if (window.competencyCriteriaList.length === 0) {
+            displayDiv.innerHTML = '<div class="text-muted text-center py-3"><i class="fas fa-info-circle"></i> No competencies entered yet. Add some above to get started.</div>';
+            return;
+        }
+        
+        displayDiv.innerHTML = window.competencyCriteriaList.map((competency, index) => `
+            <div class="criteria-item">
+                <div class="criteria-content">
+                    <h6>${competency.name}</h6>
+                    <div class="description">${competency.description}</div>
+                    <div class="levels">
+                        ${Object.entries(competency.levels).map(([level, desc]) => 
+                            `<span class="level-badge">${level}: ${desc}</span>`
+                        ).join('')}
+                    </div>
+                </div>
+                <div class="criteria-actions">
+                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="editCompetencyCriteria(${index})">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteCompetencyCriteria(${index})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    function deleteAnnualCriteria(index) {
+        if (confirm(`Delete "${window.annualCriteriaList[index].name}" from annual criteria?`)) {
+            window.annualCriteriaList.splice(index, 1);
+            updateAnnualCriteriaDisplay();
+            showAlert('Annual criteria deleted', 'info');
+        }
+    }
+    
+    function deleteCompetencyCriteria(index) {
+        if (confirm(`Delete "${window.competencyCriteriaList[index].name}" competency?`)) {
+            window.competencyCriteriaList.splice(index, 1);
+            updateCompetencyCriteriaDisplay();
+            showAlert('Competency deleted', 'info');
+        }
+    }
+    
+    function editAnnualCriteria(index) {
+        const criteria = window.annualCriteriaList[index];
+        document.getElementById('annual-section-name').value = criteria.name;
+        document.getElementById('annual-section-description').value = criteria.description;
+        document.getElementById('annual-section-weight').value = criteria.weight || '';
+        
+        // Delete the original and let user re-add it
+        deleteAnnualCriteria(index);
+    }
+    
+    function editCompetencyCriteria(index) {
+        const competency = window.competencyCriteriaList[index];
+        document.getElementById('competency-name').value = competency.name;
+        document.getElementById('competency-description').value = competency.description;
+        
+        Object.entries(competency.levels).forEach(([level, desc]) => {
+            document.getElementById(`competency-level-${level}`).value = desc;
+        });
+        
+        // Delete the original and let user re-add it
+        deleteCompetencyCriteria(index);
+    }
+    
+    function saveCriteriaFromForm(type) {
+        const statusId = type === 'annual' ? 'annual-manual-status' : 'competency-manual-status';
+        const statusDiv = document.getElementById(statusId);
+        const criteriaList = type === 'annual' ? window.annualCriteriaList : window.competencyCriteriaList;
+        
+        if (criteriaList.length === 0) {
+            statusDiv.innerHTML = '<div class="text-warning"><i class="fas fa-exclamation-triangle"></i> No criteria entered. Please add some criteria first.</div>';
+            return;
+        }
+        
+        try {
+            // Convert form data to JSON structure
+            const criteriaData = {};
+            
+            if (type === 'annual') {
+                criteriaList.forEach(criteria => {
+                    criteriaData[criteria.name] = {
+                        description: criteria.description
+                    };
+                    if (criteria.weight) {
+                        criteriaData[criteria.name].weight = criteria.weight;
+                    }
+                });
+            } else {
+                criteriaList.forEach(competency => {
+                    criteriaData[competency.name] = {
+                        description: competency.description,
+                        levels: competency.levels
+                    };
+                });
+            }
+            
+            // Create a FormData object to send to the existing API
+            const formData = new FormData();
+            const fieldName = type === 'annual' ? 'annual_criteria' : 'competency_criteria';
+            
+            // Create a blob with the JSON data and add it as a file
+            const jsonBlob = new Blob([JSON.stringify(criteriaData, null, 2)], { type: 'application/json' });
+            const fileName = `${type}_criteria_form_${new Date().toISOString().slice(0, 19).replace(/[:]/g, '-')}.json`;
+            
+            formData.append(fieldName, jsonBlob, fileName);
+            
+            statusDiv.innerHTML = '<div class="text-info"><i class="fas fa-spinner fa-spin"></i> Saving criteria...</div>';
+            
+            fetch('/api/upload-criteria', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                const result = data[fieldName];
+                if (result && result.success) {
+                    statusDiv.innerHTML = `<div class="text-success"><i class="fas fa-check"></i> Criteria saved successfully (${criteriaList.length} items)</div>`;
+                    
+                    // Store file path for later use (similar to file upload)
+                    if (type === 'annual') {
+                        window.annualCriteriaFile = result.path;
+                    } else {
+                        window.competencyCriteriaFile = result.path;
+                    }
+                    
+                    showAlert(`${type === 'annual' ? 'Annual' : 'Competency'} criteria saved successfully!`, 'success');
+                } else {
+                    const error = result?.error || data.error || 'Save failed';
+                    statusDiv.innerHTML = `<div class="text-danger"><i class="fas fa-exclamation-triangle"></i> ${error}</div>`;
+                }
+            })
+            .catch(error => {
+                statusDiv.innerHTML = `<div class="text-danger"><i class="fas fa-exclamation-triangle"></i> Save failed: ${error.message}</div>`;
+            });
+            
+        } catch (error) {
+            statusDiv.innerHTML = `<div class="text-danger"><i class="fas fa-exclamation-triangle"></i> Error: ${error.message}</div>`;
+        }
+    }
+    
     function setupLLMProviderChange() {
         const providerSelect = document.getElementById('llm-provider');
-        const modelSelect = document.getElementById('llm-model');
+        const modelSelect = document.getElementById('llm-model'); // Hidden select (for backward compatibility)
+        const modelInput = document.getElementById('llm-model-input');
+        const clearModelBtn = document.getElementById('clear-model-btn');
+        
+        // Initialize previously used models storage
+        let previouslyUsedModels = JSON.parse(localStorage.getItem('previouslyUsedModels') || '[]');
         
         providerSelect.addEventListener('change', function() {
             const provider = this.value;
             modelSelect.innerHTML = '<option value="">Select model...</option>';
+            modelInput.value = ''; // Clear the input when provider changes
             
             if (provider !== 'none' && modelsByProvider[provider]) {
                 modelsByProvider[provider].forEach(model => {
@@ -387,8 +946,63 @@
                 });
             }
             
+            // Update the dropdown menu
+            updateModelDropdown(provider);
+            
             // Check for stored key when provider changes
             checkStoredKey(provider);
+        });
+        
+        // Clear model button handler
+        clearModelBtn.addEventListener('click', function() {
+            modelInput.value = '';
+            modelSelect.value = '';
+        });
+        
+        // Setup dropdown button handler
+        const dropdownBtn = document.getElementById('model-dropdown-btn');
+        const dropdownMenu = document.getElementById('model-dropdown-menu');
+        
+        // Toggle dropdown on button click
+        dropdownBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const isOpen = dropdownMenu.classList.contains('show');
+            
+            // Close all other dropdowns
+            document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+                menu.classList.remove('show');
+            });
+            
+            // Toggle this dropdown
+            if (!isOpen) {
+                dropdownMenu.classList.add('show');
+            }
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!dropdownBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
+                dropdownMenu.classList.remove('show');
+            }
+        });
+        
+        // Model input change handler - sync with hidden select
+        modelInput.addEventListener('input', function() {
+            modelSelect.value = this.value;
+            
+            // Save to previously used models when user types something substantial
+            if (this.value.trim() && this.value.length > 3 && !previouslyUsedModels.includes(this.value)) {
+                previouslyUsedModels.unshift(this.value);
+                // Keep only last 10 previously used models
+                previouslyUsedModels = previouslyUsedModels.slice(0, 10);
+                localStorage.setItem('previouslyUsedModels', JSON.stringify(previouslyUsedModels));
+                
+                // Update dropdown with new previously used models
+                const provider = providerSelect.value;
+                updateModelDropdown(provider);
+            }
         });
         
         // Setup key storage button handlers
@@ -411,11 +1025,95 @@
                 });
                 // Select a default model if available
                 if (modelsByProvider[initialProvider].length > 0) {
-                    modelSelect.value = modelsByProvider[initialProvider][0];
+                    const defaultModel = modelsByProvider[initialProvider][0];
+                    modelSelect.value = defaultModel;
+                    modelInput.value = defaultModel;
                 }
             }
+            updateModelDropdown(initialProvider);
             checkStoredKey(initialProvider);
+        } else {
+            updateModelDropdown('none');
         }
+    }
+    
+    function updateModelDropdown(provider) {
+        const dropdown = document.getElementById('model-dropdown-menu');
+        const previouslyUsedModels = JSON.parse(localStorage.getItem('previouslyUsedModels') || '[]');
+        
+        // Clear existing content
+        dropdown.innerHTML = '';
+        
+        // Add common models section if provider is selected
+        if (provider !== 'none' && modelsByProvider[provider]) {
+            const commonHeader = document.createElement('li');
+            commonHeader.innerHTML = '<h6 class="dropdown-header">Common Models</h6>';
+            dropdown.appendChild(commonHeader);
+            
+            modelsByProvider[provider].forEach(model => {
+                const li = document.createElement('li');
+                const a = document.createElement('a');
+                a.className = 'dropdown-item';
+                a.href = '#';
+                a.textContent = model;
+                a.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    selectModel(model);
+                });
+                li.appendChild(a);
+                dropdown.appendChild(li);
+            });
+            
+            // Add divider if we have previously used models
+            if (previouslyUsedModels.length > 0) {
+                const divider = document.createElement('li');
+                divider.innerHTML = '<hr class="dropdown-divider">';
+                dropdown.appendChild(divider);
+            }
+        }
+        
+        // Add previously used models section
+        if (previouslyUsedModels.length > 0) {
+            const prevHeader = document.createElement('li');
+            prevHeader.innerHTML = '<h6 class="dropdown-header">Previously Used</h6>';
+            dropdown.appendChild(prevHeader);
+            
+            previouslyUsedModels.forEach(model => {
+                const li = document.createElement('li');
+                const a = document.createElement('a');
+                a.className = 'dropdown-item';
+                a.href = '#';
+                a.textContent = model;
+                a.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    selectModel(model);
+                });
+                li.appendChild(a);
+                dropdown.appendChild(li);
+            });
+        }
+        
+        // Show empty state if no models available
+        if (dropdown.children.length === 0) {
+            const li = document.createElement('li');
+            const span = document.createElement('span');
+            span.className = 'dropdown-item text-muted';
+            span.textContent = 'No models available';
+            li.appendChild(span);
+            dropdown.appendChild(li);
+        }
+    }
+    
+    function selectModel(model) {
+        const modelInput = document.getElementById('llm-model-input');
+        const modelSelect = document.getElementById('llm-model');
+        const dropdownMenu = document.getElementById('model-dropdown-menu');
+        
+        modelInput.value = model;
+        modelSelect.value = model;
+        
+        // Close the dropdown
+        dropdownMenu.classList.remove('show');
     }
     
     function testADOConnection() {
@@ -505,7 +1203,7 @@
         const dataSource = document.querySelector('input[name="data-source"]:checked').value;
         const outputFormat = document.querySelector('input[name="output-format"]:checked').value;
         const llmProvider = document.getElementById('llm-provider').value;
-        const llmModel = document.getElementById('llm-model').value;
+        const llmModel = document.getElementById('llm-model-input').value || document.getElementById('llm-model').value;
         const apiKey = document.getElementById('llm-api-key').value;
         
         // Prepare request data
@@ -591,6 +1289,12 @@
                 
                 // Clear the API key field since we have a stored one
                 document.getElementById('llm-api-key').value = '';
+                
+                // Populate the model field if we have a stored model
+                if (data.model) {
+                    document.getElementById('llm-model-input').value = data.model;
+                    document.getElementById('llm-model').value = data.model;
+                }
             } else {
                 statusDiv.textContent = 'No stored key found';
                 updateKeyButtons();
@@ -625,7 +1329,7 @@
     function storeApiKey() {
         const provider = document.getElementById('llm-provider').value;
         const apiKey = document.getElementById('llm-api-key').value.trim();
-        const model = document.getElementById('llm-model').value;
+        const model = document.getElementById('llm-model-input').value || document.getElementById('llm-model').value;
         const statusDiv = document.getElementById('stored-key-status');
         
         if (!provider || provider === 'none') {

@@ -168,49 +168,59 @@ def index():
 
 @app.route('/api/upload-criteria', methods=['POST'])
 def upload_criteria():
-    """Handle criteria file uploads (annual review and competency criteria)."""
+    """Handle criteria file uploads and manual entry (annual review and competency criteria)."""
     try:
         annual_file = request.files.get('annual_criteria')
         competency_file = request.files.get('competency_criteria')
         
         results = {}
         
-        if annual_file and allowed_file(annual_file.filename):
-            if annual_file.filename.endswith('.json'):
-                annual_content = json.loads(annual_file.read().decode('utf-8'))
-                annual_filename = secure_filename(f"annual_criteria_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
-                annual_path = os.path.join(app.config['UPLOAD_FOLDER'], annual_filename)
-                with open(annual_path, 'w') as f:
-                    json.dump(annual_content, f, indent=2)
-                results['annual_criteria'] = {
-                    'success': True,
-                    'filename': annual_filename,
-                    'path': annual_path,
-                    'sections': len(annual_content) if isinstance(annual_content, dict) else 0
-                }
-            else:
-                results['annual_criteria'] = {'success': False, 'error': 'Invalid file format. Please upload JSON.'}
+        # Handle annual criteria (file upload or manual entry via blob)
+        if annual_file:
+            try:
+                if annual_file.filename.endswith('.json'):
+                    annual_content = json.loads(annual_file.read().decode('utf-8'))
+                    annual_filename = secure_filename(f"annual_criteria_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
+                    annual_path = os.path.join(app.config['UPLOAD_FOLDER'], annual_filename)
+                    with open(annual_path, 'w') as f:
+                        json.dump(annual_content, f, indent=2)
+                    results['annual_criteria'] = {
+                        'success': True,
+                        'filename': annual_filename,
+                        'path': annual_path,
+                        'sections': len(annual_content) if isinstance(annual_content, dict) else 0
+                    }
+                else:
+                    results['annual_criteria'] = {'success': False, 'error': 'Invalid file format. Please upload JSON.'}
+            except json.JSONDecodeError:
+                results['annual_criteria'] = {'success': False, 'error': 'Invalid JSON format in annual criteria.'}
+            except Exception as e:
+                results['annual_criteria'] = {'success': False, 'error': f'Error processing annual criteria: {str(e)}'}
         
-        if competency_file and allowed_file(competency_file.filename):
-            if competency_file.filename.endswith('.json'):
-                competency_content = json.loads(competency_file.read().decode('utf-8'))
-                competency_filename = secure_filename(f"competency_criteria_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
-                competency_path = os.path.join(app.config['UPLOAD_FOLDER'], competency_filename)
-                with open(competency_path, 'w') as f:
-                    json.dump(competency_content, f, indent=2)
-                results['competency_criteria'] = {
-                    'success': True,
-                    'filename': competency_filename,
-                    'path': competency_path,
-                    'sections': len(competency_content) if isinstance(competency_content, dict) else 0
-                }
-            else:
-                results['competency_criteria'] = {'success': False, 'error': 'Invalid file format. Please upload JSON.'}
+        # Handle competency criteria (file upload or manual entry via blob)
+        if competency_file:
+            try:
+                if competency_file.filename.endswith('.json'):
+                    competency_content = json.loads(competency_file.read().decode('utf-8'))
+                    competency_filename = secure_filename(f"competency_criteria_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
+                    competency_path = os.path.join(app.config['UPLOAD_FOLDER'], competency_filename)
+                    with open(competency_path, 'w') as f:
+                        json.dump(competency_content, f, indent=2)
+                    results['competency_criteria'] = {
+                        'success': True,
+                        'filename': competency_filename,
+                        'path': competency_path,
+                        'sections': len(competency_content) if isinstance(competency_content, dict) else 0
+                    }
+                else:
+                    results['competency_criteria'] = {'success': False, 'error': 'Invalid file format. Please upload JSON.'}
+            except json.JSONDecodeError:
+                results['competency_criteria'] = {'success': False, 'error': 'Invalid JSON format in competency criteria.'}
+            except Exception as e:
+                results['competency_criteria'] = {'success': False, 'error': f'Error processing competency criteria: {str(e)}'}
         
         return jsonify(results)
         
-    except json.JSONDecodeError:
-        return jsonify({'error': 'Invalid JSON format in uploaded file'}), 400
     except Exception as e:
         logger.error(f"Error uploading criteria: {str(e)}")
         return jsonify({'error': f'Upload failed: {str(e)}'}), 500

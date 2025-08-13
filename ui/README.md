@@ -7,10 +7,19 @@ A simple, intuitive web interface for the Performance Review Tracker system that
 The web UI provides a complete interface for:
 
 ### 📋 **Criteria Management**
-- Upload annual review criteria (JSON format)
-- Upload competency criteria (JSON format)  
-- Real-time validation and feedback
-- Drag-and-drop file upload support
+- **Dual Input Methods**: Choose between JSON file upload OR user-friendly form entry
+- **Annual Review Criteria**: Upload JSON files or use intuitive forms with validation
+- **Competency Criteria**: Upload JSON files or enter competencies through guided forms
+- **Form-Based Entry Features**:
+  - **Annual Review Forms**: Name, description, and optional weight (%) fields
+  - **Competency Forms**: Competency name, description, and all 5 level definitions
+  - **Real-time Display**: See entered criteria immediately as you add them
+  - **Edit & Delete**: Modify or remove criteria with visual buttons
+  - **Smart Validation**: Field-level validation with helpful error messages
+  - **Duplicate Prevention**: Automatic checking for duplicate names
+- **Visual Criteria Display**: Clean cards showing all entered criteria with level badges for competencies
+- **File Upload**: Traditional drag-and-drop JSON file upload support
+- **Flexible Workflow**: Mix and match - upload one type, manually enter another
 
 ### ⚙️ **Review Configuration**
 - Select review type (Competency Assessment or Annual Review)
@@ -77,11 +86,34 @@ Navigate to: `http://localhost:8888`
 
 ## Usage Guide
 
-### Step 1: Upload Criteria (Optional)
-- Upload your annual review criteria as JSON
-- Upload your competency criteria as JSON  
-- Files are validated automatically
-- Skip this step to use default criteria
+### Step 1: Configure Criteria (Optional)
+Choose how to provide your review criteria for each type:
+
+#### Annual Review Criteria
+- **Option 1: Upload JSON File** - Traditional file upload with drag-and-drop
+- **Option 2: Enter Using Forms** - User-friendly form with dedicated fields:
+  - **Section Name**: e.g., "Leadership", "Innovation"  
+  - **Description**: Clear description of what this section evaluates
+  - **Weight (%)**: Optional numerical weight for the section
+  - Click **Add** to add each criteria, see them appear in real-time
+  - **Edit/Delete** any criteria with visual buttons
+
+#### Competency Criteria
+- **Option 1: Upload JSON File** - Upload your competency framework as JSON
+- **Option 2: Enter Using Forms** - Guided form for each competency:
+  - **Competency Name**: e.g., "Programming", "Problem Management"
+  - **Description**: What skills this competency covers
+  - **Level Definitions**: All 5 levels from "Learning" to "Leading"
+  - Click **Add** to add each competency, see them appear with level badges
+  - **Edit/Delete** any competency with visual buttons
+
+#### Form Features & Validation
+- **Real-time Validation**: Field-level error messages for missing or duplicate entries
+- **Visual Display**: Clean cards show all entered criteria with edit/delete options
+- **Auto-Save**: Forms automatically convert to JSON and save through existing pipeline
+- **Mix & Match**: Upload JSON for one type, use forms for the other
+- **Sample Data**: See `ui/sample_criteria_data.md` for copy-paste examples
+- Skip this entire step to use built-in default criteria
 
 ### Step 2: Configure Review
 - Select **Competency Assessment** or **Annual Review**
