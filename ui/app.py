@@ -65,6 +65,18 @@ except ImportError:
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Import key storage
+try:
+    from ui.key_storage import get_key_storage
+except ImportError:
+    try:
+        # Try relative import for when running from ui directory
+        from key_storage import get_key_storage
+    except ImportError:
+        print("Warning: key_storage module not found. API key persistence disabled.", file=sys.stderr)
+        def get_key_storage():
+            return None
+
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-key-change-in-production')
 
@@ -156,49 +168,59 @@ def index():
 
 @app.route('/api/upload-criteria', methods=['POST'])
 def upload_criteria():
-    """Handle criteria file uploads (annual review and competency criteria)."""
+    """Handle criteria file uploads and manual entry (annual review and competency criteria)."""
     try:
         annual_file = request.files.get('annual_criteria')
         competency_file = request.files.get('competency_criteria')
         
         results = {}
         
-        if annual_file and allowed_file(annual_file.filename):
-            if annual_file.filename.endswith('.json'):
-                annual_content = json.loads(annual_file.read().decode('utf-8'))
-                annual_filename = secure_filename(f"annual_criteria_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
-                annual_path = os.path.join(app.config['UPLOAD_FOLDER'], annual_filename)
-                with open(annual_path, 'w') as f:
-                    json.dump(annual_content, f, indent=2)
-                results['annual_criteria'] = {
-                    'success': True,
-                    'filename': annual_filename,
-                    'path': annual_path,
-                    'sections': len(annual_content) if isinstance(annual_content, dict) else 0
-                }
-            else:
-                results['annual_criteria'] = {'success': False, 'error': 'Invalid file format. Please upload JSON.'}
+        # Handle annual criteria (file upload or manual entry via blob)
+        if annual_file:
+            try:
+                if annual_file.filename.endswith('.json'):
+                    annual_content = json.loads(annual_file.read().decode('utf-8'))
+                    annual_filename = secure_filename(f"annual_criteria_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
+                    annual_path = os.path.join(app.config['UPLOAD_FOLDER'], annual_filename)
+                    with open(annual_path, 'w') as f:
+                        json.dump(annual_content, f, indent=2)
+                    results['annual_criteria'] = {
+                        'success': True,
+                        'filename': annual_filename,
+                        'path': annual_path,
+                        'sections': len(annual_content) if isinstance(annual_content, dict) else 0
+                    }
+                else:
+                    results['annual_criteria'] = {'success': False, 'error': 'Invalid file format. Please upload JSON.'}
+            except json.JSONDecodeError:
+                results['annual_criteria'] = {'success': False, 'error': 'Invalid JSON format in annual criteria.'}
+            except Exception as e:
+                results['annual_criteria'] = {'success': False, 'error': f'Error processing annual criteria: {str(e)}'}
         
-        if competency_file and allowed_file(competency_file.filename):
-            if competency_file.filename.endswith('.json'):
-                competency_content = json.loads(competency_file.read().decode('utf-8'))
-                competency_filename = secure_filename(f"competency_criteria_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
-                competency_path = os.path.join(app.config['UPLOAD_FOLDER'], competency_filename)
-                with open(competency_path, 'w') as f:
-                    json.dump(competency_content, f, indent=2)
-                results['competency_criteria'] = {
-                    'success': True,
-                    'filename': competency_filename,
-                    'path': competency_path,
-                    'sections': len(competency_content) if isinstance(competency_content, dict) else 0
-                }
-            else:
-                results['competency_criteria'] = {'success': False, 'error': 'Invalid file format. Please upload JSON.'}
+        # Handle competency criteria (file upload or manual entry via blob)
+        if competency_file:
+            try:
+                if competency_file.filename.endswith('.json'):
+                    competency_content = json.loads(competency_file.read().decode('utf-8'))
+                    competency_filename = secure_filename(f"competency_criteria_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
+                    competency_path = os.path.join(app.config['UPLOAD_FOLDER'], competency_filename)
+                    with open(competency_path, 'w') as f:
+                        json.dump(competency_content, f, indent=2)
+                    results['competency_criteria'] = {
+                        'success': True,
+                        'filename': competency_filename,
+                        'path': competency_path,
+                        'sections': len(competency_content) if isinstance(competency_content, dict) else 0
+                    }
+                else:
+                    results['competency_criteria'] = {'success': False, 'error': 'Invalid file format. Please upload JSON.'}
+            except json.JSONDecodeError:
+                results['competency_criteria'] = {'success': False, 'error': 'Invalid JSON format in competency criteria.'}
+            except Exception as e:
+                results['competency_criteria'] = {'success': False, 'error': f'Error processing competency criteria: {str(e)}'}
         
         return jsonify(results)
         
-    except json.JSONDecodeError:
-        return jsonify({'error': 'Invalid JSON format in uploaded file'}), 400
     except Exception as e:
         logger.error(f"Error uploading criteria: {str(e)}")
         return jsonify({'error': f'Upload failed: {str(e)}'}), 500
@@ -351,6 +373,17 @@ def run_analysis():
         llm_provider = data.get('llm_provider')
         llm_model = data.get('llm_model')
         api_key = data.get('api_key')
+        
+        # Check for stored API key if none provided
+        if llm_provider and llm_provider != 'none' and not api_key:
+            storage = get_key_storage()
+            if storage:
+                stored_key_data = storage.get_key(llm_provider)
+                if stored_key_data:
+                    api_key = stored_key_data['api_key']
+                    # Use stored model if no model specified
+                    if not llm_model and stored_key_data.get('model'):
+                        llm_model = stored_key_data['model']
         
         # Prepare arguments for main analysis
         analysis_args = {
@@ -542,6 +575,102 @@ def download_result(filename):
     except Exception as e:
         logger.error(f"Download failed: {str(e)}")
         return jsonify({'error': 'Download failed'}), 500
+
+
+@app.route('/api/store-api-key', methods=['POST'])
+def store_api_key():
+    """Store an API key securely."""
+    try:
+        storage = get_key_storage()
+        if not storage:
+            return jsonify({'error': 'Key storage not available'}), 500
+        
+        data = request.get_json()
+        provider = data.get('provider')
+        api_key = data.get('api_key')
+        model = data.get('model')
+        
+        if not provider or not api_key:
+            return jsonify({'error': 'Provider and API key are required'}), 400
+        
+        success = storage.store_key(provider, api_key, model)
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': f'API key stored for {provider}'
+            })
+        else:
+            return jsonify({'error': 'Failed to store API key'}), 500
+            
+    except Exception as e:
+        logger.error(f"Error storing API key: {str(e)}")
+        return jsonify({'error': f'Failed to store API key: {str(e)}'}), 500
+
+
+@app.route('/api/get-stored-key/<provider>')
+def get_stored_key(provider):
+    """Get stored API key info (without exposing the key)."""
+    try:
+        storage = get_key_storage()
+        if not storage:
+            return jsonify({'has_key': False, 'error': 'Key storage not available'})
+        
+        key_data = storage.get_key(provider)
+        
+        if key_data:
+            # Return info without exposing the actual key
+            return jsonify({
+                'has_key': True,
+                'model': key_data.get('model'),
+                'stored_at': key_data.get('stored_at'),
+                'key_preview': f"{key_data['api_key'][:8]}..." if len(key_data['api_key']) > 8 else "***"
+            })
+        else:
+            return jsonify({'has_key': False})
+            
+    except Exception as e:
+        logger.error(f"Error retrieving API key info: {str(e)}")
+        return jsonify({'has_key': False, 'error': str(e)})
+
+
+@app.route('/api/delete-api-key/<provider>', methods=['DELETE'])
+def delete_api_key(provider):
+    """Delete a stored API key."""
+    try:
+        storage = get_key_storage()
+        if not storage:
+            return jsonify({'error': 'Key storage not available'}), 500
+        
+        success = storage.delete_key(provider)
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': f'API key deleted for {provider}'
+            })
+        else:
+            return jsonify({'error': 'API key not found or could not be deleted'}), 404
+            
+    except Exception as e:
+        logger.error(f"Error deleting API key: {str(e)}")
+        return jsonify({'error': f'Failed to delete API key: {str(e)}'}), 500
+
+
+@app.route('/api/list-stored-keys')
+def list_stored_keys():
+    """Get list of providers with stored keys."""
+    try:
+        storage = get_key_storage()
+        if not storage:
+            return jsonify({'providers': [], 'error': 'Key storage not available'})
+        
+        providers = storage.list_stored_providers()
+        return jsonify({'providers': providers})
+        
+    except Exception as e:
+        logger.error(f"Error listing stored keys: {str(e)}")
+        return jsonify({'providers': [], 'error': str(e)})
 
 
 if __name__ == '__main__':

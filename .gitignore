@@ -80,3 +80,7 @@ ui/results/performance_review_*.md
 ui/uploads/accomplishments_*.csv
 ui/uploads/
 ui/results/
+data/ado_*.csv
+data/proof*.csv
+data/analyzed_annual.md
+data/processed_annual.json

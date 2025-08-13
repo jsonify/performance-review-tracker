@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual Criteria Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container py-4">
+        <h2>Test Manual Criteria Entry</h2>
+        <p class="text-muted">This is a simple test page to demonstrate the manual criteria entry functionality.</p>
+        
+        <!-- Annual Review Example -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Annual Review Criteria Example</h5>
+            </div>
+            <div class="card-body">
+                <pre><code>{
+  "leadership": {
+    "description": "Demonstrates leadership capabilities and influences team direction",
+    "weight": 25
+  },
+  "collaboration": {
+    "description": "Works effectively with team members and stakeholders",
+    "weight": 20
+  },
+  "technical_excellence": {
+    "description": "Maintains high technical standards and best practices",
+    "weight": 20
+  },
+  "innovation": {
+    "description": "Introduces new ideas and improves existing processes",
+    "weight": 15
+  },
+  "business_impact": {
+    "description": "Contributes to business objectives and measurable outcomes",
+    "weight": 20
+  }
+}</code></pre>
+            </div>
+        </div>
+        
+        <!-- Competency Example -->
+        <div class="card">
+            <div class="card-header">
+                <h5>Competency Criteria Example</h5>
+            </div>
+            <div class="card-body">
+                <pre><code>{
+  "Programming": {
+    "description": "Software development and coding skills",
+    "levels": {
+      "1": "Learning - Beginning to apply programming concepts with guidance",
+      "2": "Developing - Building programming proficiency with occasional support",
+      "3": "Practicing - Demonstrating consistent programming competency independently",
+      "4": "Mastering - Advanced programming proficiency, able to guide others",
+      "5": "Leading - Expert programming level, driving technical innovation"
+    }
+  },
+  "Problem Management": {
+    "description": "Issue resolution and troubleshooting capabilities",
+    "levels": {
+      "1": "Learning - Beginning to apply problem-solving with guidance",
+      "2": "Developing - Building problem-solving skills with occasional support",
+      "3": "Practicing - Consistent independent problem resolution",
+      "4": "Mastering - Advanced problem-solving, able to handle complex issues",
+      "5": "Leading - Expert problem solver, defines resolution strategies"
+    }
+  },
+  "Solution Architecture": {
+    "description": "System design and technical architecture capabilities",
+    "levels": {
+      "1": "Learning - Beginning to understand architecture concepts",
+      "2": "Developing - Building architecture skills with guidance",
+      "3": "Practicing - Consistent architecture contributions",
+      "4": "Mastering - Advanced architecture design capabilities",
+      "5": "Leading - Expert architect, defines technical strategy"
+    }
+  }
+}</code></pre>
+            </div>
+        </div>
+        
+        <div class="alert alert-info mt-4">
+            <h6>Usage Instructions:</h6>
+            <ol>
+                <li>Copy the example JSON from above</li>
+                <li>Go to the main Performance Review Tracker UI</li>
+                <li>In Step 1, select "Enter Manually" for either Annual Review or Competency Criteria</li>
+                <li>Paste the JSON into the textarea</li>
+                <li>Click "Validate JSON" to check the format</li>
+                <li>Click "Save Criteria" to save and use in your analysis</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>
