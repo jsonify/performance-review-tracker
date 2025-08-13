@@ -16,6 +16,8 @@ import sys
 import json
 import tempfile
 import logging
+import threading
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, Any, Optional, List
@@ -94,6 +96,39 @@ os.makedirs(RESULTS_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['RESULTS_FOLDER'] = RESULTS_FOLDER
 
+# Progress tracking system
+progress_store = {}
+progress_lock = threading.Lock()
+
+
+def update_progress(job_id: str, stage: str, percentage: int, message: str = ""):
+    """Update progress for a job."""
+    with progress_lock:
+        progress_store[job_id] = {
+            'stage': stage,
+            'percentage': percentage,
+            'message': message,
+            'timestamp': datetime.now().isoformat()
+        }
+
+
+def get_progress(job_id: str) -> Dict[str, Any]:
+    """Get progress for a job."""
+    with progress_lock:
+        return progress_store.get(job_id, {
+            'stage': 'unknown',
+            'percentage': 0,
+            'message': 'Unknown job',
+            'timestamp': datetime.now().isoformat()
+        })
+
+
+def clear_progress(job_id: str):
+    """Clear progress for a job."""
+    with progress_lock:
+        if job_id in progress_store:
+            del progress_store[job_id]
+
 
 def allowed_file(filename):
     """Check if file extension is allowed."""
@@ -122,30 +157,11 @@ def get_common_models():
     """Get common model options by provider."""
     return {
         'requestyai': [
-            # Most Popular Models
-            'openai/gpt-4o',
-            'openai/gpt-4o-mini', 
-            'anthropic/claude-3-5-sonnet-20241022',
+            # Available Models
+            'google/gemini-2.5-pro',
             'coding/claude-4-sonnet',
-            # Coding & Reasoning Models
-            'openai/o1-preview',
-            'openai/o1-mini',
-            'mistral/codestral-latest',
-            'deepseek/deepseek-coder',
-            # Other Popular Options
-            'anthropic/claude-3-5-haiku-20241022',
-            'google/gemini-1.5-pro',
-            'google/gemini-1.5-flash',
-            'openai/gpt-4-turbo',
-            'openai/gpt-3.5-turbo',
-            'anthropic/claude-3-opus-20240229',
-            'meta/llama-3.2-90b',
-            'meta/llama-3.1-70b',
-            'meta/llama-3.2-11b',
-            'mistral/mistral-large-2407',
-            'cohere/command-r-plus',
-            'cohere/command-r',
-            'x-ai/grok-beta'
+            'deepinfra/deepseek-ai/DeepSeek-R1',
+            'openai/gpt-5'
         ],
         'openai': ['gpt-4', 'gpt-4-turbo', 'gpt-3.5-turbo'],
         'anthropic': ['claude-3-opus', 'claude-3-sonnet', 'claude-3-haiku'],
@@ -357,11 +373,30 @@ def fetch_ado_data():
         }), 400
 
 
+@app.route('/api/get-progress/<job_id>')
+def get_progress_api(job_id):
+    """Get progress for a specific job."""
+    try:
+        progress = get_progress(job_id)
+        return jsonify(progress)
+    except Exception as e:
+        logger.error(f"Error getting progress: {str(e)}")
+        return jsonify({
+            'stage': 'error',
+            'percentage': 0,
+            'message': f'Error: {str(e)}',
+            'timestamp': datetime.now().isoformat()
+        }), 500
+
+
 @app.route('/api/run-analysis', methods=['POST'])
 def run_analysis():
     """Run performance review analysis."""
     try:
         data = request.get_json()
+        
+        # Generate unique job ID for progress tracking
+        job_id = f"analysis_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}"
         
         # Extract parameters
         review_type = data.get('review_type', 'competency')
@@ -374,7 +409,11 @@ def run_analysis():
         llm_model = data.get('llm_model')
         api_key = data.get('api_key')
         
+        # Initialize progress
+        update_progress(job_id, 'initializing', 5, 'Starting analysis...')
+        
         # Check for stored API key if none provided
+        update_progress(job_id, 'configuration', 10, 'Configuring LLM settings...')
         if llm_provider and llm_provider != 'none' and not api_key:
             storage = get_key_storage()
             if storage:
@@ -386,6 +425,7 @@ def run_analysis():
                         llm_model = stored_key_data['model']
         
         # Prepare arguments for main analysis
+        update_progress(job_id, 'preparation', 20, 'Preparing analysis parameters...')
         analysis_args = {
             'source': data_source,
             'type': review_type,
@@ -416,6 +456,7 @@ def run_analysis():
             analysis_args['config'] = config_file
         
         # Run actual analysis using your existing main.py functionality
+        update_progress(job_id, 'processing', 30, 'Preparing analysis environment...')
         file_extension = 'md' if output_format.lower() == 'markdown' else output_format
         result_file = f"performance_review_{review_type}_{year}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{file_extension}"
         result_path = os.path.join(app.config['RESULTS_FOLDER'], result_file)
@@ -440,10 +481,25 @@ def run_analysis():
                     cmd_args.extend(['--file', csv_file])
                 else:
                     # Error: CSV source requires a file
+                    clear_progress(job_id)
                     return jsonify({
                         'success': False,
                         'error': 'CSV source selected but no CSV file provided. Please upload a CSV file first.'
                     }), 400
+            
+            # Handle criteria file - copy uploaded criteria to expected location
+            criteria_file = data.get('criteria_file')
+            if criteria_file and os.path.exists(criteria_file):
+                import shutil
+                # Create criteria directory if it doesn't exist
+                os.makedirs('criteria', exist_ok=True)
+                
+                # Copy criteria file to expected location based on review type
+                expected_criteria_file = f"criteria/{review_type}_review_criteria.json"
+                shutil.copy2(criteria_file, expected_criteria_file)
+                logger.info(f"Copied criteria file from {criteria_file} to {expected_criteria_file}")
+            else:
+                logger.warning(f"No criteria file found or file doesn't exist: {criteria_file}")
             
             # Create complete config file (always needed)
             temp_config = {
@@ -469,7 +525,7 @@ def run_analysis():
                     'fallback_to_roo': True,
                     'options': {
                         'temperature': 0.7,
-                        'max_tokens': 4000
+                        'max_tokens': 32000
                     }
                 },
                 'processing': {
@@ -490,8 +546,49 @@ def run_analysis():
             cmd_args.extend(['--output', result_path])
             
             # Execute the analysis
+            update_progress(job_id, 'executing', 50, 'Starting analysis process...')
             logger.info(f"Running analysis command: {' '.join(cmd_args)}")
-            result = subprocess.run(cmd_args, capture_output=True, text=True, cwd='.')
+            
+            # Start the subprocess with non-blocking progress monitoring
+            import threading
+            import time
+            
+            # Progress stages with more realistic timing
+            progress_stages = [
+                (55, 'Loading data and validating...'),
+                (65, 'Processing accomplishments...'), 
+                (75, 'Analyzing competencies...'),
+                (85, 'Generating insights...'),
+                (90, 'Formatting report...')
+            ]
+            
+            # Start subprocess with Popen for non-blocking execution
+            process = subprocess.Popen(cmd_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, cwd='.')
+            
+            # Monitor progress while process runs
+            stage_index = 0
+            while process.poll() is None:  # Process is still running
+                if stage_index < len(progress_stages):
+                    percentage, message = progress_stages[stage_index]
+                    update_progress(job_id, 'executing', percentage, message)
+                    stage_index += 1
+                
+                # Wait before checking again
+                time.sleep(3 if stage_index < len(progress_stages) else 1)
+            
+            # Get the final result
+            stdout, stderr = process.communicate()
+            
+            # Create a result object similar to subprocess.run
+            class ProcessResult:
+                def __init__(self, returncode, stdout, stderr):
+                    self.returncode = returncode
+                    self.stdout = stdout
+                    self.stderr = stderr
+            
+            result = ProcessResult(process.returncode, stdout, stderr)
+            
+            update_progress(job_id, 'finalizing', 95, 'Finalizing report...')
             
             if result.returncode == 0:
                 # Success - the file should be created by main.py
@@ -545,19 +642,75 @@ def run_analysis():
                     f.write(f"\nLLM Provider: {llm_provider}\n")
                     f.write(f"LLM Model: {llm_model or 'default'}\n")
         
+        # Mark as complete and prepare result metadata
+        update_progress(job_id, 'completed', 100, 'Analysis completed successfully!')
+        
+        # Read file size for metadata
+        file_size = 0
+        if os.path.exists(result_path):
+            file_size = os.path.getsize(result_path)
+        
+        # Clear progress after a delay (keep it available for final check)
+        def cleanup_progress():
+            time.sleep(30)  # Keep progress for 30 seconds
+            clear_progress(job_id)
+        
+        threading.Thread(target=cleanup_progress, daemon=True).start()
+        
         return jsonify({
             'success': True,
+            'job_id': job_id,
             'result_file': result_file,
             'result_path': result_path,
-            'message': 'Analysis completed successfully'
+            'message': 'Analysis completed successfully',
+            'metadata': {
+                'review_type': review_type,
+                'year': year,
+                'data_source': data_source,
+                'output_format': output_format,
+                'llm_provider': llm_provider if llm_provider != 'none' else None,
+                'llm_model': llm_model if llm_provider != 'none' else None,
+                'file_size': file_size,
+                'generated_at': datetime.now().isoformat()
+            }
         })
         
     except Exception as e:
         logger.error(f"Analysis failed: {str(e)}")
+        # Clear progress on error
+        try:
+            clear_progress(job_id)
+        except:
+            pass
         return jsonify({
             'success': False,
             'error': str(e)
         }), 500
+
+
+@app.route('/api/get-result-content/<filename>')
+def get_result_content(filename):
+    """Get the content of a result file for inline display."""
+    try:
+        safe_filename = secure_filename(filename)
+        file_path = os.path.join(app.config['RESULTS_FOLDER'], safe_filename)
+        
+        if not os.path.exists(file_path):
+            return jsonify({'error': 'File not found'}), 404
+        
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        return jsonify({
+            'success': True,
+            'content': content,
+            'filename': safe_filename,
+            'size': len(content)
+        })
+        
+    except Exception as e:
+        logger.error(f"Error reading result content: {str(e)}")
+        return jsonify({'error': f'Failed to read content: {str(e)}'}), 500
 
 
 @app.route('/api/download-result/<filename>')
