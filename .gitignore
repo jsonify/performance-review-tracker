@@ -88,3 +88,8 @@ data/analyzed_annual.md
 data/processed_annual.json
 
 ui/secure_storage/
+screenshots/
+function_test_screenshot.png
+crash_screenshot.png
+debug_screenshot.png
+direct_test_screenshot.png

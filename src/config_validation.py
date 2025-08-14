@@ -252,11 +252,12 @@ class ConfigValidator:
             
             ado_config = self.config_data.get("azure_devops", {})
             
-            # Check required fields
+            # Check required fields (skip if values are placeholders)
             required_fields = ["organization", "project", "personal_access_token"]
             for field in required_fields:
-                if not ado_config.get(field):
-                    return False, f"Azure DevOps configuration missing required field: {field}"
+                value = ado_config.get(field)
+                if not value or value == "n/a":
+                    return False, f"Azure DevOps configuration missing or has placeholder value for field: {field}"
             
             # Test connection
             client = ADOUserStoryClient(
