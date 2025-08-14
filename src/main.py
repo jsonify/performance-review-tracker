@@ -1238,7 +1238,9 @@ Examples:
         # Load and validate configuration
         print("Loading configuration...")
         try:
-            config = load_and_validate_config(args.config, create_if_missing=False, test_connections=True)
+            # Skip connection testing for CSV source to avoid ADO validation failures
+            test_connections = args.source not in ['csv']
+            config = load_and_validate_config(args.config, create_if_missing=False, test_connections=test_connections)
         except ConfigValidationError as e:
             print(f"Configuration error: {e}", file=sys.stderr)
             print("Hint: Use --create-config to create an example configuration file.", file=sys.stderr)

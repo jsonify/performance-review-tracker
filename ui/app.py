@@ -101,14 +101,20 @@ progress_store = {}
 progress_lock = threading.Lock()
 
 
-def update_progress(job_id: str, stage: str, percentage: int, message: str = ""):
+def update_progress(job_id: str, stage: str, percentage: int, message: str = "", details: str = ""):
     """Update progress for a job."""
     with progress_lock:
+        # Get existing data to preserve start_time
+        existing = progress_store.get(job_id, {})
+        start_time = existing.get('start_time', datetime.now().isoformat())
+        
         progress_store[job_id] = {
             'stage': stage,
             'percentage': percentage,
             'message': message,
-            'timestamp': datetime.now().isoformat()
+            'details': details,
+            'timestamp': datetime.now().isoformat(),
+            'start_time': start_time
         }
 
 
@@ -119,7 +125,9 @@ def get_progress(job_id: str) -> Dict[str, Any]:
             'stage': 'unknown',
             'percentage': 0,
             'message': 'Unknown job',
-            'timestamp': datetime.now().isoformat()
+            'details': '',
+            'timestamp': datetime.now().isoformat(),
+            'start_time': datetime.now().isoformat()
         })
 
 
@@ -389,6 +397,7 @@ def get_progress_api(job_id):
         }), 500
 
 
+
 @app.route('/api/run-analysis', methods=['POST'])
 def run_analysis():
     """Run performance review analysis."""
@@ -398,11 +407,19 @@ def run_analysis():
         # Generate unique job ID for progress tracking
         job_id = f"analysis_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}"
         
-        # Extract parameters
-        review_type = data.get('review_type', 'competency')
-        year = data.get('year', get_current_year())
-        data_source = data.get('data_source', 'csv')
-        output_format = data.get('output_format', 'markdown')
+        # Extract parameters with validation
+        review_type = data.get('review_type', 'competency') or 'competency'
+        year = data.get('year', get_current_year()) or get_current_year()
+        data_source = data.get('data_source', 'csv') or 'csv'
+        output_format = data.get('output_format', 'markdown') or 'markdown'
+        
+        # Validate required parameters
+        if not review_type or not year or not data_source or not output_format:
+            clear_progress(job_id)
+            return jsonify({
+                'success': False,
+                'error': f'Missing required parameters: review_type={review_type}, year={year}, data_source={data_source}, output_format={output_format}'
+            }), 400
         
         # LLM configuration
         llm_provider = data.get('llm_provider')
@@ -410,10 +427,9 @@ def run_analysis():
         api_key = data.get('api_key')
         
         # Initialize progress
-        update_progress(job_id, 'initializing', 5, 'Starting analysis...')
+        update_progress(job_id, 'running', 10, 'Running analysis...', 'Processing your performance data')
         
         # Check for stored API key if none provided
-        update_progress(job_id, 'configuration', 10, 'Configuring LLM settings...')
         if llm_provider and llm_provider != 'none' and not api_key:
             storage = get_key_storage()
             if storage:
@@ -423,9 +439,6 @@ def run_analysis():
                     # Use stored model if no model specified
                     if not llm_model and stored_key_data.get('model'):
                         llm_model = stored_key_data['model']
-        
-        # Prepare arguments for main analysis
-        update_progress(job_id, 'preparation', 20, 'Preparing analysis parameters...')
         analysis_args = {
             'source': data_source,
             'type': review_type,
@@ -456,7 +469,7 @@ def run_analysis():
             analysis_args['config'] = config_file
         
         # Run actual analysis using your existing main.py functionality
-        update_progress(job_id, 'processing', 30, 'Preparing analysis environment...')
+        update_progress(job_id, 'running', 50, 'Processing data...', 'Analysis in progress')
         file_extension = 'md' if output_format.lower() == 'markdown' else output_format
         result_file = f"performance_review_{review_type}_{year}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{file_extension}"
         result_path = os.path.join(app.config['RESULTS_FOLDER'], result_file)
@@ -546,49 +559,13 @@ def run_analysis():
             cmd_args.extend(['--output', result_path])
             
             # Execute the analysis
-            update_progress(job_id, 'executing', 50, 'Starting analysis process...')
             logger.info(f"Running analysis command: {' '.join(cmd_args)}")
             
-            # Start the subprocess with non-blocking progress monitoring
-            import threading
-            import time
+            # Execute the analysis with simple subprocess.run
+            result = subprocess.run(cmd_args, capture_output=True, text=True, cwd='.')
             
-            # Progress stages with more realistic timing
-            progress_stages = [
-                (55, 'Loading data and validating...'),
-                (65, 'Processing accomplishments...'), 
-                (75, 'Analyzing competencies...'),
-                (85, 'Generating insights...'),
-                (90, 'Formatting report...')
-            ]
-            
-            # Start subprocess with Popen for non-blocking execution
-            process = subprocess.Popen(cmd_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, cwd='.')
-            
-            # Monitor progress while process runs
-            stage_index = 0
-            while process.poll() is None:  # Process is still running
-                if stage_index < len(progress_stages):
-                    percentage, message = progress_stages[stage_index]
-                    update_progress(job_id, 'executing', percentage, message)
-                    stage_index += 1
-                
-                # Wait before checking again
-                time.sleep(3 if stage_index < len(progress_stages) else 1)
-            
-            # Get the final result
-            stdout, stderr = process.communicate()
-            
-            # Create a result object similar to subprocess.run
-            class ProcessResult:
-                def __init__(self, returncode, stdout, stderr):
-                    self.returncode = returncode
-                    self.stdout = stdout
-                    self.stderr = stderr
-            
-            result = ProcessResult(process.returncode, stdout, stderr)
-            
-            update_progress(job_id, 'finalizing', 95, 'Finalizing report...')
+            # Mark as complete
+            update_progress(job_id, 'completed', 100, 'Analysis complete!', 'Report generated successfully')
             
             if result.returncode == 0:
                 # Success - the file should be created by main.py
@@ -642,20 +619,15 @@ def run_analysis():
                     f.write(f"\nLLM Provider: {llm_provider}\n")
                     f.write(f"LLM Model: {llm_model or 'default'}\n")
         
-        # Mark as complete and prepare result metadata
-        update_progress(job_id, 'completed', 100, 'Analysis completed successfully!')
+        # Analysis is already marked as complete above
         
         # Read file size for metadata
         file_size = 0
         if os.path.exists(result_path):
             file_size = os.path.getsize(result_path)
         
-        # Clear progress after a delay (keep it available for final check)
-        def cleanup_progress():
-            time.sleep(30)  # Keep progress for 30 seconds
-            clear_progress(job_id)
-        
-        threading.Thread(target=cleanup_progress, daemon=True).start()
+        # Clear progress after analysis is complete (no need for threading)
+        # Progress will be cleared when UI polls for results
         
         return jsonify({
             'success': True,

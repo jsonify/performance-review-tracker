@@ -87,15 +87,19 @@
                 </div>
                 <div class="progress-step" data-step="data">
                     <div class="step-circle">2</div>
-                    <span class="step-label">Data Source</span>
+                    <span class="step-label">Data</span>
                 </div>
                 <div class="progress-step" data-step="ai">
                     <div class="step-circle">3</div>
-                    <span class="step-label">AI Analysis</span>
+                    <span class="step-label">AI Setup</span>
                 </div>
                 <div class="progress-step" data-step="generate">
                     <div class="step-circle">4</div>
                     <span class="step-label">Generate</span>
+                </div>
+                <div class="progress-step" data-step="results">
+                    <div class="step-circle">5</div>
+                    <span class="step-label">Results</span>
                 </div>
             </div>
             <div class="progress-line"></div>
@@ -500,6 +504,107 @@
             </div>
         </div>
     </div>
+
+    <!-- Step 5: Results -->
+    <div class="workflow-step" id="step-results" style="display: none;">
+        <div class="row">
+            <div class="col-12">
+                <div class="step-card">
+                    <div class="step-header">
+                        <h4><i class="fas fa-check-circle text-success"></i> Performance Review Generated</h4>
+                        <p>Your performance review has been successfully generated and is ready for download</p>
+                    </div>
+                    
+                    <!-- Process Statistics -->
+                    <div class="process-stats mb-4">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <div class="stat-card" data-stat="time">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-clock"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <h6>Processing Time</h6>
+                                        <span id="final-processing-time" class="stat-value">--:--</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-card" data-stat="size">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-file-alt"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <h6>File Size</h6>
+                                        <span id="final-file-size" class="stat-value">-- KB</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-card" data-stat="ai">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-robot"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <h6>AI Provider</h6>
+                                        <span id="final-ai-provider" class="stat-value">--</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-card" data-stat="generated">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-calendar"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <h6>Generated</h6>
+                                        <span id="final-generated-time" class="stat-value">--</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Report Content Preview -->
+                    <div class="report-preview-section">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5><i class="fas fa-file-alt"></i> Report Content</h5>
+                            <div class="report-preview-actions">
+                                <button type="button" id="expand-preview-btn" class="btn btn-outline-secondary btn-sm">
+                                    <i class="fas fa-expand"></i> Expand
+                                </button>
+                                <button type="button" id="copy-content-btn" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-copy"></i> Copy
+                                </button>
+                                <button type="button" id="download-file-btn" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-download"></i> Download
+                                </button>
+                            </div>
+                        </div>
+                        <div id="report-preview-content" class="report-preview-content">
+                            <!-- Report content will be loaded here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="results-actions mt-4">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <button type="button" class="btn btn-success btn-lg w-100" onclick="generateAnotherReview()">
+                                    <i class="fas fa-plus"></i> Generate Another Review
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <button type="button" class="btn btn-outline-primary btn-lg w-100" onclick="resetWorkflow()">
+                                    <i class="fas fa-home"></i> Start Over
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Progress Indicator -->
@@ -511,15 +616,25 @@
         </div>
         <div class="progress-content">
             <div class="progress-stage mb-3">
-                <h5 id="current-stage">Initializing...</h5>
-                <p id="stage-message" class="text-muted">Starting analysis...</p>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 id="current-stage" class="mb-0">Initializing...</h5>
+                    <div class="progress-timer">
+                        <span class="badge bg-info">
+                            <i class="fas fa-clock"></i> <span id="elapsed-time">00:00</span>
+                        </span>
+                    </div>
+                </div>
+                <p id="stage-message" class="text-muted mb-1">Starting analysis...</p>
+                <p id="stage-details" class="text-muted small mb-0" style="opacity: 0.8;"></p>
             </div>
-            <div class="progress mb-3" style="height: 8px;">
-                <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" 
-                     role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+            <div class="progress mb-3" style="height: 12px;">
+                <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" 
+                     role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                    <span id="progress-percentage" class="small fw-bold" style="line-height: 12px;">0%</span>
+                </div>
             </div>
             <div class="progress-stages small text-muted">
-                <div class="row">
+                <div class="row g-2">
                     <div class="col-3"><span id="stage-init" class="badge bg-secondary">Initializing</span></div>
                     <div class="col-3"><span id="stage-config" class="badge bg-secondary">Configuration</span></div>
                     <div class="col-3"><span id="stage-processing" class="badge bg-secondary">Processing</span></div>
@@ -624,6 +739,12 @@
     let currentWorkflow = null;
     let currentStep = 'criteria';
     let stepData = {};
+    
+    // Global variables for progress tracking
+    let currentJobId = null;
+    let progressInterval = null;
+    let timerInterval = null;
+    let analysisStartTime = null;
 
     // Initialize app
     document.addEventListener('DOMContentLoaded', function() {
@@ -1029,7 +1150,7 @@
 
     // Step Navigation Functions
     function nextStep() {
-        const stepOrder = ['criteria', 'data', 'ai', 'generate'];
+        const stepOrder = ['criteria', 'data', 'ai', 'generate', 'results'];
         const currentIndex = stepOrder.indexOf(currentStep);
         if (currentIndex < stepOrder.length - 1) {
             const nextStepName = stepOrder[currentIndex + 1];
@@ -1038,7 +1159,7 @@
     }
 
     function prevStep() {
-        const stepOrder = ['criteria', 'data', 'ai', 'generate'];
+        const stepOrder = ['criteria', 'data', 'ai', 'generate', 'results'];
         const currentIndex = stepOrder.indexOf(currentStep);
         if (currentIndex > 0) {
             const prevStepName = stepOrder[currentIndex - 1];
@@ -1068,7 +1189,7 @@
     }
 
     function updateProgressIndicators(activeStep) {
-        const steps = ['criteria', 'data', 'ai', 'generate'];
+        const steps = ['criteria', 'data', 'ai', 'generate', 'results'];
         const activeIndex = steps.indexOf(activeStep);
         
         steps.forEach((step, index) => {
@@ -1503,8 +1624,10 @@
         // Show progress and start tracking
         showProgress(true);
         document.getElementById('generate-btn').disabled = true;
-        let currentJobId = null;
-        let progressInterval = null;
+        
+        // Start timer immediately when analysis begins
+        analysisStartTime = new Date();
+        startTimer();
         
         // Start the analysis
         fetch('/api/run-analysis', {
@@ -1526,13 +1649,17 @@
                 waitForCompletion(currentJobId, data, progressInterval);
             } else {
                 showProgress(false);
+                stopTimer();
                 document.getElementById('generate-btn').disabled = false;
+                resetAnalysisState();
                 showAlert(`Analysis failed: ${data.error}`, 'danger');
             }
         })
         .catch(error => {
             showProgress(false);
+            stopTimer();
             document.getElementById('generate-btn').disabled = false;
+            resetAnalysisState();
             showAlert(`Analysis failed: ${error.message}`, 'danger');
         });
     }
@@ -1542,21 +1669,98 @@
         fetch(`/api/get-progress/${jobId}`)
         .then(response => response.json())
         .then(progress => {
+            // Timer is already started when analysis begins
+            // No need to start it again based on server response
+            
             // Update progress bar
             const progressBar = document.getElementById('progress-bar');
             progressBar.style.width = `${progress.percentage}%`;
             progressBar.setAttribute('aria-valuenow', progress.percentage);
             
+            // Update progress percentage text
+            const progressPercentage = document.getElementById('progress-percentage');
+            if (progressPercentage) {
+                progressPercentage.textContent = `${progress.percentage}%`;
+            }
+            
             // Update stage information
-            document.getElementById('current-stage').textContent = formatStageName(progress.stage);
-            document.getElementById('stage-message').textContent = progress.message;
+            const currentStage = document.getElementById('current-stage');
+            if (currentStage) {
+                currentStage.textContent = formatStageName(progress.stage);
+            }
+            
+            const stageMessage = document.getElementById('stage-message');
+            if (stageMessage) {
+                stageMessage.textContent = progress.message || 'Processing...';
+            }
+            
+            // Update stage details if available
+            const stageDetails = document.getElementById('stage-details');
+            if (stageDetails) {
+                if (progress.details) {
+                    stageDetails.textContent = progress.details;
+                    stageDetails.style.display = 'block';
+                } else {
+                    stageDetails.style.display = 'none';
+                }
+            }
             
             // Update stage badges
             updateStageBadges(progress.stage);
+            
+            // Change progress bar color based on stage
+            updateProgressBarColor(progress.stage, progress.percentage);
         })
         .catch(error => {
             console.error('Error fetching progress:', error);
         });
+    }
+    
+    // Start Timer
+    function startTimer() {
+        // Clear any existing timer
+        if (timerInterval) {
+            clearInterval(timerInterval);
+        }
+        
+        timerInterval = setInterval(() => {
+            if (analysisStartTime) {
+                const now = new Date();
+                const elapsed = Math.floor((now - analysisStartTime) / 1000);
+                const minutes = Math.floor(elapsed / 60);
+                const seconds = elapsed % 60;
+                const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                const elapsedTimeElement = document.getElementById('elapsed-time');
+                if (elapsedTimeElement) {
+                    elapsedTimeElement.textContent = timeString;
+                }
+            }
+        }, 1000);
+    }
+    
+    // Stop Timer
+    function stopTimer() {
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+    }
+    
+    // Update Progress Bar Color
+    function updateProgressBarColor(stage, percentage) {
+        const progressBar = document.getElementById('progress-bar');
+        progressBar.className = 'progress-bar progress-bar-striped progress-bar-animated';
+        
+        if (stage === 'completed') {
+            progressBar.classList.add('bg-success');
+        } else if (stage === 'error') {
+            progressBar.classList.add('bg-danger');
+        } else if (percentage >= 80) {
+            progressBar.classList.add('bg-warning');
+        } else {
+            progressBar.classList.add('bg-primary');
+        }
     }
     
     // Format Stage Name
@@ -1624,19 +1828,33 @@
             .then(response => response.json())
             .then(progress => {
                 if (progress.stage === 'completed' || progress.percentage >= 100) {
-                    // Stop progress polling
+                    // Stop progress polling and timer
                     clearInterval(progressInterval);
+                    stopTimer();
                     
-                    // Hide progress and show results
+                    // Ensure progress shows 100% completion briefly
+                    const progressBar = document.getElementById('progress-bar');
+                    if (progressBar) progressBar.style.width = '100%';
+                    
+                    const progressMessage = document.getElementById('progress-message');
+                    if (progressMessage) progressMessage.textContent = 'Analysis completed successfully!';
+                    
+                    const progressDetails = document.getElementById('progress-details');
+                    if (progressDetails) progressDetails.textContent = 'Report generated and ready for download';
+                    
+                    // Hide progress and show results after showing completion
                     setTimeout(() => {
                         showProgress(false);
                         displayResults(responseData);
                         document.getElementById('generate-btn').disabled = false;
-                    }, 1000);
+                        resetAnalysisState();
+                    }, 2000);
                 } else if (progress.stage === 'error') {
                     clearInterval(progressInterval);
+                    stopTimer();
                     showProgress(false);
                     document.getElementById('generate-btn').disabled = false;
+                    resetAnalysisState();
                     showAlert(`Analysis failed: ${progress.message}`, 'danger');
                 } else {
                     // Continue checking
@@ -1645,8 +1863,10 @@
             })
             .catch(error => {
                 clearInterval(progressInterval);
+                stopTimer();
                 showProgress(false);
                 document.getElementById('generate-btn').disabled = false;
+                resetAnalysisState();
                 showAlert(`Analysis monitoring failed: ${error.message}`, 'danger');
             });
         };
@@ -1657,38 +1877,78 @@
     
     // Display Results
     function displayResults(data) {
+        console.log('displayResults called with data:', data);
+        
         if (!data.success) {
             showAlert(`Analysis failed: ${data.error}`, 'danger');
             return;
         }
         
+        console.log('Navigating to results step...');
+        
+        // Navigate to results step first
+        setActiveStep('results');
+        
+        // Wait a moment for the DOM elements to be visible
+        setTimeout(() => {
+            console.log('Populating results data...');
+            populateResultsData(data);
+        }, 250);
+        
+        showAlert('Performance review generated successfully!', 'success');
+    }
+    
+    // Populate Results Data
+    function populateResultsData(data) {
+        console.log('populateResultsData called with:', data);
+        
         const metadata = data.metadata || {};
         
-        // Update summary information
-        document.getElementById('summary-review-type').textContent = metadata.review_type || 'Unknown';
-        document.getElementById('summary-review-year').textContent = metadata.year || 'Unknown';
-        document.getElementById('summary-data-source').textContent = (metadata.data_source || 'Unknown').toUpperCase();
-        document.getElementById('summary-format').textContent = (metadata.output_format || 'Unknown').toUpperCase();
+        // Calculate processing time
+        const processingTime = analysisStartTime ? 
+            Math.floor((new Date() - analysisStartTime) / 1000) : 0;
+        const minutes = Math.floor(processingTime / 60);
+        const seconds = processingTime % 60;
+        const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         
-        // Update AI details
-        document.getElementById('summary-llm-provider').textContent = metadata.llm_provider || 'Automated Only';
-        document.getElementById('summary-llm-model').textContent = metadata.llm_model || 'N/A';
-        document.getElementById('summary-file-size').textContent = formatFileSize(metadata.file_size || 0);
-        document.getElementById('summary-generated-at').textContent = formatDateTime(metadata.generated_at);
+        console.log('Looking for results elements...');
+        
+        // Update process statistics with null checks
+        const timeElement = document.getElementById('final-processing-time');
+        console.log('timeElement:', timeElement);
+        if (timeElement) timeElement.textContent = timeString;
+        
+        const sizeElement = document.getElementById('final-file-size');
+        console.log('sizeElement:', sizeElement);
+        if (sizeElement) sizeElement.textContent = formatFileSize(metadata.file_size || 0);
+        
+        const providerElement = document.getElementById('final-ai-provider');
+        console.log('providerElement:', providerElement);
+        if (providerElement) providerElement.textContent = metadata.llm_provider || 'Automated Only';
+        
+        const generatedElement = document.getElementById('final-generated-time');
+        console.log('generatedElement:', generatedElement);
+        if (generatedElement) generatedElement.textContent = formatDateTime(metadata.generated_at);
         
         // Load and display report content
-        loadReportContent(data.result_file);
+        if (data.result_file) {
+            console.log('Loading report content for:', data.result_file);
+            loadReportContentForResults(data.result_file);
+        }
         
-        // Setup download button
-        const downloadBtn = document.getElementById('download-report-btn');
-        downloadBtn.onclick = () => {
-            window.open(`/api/download-result/${data.result_file}`, '_blank');
-        };
+        // Setup download button for results screen
+        const downloadBtn = document.getElementById('download-file-btn');
+        console.log('downloadBtn:', downloadBtn);
+        if (downloadBtn) {
+            downloadBtn.onclick = () => {
+                window.open(`/api/download-result/${data.result_file}`, '_blank');
+            };
+        }
         
-        // Hide the main workflow and show results
-        document.getElementById('main-workflow').style.display = 'none';
-        showResult('', true);
-        showAlert('Performance review generated successfully!', 'success');
+        // Setup results screen event handlers
+        setupResultsScreenHandlers();
+        
+        console.log('Results data population complete');
     }
     
     // Load Report Content
@@ -1860,19 +2120,158 @@
         }
     }
     
-    function generateAnotherReview() {
-        // Hide results and show the main workflow
-        document.querySelector('.result-display').classList.remove('show');
-        document.getElementById('main-workflow').style.display = 'block';
+    // Reset Analysis State
+    function resetAnalysisState() {
+        analysisStartTime = null;
+        currentJobId = null;
         
-        // Go back to the generate step (last step)
+        // Reset progress display to initial state
+        document.getElementById('elapsed-time').textContent = '00:00';
+        document.getElementById('current-stage').textContent = 'Initializing...';
+        document.getElementById('stage-message').textContent = 'Starting analysis...';
+        document.getElementById('stage-details').textContent = '';
+        document.getElementById('progress-bar').style.width = '0%';
+        document.getElementById('progress-percentage').textContent = '0%';
+        
+        // Reset stage badges
+        const badges = ['stage-init', 'stage-config', 'stage-processing', 'stage-finalizing'];
+        badges.forEach(badgeId => {
+            const badge = document.getElementById(badgeId);
+            if (badge) {
+                badge.className = 'badge bg-secondary';
+            }
+        });
+        
+        // Reset progress bar color
+        const progressBar = document.getElementById('progress-bar');
+        progressBar.className = 'progress-bar progress-bar-striped progress-bar-animated bg-primary';
+    }
+    
+    // Load Report Content for Results Screen
+    function loadReportContentForResults(filename) {
+        fetch(`/api/get-result-content/${filename}`)
+        .then(response => response.json())
+        .then(data => {
+            const contentElement = document.getElementById('report-preview-content');
+            if (contentElement) {
+                if (data.success) {
+                    contentElement.textContent = data.content;
+                    setupResultsCopyButton(data.content);
+                } else {
+                    contentElement.textContent = 'Error loading report content.';
+                }
+            }
+        })
+        .catch(error => {
+            const contentElement = document.getElementById('report-preview-content');
+            if (contentElement) {
+                contentElement.textContent = 'Failed to load report content.';
+            }
+            console.error('Error loading report content:', error);
+        });
+    }
+    
+    // Setup Results Screen Event Handlers
+    function setupResultsScreenHandlers() {
+        // Expand/Collapse functionality
+        const expandBtn = document.getElementById('expand-preview-btn');
+        const previewContent = document.getElementById('report-preview-content');
+        
+        if (expandBtn && previewContent) {
+            expandBtn.onclick = () => {
+                if (previewContent.classList.contains('expanded')) {
+                    previewContent.classList.remove('expanded');
+                    expandBtn.innerHTML = '<i class="fas fa-expand"></i> Expand';
+                } else {
+                    previewContent.classList.add('expanded');
+                    expandBtn.innerHTML = '<i class="fas fa-compress"></i> Collapse';
+                }
+            };
+        }
+    }
+    
+    // Setup Copy Button for Results Screen
+    function setupResultsCopyButton(content) {
+        const copyBtn = document.getElementById('copy-content-btn');
+        if (copyBtn) {
+            copyBtn.onclick = () => {
+                navigator.clipboard.writeText(content).then(() => {
+                    // Show success feedback
+                    const originalHTML = copyBtn.innerHTML;
+                    copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                    copyBtn.classList.add('btn-copy-success');
+                    
+                    setTimeout(() => {
+                        copyBtn.innerHTML = originalHTML;
+                        copyBtn.classList.remove('btn-copy-success');
+                    }, 2000);
+                    
+                    showAlert('Report content copied to clipboard!', 'success');
+                }).catch(err => {
+                    showAlert('Failed to copy to clipboard', 'warning');
+                    console.error('Copy failed:', err);
+                });
+            };
+        }
+    }
+    
+    function generateAnotherReview() {
+        // Go back to the generate step (step 4)
         setActiveStep('generate');
         
         // Re-enable the generate button
         document.getElementById('generate-btn').disabled = false;
         
+        // Reset analysis state
+        resetAnalysisState();
+        
         // Show success message
         showAlert('Ready to generate another performance review!', 'info');
+    }
+    
+    function resetWorkflow() {
+        // Go back to step 1 (criteria)
+        setActiveStep('criteria');
+        
+        // Reset all form data
+        resetAllFormData();
+        
+        // Reset analysis state
+        resetAnalysisState();
+        
+        // Clear any stored data
+        selectedWorkflow = null;
+        currentStep = 'criteria';
+        
+        // Show info message
+        showAlert('Workflow reset. Start with selecting your criteria!', 'info');
+    }
+    
+    function resetAllFormData() {
+        // Reset criteria
+        document.querySelectorAll('[data-criteria-type]').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.getElementById('manual-criteria-text').value = '';
+        
+        // Reset data source
+        document.querySelectorAll('input[name="data_source"]').forEach(radio => {
+            radio.checked = false;
+        });
+        
+        // Reset AI configuration
+        document.getElementById('llm-api-key').value = '';
+        document.getElementById('llm-model-input').value = '';
+        
+        // Clear file uploads
+        document.querySelectorAll('input[type="file"]').forEach(input => {
+            input.value = '';
+        });
+        
+        // Reset buttons to disabled state
+        document.querySelectorAll('[id$="-next-btn"]').forEach(btn => {
+            btn.disabled = true;
+        });
     }
 </script>
 {% endblock %}
