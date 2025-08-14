@@ -30,7 +30,7 @@ except ImportError:
         def run_llm_analysis(data_file, review_type, config):
             # Fallback implementation
             from .llm_analyzer import generate_manual_analysis
-            return generate_manual_analysis(data_file, review_type)
+            return generate_manual_analysis(data_file, review_type, None, config)
         def validate_llm_config(config):
             return []
 
@@ -699,7 +699,7 @@ def run_roo_code_analysis(data_file: str, review_type: str) -> str:
         # Check if the analysis file is empty and generate manual analysis if needed
         if os.path.getsize(analysis_path) == 0:
             print("DEBUG: run_roo_code_analysis - AI analysis is empty, generating manual analysis...") # DEBUG LOG
-            manual_analysis = generate_manual_analysis(data_file, review_type)
+            manual_analysis = generate_manual_analysis(data_file, review_type, None, None)
             with open(analysis_path, 'w') as f:
                 f.write(manual_analysis)
             print(f"DEBUG: run_roo_code_analysis - Manual analysis saved to {analysis_path}") # DEBUG LOG
@@ -1238,7 +1238,9 @@ Examples:
         # Load and validate configuration
         print("Loading configuration...")
         try:
-            config = load_and_validate_config(args.config, create_if_missing=False, test_connections=True)
+            # Skip connection testing for CSV source to avoid ADO validation failures
+            test_connections = args.source not in ['csv']
+            config = load_and_validate_config(args.config, create_if_missing=False, test_connections=test_connections)
         except ConfigValidationError as e:
             print(f"Configuration error: {e}", file=sys.stderr)
             print("Hint: Use --create-config to create an example configuration file.", file=sys.stderr)

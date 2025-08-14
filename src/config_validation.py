@@ -45,7 +45,7 @@ class ConfigValidator:
     
     # Valid values for specific fields
     VALID_VALUES = {
-        "llm_integration.provider": ["openai", "anthropic", "roo_code"],
+        "llm_integration.provider": ["requestyai", "openai", "anthropic", "google", "azure_openai", "ollama", "roo_code"],
         "processing.default_source": ["csv", "ado", "hybrid"]
     }
     
@@ -159,9 +159,9 @@ class ConfigValidator:
                 ]
             },
             "llm_integration": {
-                "provider": "roo_code",
-                "api_key": "",
-                "model": "",
+                "provider": "requestyai",
+                "api_key": "your_requestyai_api_key_here",
+                "model": "openai/gpt-4o-mini",
                 "fallback_to_roo": True,
                 "options": {
                     "temperature": 0.7,
@@ -252,11 +252,12 @@ class ConfigValidator:
             
             ado_config = self.config_data.get("azure_devops", {})
             
-            # Check required fields
+            # Check required fields (skip if values are placeholders)
             required_fields = ["organization", "project", "personal_access_token"]
             for field in required_fields:
-                if not ado_config.get(field):
-                    return False, f"Azure DevOps configuration missing required field: {field}"
+                value = ado_config.get(field)
+                if not value or value == "n/a":
+                    return False, f"Azure DevOps configuration missing or has placeholder value for field: {field}"
             
             # Test connection
             client = ADOUserStoryClient(
@@ -300,7 +301,7 @@ class ConfigValidator:
                 # For Roo Code, we don't need API keys
                 return True, "✓ Roo Code integration configured (no API key required)"
             
-            elif provider in ["openai", "anthropic"]:
+            elif provider in ["requestyai", "openai", "anthropic", "google"]:
                 api_key = llm_config.get("api_key")
                 if not api_key or api_key.strip() == "":
                     return False, f"✗ {provider} provider requires api_key configuration"
@@ -308,8 +309,14 @@ class ConfigValidator:
                 # Basic API key format validation
                 if provider == "openai" and not api_key.startswith("sk-"):
                     return False, "✗ OpenAI API key should start with 'sk-'"
+                elif provider == "requestyai" and not api_key.startswith("sk-"):
+                    return False, "✗ RequestyAI API key should start with 'sk-'"
                 
                 return True, f"✓ {provider} integration configured (API key present)"
+            
+            elif provider in ["azure_openai", "ollama"]:
+                # These providers have different validation requirements
+                return True, f"✓ {provider} integration configured"
             
             else:
                 return False, f"✗ Unknown LLM provider: {provider}"

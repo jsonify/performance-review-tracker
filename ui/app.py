@@ -1,0 +1,805 @@
+#!/usr/bin/env python3
+"""
+Flask Web UI for Performance Review Tracker
+
+A simple, useful web interface for the Performance Review Tracker that provides:
+- JSON criteria upload (annual review + competency criteria)
+- Review type and year selection
+- CSV upload or ADO integration
+- LLM provider and model selection
+- API key management
+- Progress tracking and results display
+"""
+
+import os
+import sys
+import json
+import tempfile
+import logging
+import threading
+import time
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Dict, Any, Optional, List
+
+from flask import Flask, render_template, request, jsonify, flash, redirect, url_for, send_file
+from werkzeug.utils import secure_filename
+import pandas as pd
+
+# Add parent directory to path to import our modules
+project_root = str(Path(__file__).parent.parent)
+sys.path.insert(0, project_root)  # Insert at beginning for higher priority
+
+# Change to project root if we're not already there
+if os.getcwd() != project_root:
+    os.chdir(project_root)
+
+# Import our modules with proper error handling
+try:
+    from src.config_validation import load_and_validate_config, ConfigValidationError
+except ImportError:
+    print("Warning: config_validation module not found. Configuration management disabled.", file=sys.stderr)
+    def load_and_validate_config(*args, **kwargs):
+        return {}
+    class ConfigValidationError(Exception):
+        pass
+
+try:
+    from src.llm_client import LLMProvider
+except ImportError:
+    print("Warning: llm_client module not found. LLM integration limited.", file=sys.stderr)
+    class LLMProvider:
+        pass
+
+try:
+    from ado_user_story_client import ADOUserStoryClient
+except ImportError:
+    print("Warning: ado_user_story_client module not found. ADO integration disabled.", file=sys.stderr)
+    class ADOUserStoryClient:
+        def __init__(self, config):
+            pass
+        def get_my_user_id(self):
+            raise Exception("ADO client not available")
+        def export_user_stories(self):
+            raise Exception("ADO client not available")
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Import key storage
+try:
+    from ui.key_storage import get_key_storage
+except ImportError:
+    try:
+        # Try relative import for when running from ui directory
+        from key_storage import get_key_storage
+    except ImportError:
+        print("Warning: key_storage module not found. API key persistence disabled.", file=sys.stderr)
+        def get_key_storage():
+            return None
+
+app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY', 'dev-key-change-in-production')
+
+# Configuration
+# Get the absolute path to the project root (parent of ui directory)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+UPLOAD_FOLDER = os.path.join(BASE_DIR, 'ui', 'uploads')
+RESULTS_FOLDER = os.path.join(BASE_DIR, 'ui', 'results')
+ALLOWED_EXTENSIONS = {'json', 'csv'}
+
+# Ensure required directories exist
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(RESULTS_FOLDER, exist_ok=True)
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['RESULTS_FOLDER'] = RESULTS_FOLDER
+
+# Progress tracking system
+progress_store = {}
+progress_lock = threading.Lock()
+
+
+def update_progress(job_id: str, stage: str, percentage: int, message: str = "", details: str = ""):
+    """Update progress for a job."""
+    with progress_lock:
+        # Get existing data to preserve start_time
+        existing = progress_store.get(job_id, {})
+        start_time = existing.get('start_time', datetime.now().isoformat())
+        
+        progress_store[job_id] = {
+            'stage': stage,
+            'percentage': percentage,
+            'message': message,
+            'details': details,
+            'timestamp': datetime.now().isoformat(),
+            'start_time': start_time
+        }
+
+
+def get_progress(job_id: str) -> Dict[str, Any]:
+    """Get progress for a job."""
+    with progress_lock:
+        return progress_store.get(job_id, {
+            'stage': 'unknown',
+            'percentage': 0,
+            'message': 'Unknown job',
+            'details': '',
+            'timestamp': datetime.now().isoformat(),
+            'start_time': datetime.now().isoformat()
+        })
+
+
+def clear_progress(job_id: str):
+    """Clear progress for a job."""
+    with progress_lock:
+        if job_id in progress_store:
+            del progress_store[job_id]
+
+
+def allowed_file(filename):
+    """Check if file extension is allowed."""
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def get_current_year():
+    """Get current year for default selection."""
+    return datetime.now().year
+
+
+def get_year_options():
+    """Get year options for dropdown (current year and previous 5 years)."""
+    current_year = get_current_year()
+    return list(range(current_year, current_year - 6, -1))
+
+
+def get_llm_providers():
+    """Get available LLM providers."""
+    return [
+        {'id': 'requestyai', 'name': 'RequestyAI (Unified Gateway - All Models)', 'recommended': True}
+    ]
+
+
+def get_common_models():
+    """Get common model options by provider."""
+    return {
+        'requestyai': [
+            # Available Models
+            'google/gemini-2.5-pro',
+            'coding/claude-4-sonnet',
+            'deepinfra/deepseek-ai/DeepSeek-R1',
+            'openai/gpt-5'
+        ],
+        'openai': ['gpt-4', 'gpt-4-turbo', 'gpt-3.5-turbo'],
+        'anthropic': ['claude-3-opus', 'claude-3-sonnet', 'claude-3-haiku'],
+        'google': ['gemini-pro', 'gemini-pro-vision'],
+        'azure_openai': ['gpt-4', 'gpt-35-turbo'],
+        'ollama': ['llama2', 'codellama', 'mistral'],
+        'roo_code': ['default']
+    }
+
+
+@app.route('/')
+def index():
+    """Main application page."""
+    return render_template('index.html', 
+                         year_options=get_year_options(),
+                         current_year=get_current_year(),
+                         llm_providers=get_llm_providers(),
+                         common_models=get_common_models())
+
+
+@app.route('/api/upload-criteria', methods=['POST'])
+def upload_criteria():
+    """Handle criteria file uploads and manual entry (annual review and competency criteria)."""
+    try:
+        annual_file = request.files.get('annual_criteria')
+        competency_file = request.files.get('competency_criteria')
+        
+        results = {}
+        
+        # Handle annual criteria (file upload or manual entry via blob)
+        if annual_file:
+            try:
+                if annual_file.filename.endswith('.json'):
+                    annual_content = json.loads(annual_file.read().decode('utf-8'))
+                    annual_filename = secure_filename(f"annual_criteria_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
+                    annual_path = os.path.join(app.config['UPLOAD_FOLDER'], annual_filename)
+                    with open(annual_path, 'w') as f:
+                        json.dump(annual_content, f, indent=2)
+                    results['annual_criteria'] = {
+                        'success': True,
+                        'filename': annual_filename,
+                        'path': annual_path,
+                        'sections': len(annual_content) if isinstance(annual_content, dict) else 0
+                    }
+                else:
+                    results['annual_criteria'] = {'success': False, 'error': 'Invalid file format. Please upload JSON.'}
+            except json.JSONDecodeError:
+                results['annual_criteria'] = {'success': False, 'error': 'Invalid JSON format in annual criteria.'}
+            except Exception as e:
+                results['annual_criteria'] = {'success': False, 'error': f'Error processing annual criteria: {str(e)}'}
+        
+        # Handle competency criteria (file upload or manual entry via blob)
+        if competency_file:
+            try:
+                if competency_file.filename.endswith('.json'):
+                    competency_content = json.loads(competency_file.read().decode('utf-8'))
+                    competency_filename = secure_filename(f"competency_criteria_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
+                    competency_path = os.path.join(app.config['UPLOAD_FOLDER'], competency_filename)
+                    with open(competency_path, 'w') as f:
+                        json.dump(competency_content, f, indent=2)
+                    results['competency_criteria'] = {
+                        'success': True,
+                        'filename': competency_filename,
+                        'path': competency_path,
+                        'sections': len(competency_content) if isinstance(competency_content, dict) else 0
+                    }
+                else:
+                    results['competency_criteria'] = {'success': False, 'error': 'Invalid file format. Please upload JSON.'}
+            except json.JSONDecodeError:
+                results['competency_criteria'] = {'success': False, 'error': 'Invalid JSON format in competency criteria.'}
+            except Exception as e:
+                results['competency_criteria'] = {'success': False, 'error': f'Error processing competency criteria: {str(e)}'}
+        
+        return jsonify(results)
+        
+    except Exception as e:
+        logger.error(f"Error uploading criteria: {str(e)}")
+        return jsonify({'error': f'Upload failed: {str(e)}'}), 500
+
+
+@app.route('/api/upload-accomplishments', methods=['POST'])
+def upload_accomplishments():
+    """Handle accomplishments CSV upload."""
+    try:
+        csv_file = request.files.get('accomplishments_csv')
+        
+        if not csv_file or not allowed_file(csv_file.filename):
+            return jsonify({'error': 'Please upload a valid CSV file'}), 400
+        
+        if not csv_file.filename.endswith('.csv'):
+            return jsonify({'error': 'Invalid file format. Please upload CSV.'}), 400
+        
+        # Save uploaded file
+        csv_filename = secure_filename(f"accomplishments_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv")
+        csv_path = os.path.join(app.config['UPLOAD_FOLDER'], csv_filename)
+        csv_file.save(csv_path)
+        
+        # Validate CSV structure
+        try:
+            df = pd.read_csv(csv_path)
+            required_columns = ['Date', 'Title']  # Minimum required
+            missing_columns = [col for col in required_columns if col not in df.columns]
+            
+            if missing_columns:
+                return jsonify({
+                    'error': f'Missing required columns: {", ".join(missing_columns)}',
+                    'available_columns': list(df.columns)
+                }), 400
+            
+            return jsonify({
+                'success': True,
+                'filename': csv_filename,
+                'path': csv_path,
+                'rows': len(df),
+                'columns': list(df.columns)
+            })
+            
+        except Exception as e:
+            return jsonify({'error': f'Invalid CSV format: {str(e)}'}), 400
+        
+    except Exception as e:
+        logger.error(f"Error uploading accomplishments: {str(e)}")
+        return jsonify({'error': f'Upload failed: {str(e)}'}), 500
+
+
+@app.route('/api/test-ado-connection', methods=['POST'])
+def test_ado_connection():
+    """Test Azure DevOps connection."""
+    try:
+        data = request.get_json()
+        
+        # Create temporary config for testing
+        config = {
+            'azure_devops': {
+                'organization': data.get('ado_org'),
+                'project': data.get('ado_project'),
+                'personal_access_token': data.get('ado_token')
+            }
+        }
+        
+        # Test connection
+        ado_client = ADOUserStoryClient(config)
+        user_id = ado_client.get_my_user_id()
+        
+        return jsonify({
+            'success': True,
+            'user_id': user_id,
+            'message': 'Connection successful'
+        })
+        
+    except Exception as e:
+        logger.error(f"ADO connection test failed: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 400
+
+
+@app.route('/api/fetch-ado-data', methods=['POST'])
+def fetch_ado_data():
+    """Fetch data from Azure DevOps."""
+    try:
+        data = request.get_json()
+        
+        # Create config for ADO client
+        config = {
+            'azure_devops': {
+                'organization': data.get('ado_org'),
+                'project': data.get('ado_project'),
+                'personal_access_token': data.get('ado_token'),
+                'work_item_type': data.get('work_item_type', 'User Story'),
+                'states': data.get('states', ['Closed', 'Resolved']),
+                'fields': [
+                    "System.Id",
+                    "System.Title", 
+                    "Microsoft.VSTS.Common.ClosedDate",
+                    "System.Description",
+                    "Microsoft.VSTS.Common.AcceptanceCriteria"
+                ]
+            },
+            'processing': {
+                'output_directory': app.config['UPLOAD_FOLDER'],
+                'date_range_months': data.get('months_back', 12)
+            }
+        }
+        
+        # Fetch data
+        ado_client = ADOUserStoryClient(config)
+        result = ado_client.export_user_stories()
+        
+        if result and 'csv_file' in result:
+            return jsonify({
+                'success': True,
+                'csv_file': result['csv_file'],
+                'work_items_count': result.get('work_items_count', 0),
+                'message': 'Data fetched successfully'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'No data retrieved from Azure DevOps'
+            }), 400
+            
+    except Exception as e:
+        logger.error(f"ADO data fetch failed: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 400
+
+
+@app.route('/api/get-progress/<job_id>')
+def get_progress_api(job_id):
+    """Get progress for a specific job."""
+    try:
+        progress = get_progress(job_id)
+        return jsonify(progress)
+    except Exception as e:
+        logger.error(f"Error getting progress: {str(e)}")
+        return jsonify({
+            'stage': 'error',
+            'percentage': 0,
+            'message': f'Error: {str(e)}',
+            'timestamp': datetime.now().isoformat()
+        }), 500
+
+
+
+@app.route('/api/run-analysis', methods=['POST'])
+def run_analysis():
+    """Run performance review analysis."""
+    try:
+        data = request.get_json()
+        
+        # Generate unique job ID for progress tracking
+        job_id = f"analysis_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}"
+        
+        # Extract parameters with validation
+        review_type = data.get('review_type', 'competency') or 'competency'
+        year = data.get('year', get_current_year()) or get_current_year()
+        data_source = data.get('data_source', 'csv') or 'csv'
+        output_format = data.get('output_format', 'markdown') or 'markdown'
+        
+        # Validate required parameters
+        if not review_type or not year or not data_source or not output_format:
+            clear_progress(job_id)
+            return jsonify({
+                'success': False,
+                'error': f'Missing required parameters: review_type={review_type}, year={year}, data_source={data_source}, output_format={output_format}'
+            }), 400
+        
+        # LLM configuration
+        llm_provider = data.get('llm_provider')
+        llm_model = data.get('llm_model')
+        api_key = data.get('api_key')
+        
+        # Initialize progress
+        update_progress(job_id, 'running', 10, 'Running analysis...', 'Processing your performance data')
+        
+        # Check for stored API key if none provided
+        if llm_provider and llm_provider != 'none' and not api_key:
+            storage = get_key_storage()
+            if storage:
+                stored_key_data = storage.get_key(llm_provider)
+                if stored_key_data:
+                    api_key = stored_key_data['api_key']
+                    # Use stored model if no model specified
+                    if not llm_model and stored_key_data.get('model'):
+                        llm_model = stored_key_data['model']
+        analysis_args = {
+            'source': data_source,
+            'type': review_type,
+            'year': year,
+            'format': output_format
+        }
+        
+        # Add data file if CSV source
+        if data_source == 'csv' and 'csv_file' in data:
+            analysis_args['file'] = data['csv_file']
+        
+        # Create LLM config if provided
+        if llm_provider and llm_provider != 'none':
+            llm_config = {
+                'llm_integration': {
+                    'provider': llm_provider,
+                    'model': llm_model or 'default',
+                    'api_key': api_key or '',
+                    'fallback_to_roo': True
+                }
+            }
+            
+            # Save temporary config file
+            config_file = os.path.join(app.config['UPLOAD_FOLDER'], 'temp_config.json')
+            with open(config_file, 'w') as f:
+                json.dump(llm_config, f, indent=2)
+            
+            analysis_args['config'] = config_file
+        
+        # Run actual analysis using your existing main.py functionality
+        update_progress(job_id, 'running', 50, 'Processing data...', 'Analysis in progress')
+        file_extension = 'md' if output_format.lower() == 'markdown' else output_format
+        result_file = f"performance_review_{review_type}_{year}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{file_extension}"
+        result_path = os.path.join(app.config['RESULTS_FOLDER'], result_file)
+        
+        try:
+            # Prepare command line arguments for main.py
+            import subprocess
+            import sys
+            
+            cmd_args = [
+                sys.executable, 'src/main.py',
+                '--source', data_source,
+                '--type', review_type,
+                '--year', str(year),
+                '--format', output_format
+            ]
+            
+            # Add data file if CSV source
+            if data_source == 'csv':
+                csv_file = data.get('csv_file')
+                if csv_file:
+                    cmd_args.extend(['--file', csv_file])
+                else:
+                    # Error: CSV source requires a file
+                    clear_progress(job_id)
+                    return jsonify({
+                        'success': False,
+                        'error': 'CSV source selected but no CSV file provided. Please upload a CSV file first.'
+                    }), 400
+            
+            # Handle criteria file - copy uploaded criteria to expected location
+            criteria_file = data.get('criteria_file')
+            if criteria_file and os.path.exists(criteria_file):
+                import shutil
+                # Create criteria directory if it doesn't exist
+                os.makedirs('criteria', exist_ok=True)
+                
+                # Copy criteria file to expected location based on review type
+                expected_criteria_file = f"criteria/{review_type}_review_criteria.json"
+                shutil.copy2(criteria_file, expected_criteria_file)
+                logger.info(f"Copied criteria file from {criteria_file} to {expected_criteria_file}")
+            else:
+                logger.warning(f"No criteria file found or file doesn't exist: {criteria_file}")
+            
+            # Create complete config file (always needed)
+            temp_config = {
+                'azure_devops': {
+                    'organization': 'n/a' if data_source == 'csv' else '',
+                    'project': 'n/a' if data_source == 'csv' else '',
+                    'personal_access_token': 'n/a' if data_source == 'csv' else '',
+                    'user_id': 'auto-detected',
+                    'work_item_type': 'User Story',
+                    'states': ['Closed', 'Resolved'],
+                    'fields': [
+                        'System.Id',
+                        'System.Title',
+                        'Microsoft.VSTS.Common.ClosedDate',
+                        'System.Description',
+                        'Microsoft.VSTS.Common.AcceptanceCriteria'
+                    ]
+                },
+                'llm_integration': {
+                    'provider': llm_provider if llm_provider != 'none' else 'roo_code',
+                    'model': llm_model or 'default',
+                    'api_key': api_key or '',
+                    'fallback_to_roo': True,
+                    'options': {
+                        'temperature': 0.7,
+                        'max_tokens': 32000
+                    }
+                },
+                'processing': {
+                    'output_directory': app.config['RESULTS_FOLDER'],
+                    'backup_csv': True,
+                    'date_range_months': 12,
+                    'default_source': data_source
+                }
+            }
+            
+            config_file = os.path.join(app.config['UPLOAD_FOLDER'], f'temp_config_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json')
+            with open(config_file, 'w') as f:
+                json.dump(temp_config, f, indent=2)
+            
+            cmd_args.extend(['--config', config_file])
+            
+            # Add output file specification
+            cmd_args.extend(['--output', result_path])
+            
+            # Execute the analysis
+            logger.info(f"Running analysis command: {' '.join(cmd_args)}")
+            
+            # Execute the analysis with simple subprocess.run
+            result = subprocess.run(cmd_args, capture_output=True, text=True, cwd='.')
+            
+            # Mark as complete
+            update_progress(job_id, 'completed', 100, 'Analysis complete!', 'Report generated successfully')
+            
+            if result.returncode == 0:
+                # Success - the file should be created by main.py
+                if not os.path.exists(result_path):
+                    # If main.py didn't create the file where we expected, look for it in output/
+                    alt_path = os.path.join('output', result_file)
+                    if os.path.exists(alt_path):
+                        import shutil
+                        shutil.move(alt_path, result_path)
+                    else:
+                        # Create a basic result file as fallback
+                        with open(result_path, 'w') as f:
+                            f.write(f"# Performance Review Analysis\n\n")
+                            f.write(f"Type: {review_type.title()}\n")
+                            f.write(f"Year: {year}\n")
+                            f.write(f"Generated: {datetime.now().isoformat()}\n")
+                            f.write(f"Data Source: {data_source.upper()}\n")
+                            if llm_provider:
+                                f.write(f"LLM Provider: {llm_provider}\n")
+                                f.write(f"LLM Model: {llm_model or 'default'}\n")
+                            f.write("\n## Analysis Results\n\n")
+                            f.write("Analysis completed successfully.\n")
+                            f.write(f"\nStdout: {result.stdout}\n")
+            else:
+                # Analysis failed, but create an error report
+                with open(result_path, 'w') as f:
+                    f.write(f"# Performance Review Analysis - Error Report\n\n")
+                    f.write(f"Type: {review_type.title()}\n")
+                    f.write(f"Year: {year}\n")
+                    f.write(f"Generated: {datetime.now().isoformat()}\n")
+                    f.write(f"Status: FAILED\n\n")
+                    f.write(f"## Error Details\n\n")
+                    f.write(f"Return code: {result.returncode}\n\n")
+                    f.write(f"Stderr: {result.stderr}\n\n")
+                    f.write(f"Stdout: {result.stdout}\n")
+                
+                logger.error(f"Analysis failed with return code {result.returncode}")
+                logger.error(f"Stderr: {result.stderr}")
+        
+        except Exception as e:
+            # Fallback - create basic result file
+            logger.error(f"Exception during analysis: {str(e)}")
+            with open(result_path, 'w') as f:
+                f.write(f"# Performance Review Analysis\n\n")
+                f.write(f"Type: {review_type.title()}\n")
+                f.write(f"Year: {year}\n")
+                f.write(f"Generated: {datetime.now().isoformat()}\n")
+                f.write(f"Data Source: {data_source.upper()}\n")
+                f.write(f"\n## Error\n\nAnalysis failed with error: {str(e)}\n")
+                if llm_provider:
+                    f.write(f"\nLLM Provider: {llm_provider}\n")
+                    f.write(f"LLM Model: {llm_model or 'default'}\n")
+        
+        # Analysis is already marked as complete above
+        
+        # Read file size for metadata
+        file_size = 0
+        if os.path.exists(result_path):
+            file_size = os.path.getsize(result_path)
+        
+        # Clear progress after analysis is complete (no need for threading)
+        # Progress will be cleared when UI polls for results
+        
+        return jsonify({
+            'success': True,
+            'job_id': job_id,
+            'result_file': result_file,
+            'result_path': result_path,
+            'message': 'Analysis completed successfully',
+            'metadata': {
+                'review_type': review_type,
+                'year': year,
+                'data_source': data_source,
+                'output_format': output_format,
+                'llm_provider': llm_provider if llm_provider != 'none' else None,
+                'llm_model': llm_model if llm_provider != 'none' else None,
+                'file_size': file_size,
+                'generated_at': datetime.now().isoformat()
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Analysis failed: {str(e)}")
+        # Clear progress on error
+        try:
+            clear_progress(job_id)
+        except:
+            pass
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/get-result-content/<filename>')
+def get_result_content(filename):
+    """Get the content of a result file for inline display."""
+    try:
+        safe_filename = secure_filename(filename)
+        file_path = os.path.join(app.config['RESULTS_FOLDER'], safe_filename)
+        
+        if not os.path.exists(file_path):
+            return jsonify({'error': 'File not found'}), 404
+        
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        return jsonify({
+            'success': True,
+            'content': content,
+            'filename': safe_filename,
+            'size': len(content)
+        })
+        
+    except Exception as e:
+        logger.error(f"Error reading result content: {str(e)}")
+        return jsonify({'error': f'Failed to read content: {str(e)}'}), 500
+
+
+@app.route('/api/download-result/<filename>')
+def download_result(filename):
+    """Download analysis result file."""
+    try:
+        safe_filename = secure_filename(filename)
+        file_path = os.path.join(app.config['RESULTS_FOLDER'], safe_filename)
+        
+        if not os.path.exists(file_path):
+            return jsonify({'error': 'File not found'}), 404
+        
+        return send_file(file_path, as_attachment=True)
+        
+    except Exception as e:
+        logger.error(f"Download failed: {str(e)}")
+        return jsonify({'error': 'Download failed'}), 500
+
+
+@app.route('/api/store-api-key', methods=['POST'])
+def store_api_key():
+    """Store an API key securely."""
+    try:
+        storage = get_key_storage()
+        if not storage:
+            return jsonify({'error': 'Key storage not available'}), 500
+        
+        data = request.get_json()
+        provider = data.get('provider')
+        api_key = data.get('api_key')
+        model = data.get('model')
+        
+        if not provider or not api_key:
+            return jsonify({'error': 'Provider and API key are required'}), 400
+        
+        success = storage.store_key(provider, api_key, model)
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': f'API key stored for {provider}'
+            })
+        else:
+            return jsonify({'error': 'Failed to store API key'}), 500
+            
+    except Exception as e:
+        logger.error(f"Error storing API key: {str(e)}")
+        return jsonify({'error': f'Failed to store API key: {str(e)}'}), 500
+
+
+@app.route('/api/get-stored-key/<provider>')
+def get_stored_key(provider):
+    """Get stored API key info (without exposing the key)."""
+    try:
+        storage = get_key_storage()
+        if not storage:
+            return jsonify({'has_key': False, 'error': 'Key storage not available'})
+        
+        key_data = storage.get_key(provider)
+        
+        if key_data:
+            # Return info without exposing the actual key
+            return jsonify({
+                'has_key': True,
+                'model': key_data.get('model'),
+                'stored_at': key_data.get('stored_at'),
+                'key_preview': f"{key_data['api_key'][:8]}..." if len(key_data['api_key']) > 8 else "***"
+            })
+        else:
+            return jsonify({'has_key': False})
+            
+    except Exception as e:
+        logger.error(f"Error retrieving API key info: {str(e)}")
+        return jsonify({'has_key': False, 'error': str(e)})
+
+
+@app.route('/api/delete-api-key/<provider>', methods=['DELETE'])
+def delete_api_key(provider):
+    """Delete a stored API key."""
+    try:
+        storage = get_key_storage()
+        if not storage:
+            return jsonify({'error': 'Key storage not available'}), 500
+        
+        success = storage.delete_key(provider)
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': f'API key deleted for {provider}'
+            })
+        else:
+            return jsonify({'error': 'API key not found or could not be deleted'}), 404
+            
+    except Exception as e:
+        logger.error(f"Error deleting API key: {str(e)}")
+        return jsonify({'error': f'Failed to delete API key: {str(e)}'}), 500
+
+
+@app.route('/api/list-stored-keys')
+def list_stored_keys():
+    """Get list of providers with stored keys."""
+    try:
+        storage = get_key_storage()
+        if not storage:
+            return jsonify({'providers': [], 'error': 'Key storage not available'})
+        
+        providers = storage.list_stored_providers()
+        return jsonify({'providers': providers})
+        
+    except Exception as e:
+        logger.error(f"Error listing stored keys: {str(e)}")
+        return jsonify({'providers': [], 'error': str(e)})
+
+
+if __name__ == '__main__':
+    import sys
+    # Allow port to be specified as command line argument
+    port = int(sys.argv[1]) if len(sys.argv) > 1 else 8888
+    app.run(debug=True, host='0.0.0.0', port=port)

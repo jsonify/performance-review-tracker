@@ -1,0 +1,125 @@
+{
+  "annual_review_framework": {
+    "name": "Annual Performance Review",
+    "year": 2025,
+    "review_period": "January 2025 - December 2025",
+    "description": "Comprehensive annual performance assessment framework"
+  },
+  "performance_dimensions": {
+    "Technical Excellence": {
+      "weight": 0.3,
+      "description": "Quality and impact of technical work delivered",
+      "criteria": [
+        "Code quality and maintainability",
+        "Technical problem-solving effectiveness", 
+        "Innovation and technical leadership",
+        "Knowledge sharing and mentoring"
+      ],
+      "measurement": "Based on technical accomplishments, code reviews, and peer feedback"
+    },
+    "Project Delivery": {
+      "weight": 0.25,
+      "description": "Effectiveness in delivering projects on time and within scope",
+      "criteria": [
+        "Meeting project deadlines and milestones",
+        "Quality of deliverables",
+        "Stakeholder satisfaction",
+        "Risk management and mitigation"
+      ],
+      "measurement": "Project success metrics, stakeholder feedback, delivery timeliness"
+    },
+    "Business Impact": {
+      "weight": 0.2,
+      "description": "Measurable contribution to business objectives and outcomes",
+      "criteria": [
+        "Revenue generation or cost savings",
+        "Process improvements and efficiency gains",
+        "Customer satisfaction improvements",
+        "Market or competitive advantages created"
+      ],
+      "measurement": "Quantifiable business metrics and impact assessments"
+    },
+    "Leadership & Collaboration": {
+      "weight": 0.15,
+      "description": "Ability to lead, influence, and work effectively with others",
+      "criteria": [
+        "Team leadership and guidance",
+        "Cross-functional collaboration",
+        "Conflict resolution and problem-solving",
+        "Cultural contribution and team building"
+      ],
+      "measurement": "360-degree feedback, team assessments, leadership examples"
+    },
+    "Professional Development": {
+      "weight": 0.1,
+      "description": "Growth, learning, and skill development throughout the year",
+      "criteria": [
+        "New skills acquired and applied",
+        "Certifications or training completed",
+        "Knowledge sharing and teaching others",
+        "Career progression and goal achievement"
+      ],
+      "measurement": "Learning objectives, certification achievements, skill demonstrations"
+    }
+  },
+  "rating_scale": {
+    "5": {
+      "label": "Exceptional",
+      "description": "Consistently exceeds expectations, demonstrates outstanding performance"
+    },
+    "4": {
+      "label": "Exceeds Expectations",
+      "description": "Regularly surpasses goals, strong performance across most areas"
+    },
+    "3": {
+      "label": "Meets Expectations",
+      "description": "Achieves goals and objectives, solid performance"
+    },
+    "2": {
+      "label": "Below Expectations",
+      "description": "Performance gaps exist, improvement needed in key areas"
+    },
+    "1": {
+      "label": "Unsatisfactory",
+      "description": "Significant performance issues, immediate improvement required"
+    }
+  },
+  "assessment_process": {
+    "self_assessment_weight": 0.3,
+    "manager_assessment_weight": 0.4,
+    "peer_feedback_weight": 0.2,
+    "objective_metrics_weight": 0.1
+  },
+  "goal_setting": {
+    "technical_goals": {
+      "description": "Technical skill development and project objectives",
+      "examples": [
+        "Master new programming language or framework",
+        "Lead technical architecture for major project",
+        "Improve system performance by measurable percentage"
+      ]
+    },
+    "business_goals": {
+      "description": "Business impact and organizational contribution objectives",
+      "examples": [
+        "Deliver project resulting in $X cost savings",
+        "Improve customer satisfaction by Y%",
+        "Launch feature driving Z% user engagement increase"
+      ]
+    },
+    "leadership_goals": {
+      "description": "Leadership development and team contribution objectives",
+      "examples": [
+        "Mentor X junior team members",
+        "Lead cross-functional initiative",
+        "Improve team productivity metrics"
+      ]
+    }
+  },
+  "development_planning": {
+    "skill_gap_analysis": "Identify gaps between current skills and role requirements",
+    "learning_opportunities": "Training, conferences, certifications, stretch assignments",
+    "career_pathing": "Discussion of career progression and advancement opportunities",
+    "support_needed": "Resources, tools, or support required for success"
+  }
+}
