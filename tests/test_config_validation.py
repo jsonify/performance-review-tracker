@@ -26,17 +26,12 @@ class TestConfigValidator(unittest.TestCase):
         
         # Valid test configuration
         self.valid_config = {
-            "azure_devops": {
-                "organization": "test-org",
-                "project": "test-project",
-                "personal_access_token": "test-token-123"
-            },
             "llm_integration": {
                 "provider": "roo_code"
             },
             "processing": {
                 "output_directory": "test_data",
-                "default_source": "csv"
+                "date_range_months": 12
             }
         }
     
@@ -60,8 +55,8 @@ class TestConfigValidator(unittest.TestCase):
         
         # Check that configuration was loaded
         self.assertIsInstance(config, dict)
-        self.assertEqual(config["azure_devops"]["organization"], "test-org")
         self.assertEqual(config["llm_integration"]["provider"], "roo_code")
+        self.assertEqual(config["processing"]["output_directory"], "test_data")
     
     def test_load_missing_config_file(self):
         """Test loading configuration when file doesn't exist."""
@@ -98,8 +93,8 @@ class TestConfigValidator(unittest.TestCase):
     def test_missing_required_section(self):
         """Test validation when required configuration section is missing."""
         incomplete_config = {
-            "llm_integration": {"provider": "roo_code"}
-            # Missing azure_devops section
+            # Missing llm_integration section
+            "processing": {"output_directory": "test_data"}
         }
         self._create_config_file(incomplete_config)
         
@@ -113,11 +108,9 @@ class TestConfigValidator(unittest.TestCase):
     def test_missing_required_field(self):
         """Test validation when required field is missing."""
         incomplete_config = {
-            "azure_devops": {
-                "organization": "test-org",
-                # Missing project and personal_access_token
-            },
-            "llm_integration": {"provider": "roo_code"}
+            "llm_integration": {
+                # Missing required provider field
+            }
         }
         self._create_config_file(incomplete_config)
         
@@ -144,11 +137,6 @@ class TestConfigValidator(unittest.TestCase):
     def test_apply_defaults(self):
         """Test that default values are applied for missing optional fields."""
         minimal_config = {
-            "azure_devops": {
-                "organization": "test-org",
-                "project": "test-project",
-                "personal_access_token": "test-token"
-            },
             "llm_integration": {
                 "provider": "roo_code"
             }
@@ -159,36 +147,30 @@ class TestConfigValidator(unittest.TestCase):
         config = validator.load_config()
         
         # Check that defaults were applied
-        self.assertEqual(config["azure_devops"]["work_item_type"], "User Story")
-        self.assertEqual(config["processing"]["default_source"], "csv")
+        self.assertEqual(config["processing"]["output_directory"], "data")
+        self.assertEqual(config["processing"]["date_range_months"], 12)
         self.assertEqual(config["llm_integration"]["fallback_to_roo"], True)
     
     def test_mask_sensitive_values(self):
         """Test that sensitive values are properly masked."""
-        self._create_config_file(self.valid_config)
+        test_config = {
+            "llm_integration": {
+                "provider": "openai",
+                "api_key": "sk-test123456789"
+            }
+        }
+        self._create_config_file(test_config)
         
         validator = ConfigValidator(self.temp_config_path)
         validator.load_config()
         
         masked_config = validator.mask_sensitive_values()
         
-        # Check that PAT is masked
-        masked_pat = masked_config["azure_devops"]["personal_access_token"]
-        self.assertTrue("*" in masked_pat)
-        self.assertNotEqual(masked_pat, "test-token-123")
-    
-    def test_validate_azure_devops_connection_missing_client(self):
-        """Test Azure DevOps connection validation when client is not available."""
-        self._create_config_file(self.valid_config)
-        validator = ConfigValidator(self.temp_config_path)
-        validator.load_config()
-        
-        # This will likely fail since ADO client may not be available in test environment
-        success, message = validator.validate_azure_devops_connection()
-        
-        # Either succeeds with connection or fails with client not found
-        self.assertIsInstance(success, bool)
-        self.assertIsInstance(message, str)
+        # Check that API key is masked
+        if "api_key" in masked_config["llm_integration"]:
+            masked_key = masked_config["llm_integration"]["api_key"]
+            self.assertTrue("*" in masked_key)
+            self.assertNotEqual(masked_key, "sk-test123456789")
     
     def test_validate_llm_integration_roo_code(self):
         """Test LLM integration validation for Roo Code provider."""
@@ -255,11 +237,6 @@ class TestLoadAndValidateConfig(unittest.TestCase):
         self.temp_config_path = os.path.join(self.temp_dir, "test_config.json")
         
         self.valid_config = {
-            "azure_devops": {
-                "organization": "test-org",
-                "project": "test-project", 
-                "personal_access_token": "test-token-123"
-            },
             "llm_integration": {
                 "provider": "roo_code"
             }
@@ -283,7 +260,7 @@ class TestLoadAndValidateConfig(unittest.TestCase):
         config = load_and_validate_config(self.temp_config_path, test_connections=False)
         
         self.assertIsInstance(config, dict)
-        self.assertEqual(config["azure_devops"]["organization"], "test-org")
+        self.assertEqual(config["llm_integration"]["provider"], "roo_code")
     
     def test_load_and_validate_config_missing_file(self):
         """Test handling of missing configuration file."""

@@ -196,19 +196,6 @@
                                 </div>
                             </div>
                             
-                            <div class="col-md-6">
-                                <div class="data-source-card" data-source="ado">
-                                    <input type="radio" name="data-source" id="ado-source" value="ado">
-                                    <label for="ado-source" class="data-source-label">
-                                        <div class="data-source-icon">
-                                            <i class="fas fa-cloud"></i>
-                                        </div>
-                                        <h5>Azure DevOps</h5>
-                                        <p>Import directly from Azure DevOps work items</p>
-                                        <small class="text-muted">Requires organization access</small>
-                                    </label>
-                                </div>
-                            </div>
                         </div>
                     </div>
                     
@@ -223,59 +210,6 @@
                         </div>
                         <div id="csv-status" class="mt-3"></div>
                     </div>
-                    
-                    <!-- ADO Section -->
-                    <div id="ado-config" class="data-config-section" style="display: none;">
-                        <div class="ado-form">
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label for="ado-org" class="form-label">Organization</label>
-                                    <input type="text" id="ado-org" class="form-control" placeholder="your-org">
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="ado-project" class="form-label">Project</label>
-                                    <input type="text" id="ado-project" class="form-control" placeholder="your-project">
-                                </div>
-                                <div class="col-12">
-                                    <label for="ado-token" class="form-label">Personal Access Token</label>
-                                    <div class="api-key-input">
-                                        <input type="password" id="ado-token" class="form-control" placeholder="Enter your PAT">
-                                        <button type="button" class="api-key-toggle" onclick="togglePasswordVisibility('ado-token')">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="work-item-type" class="form-label">Work Item Type</label>
-                                    <select id="work-item-type" class="form-select">
-                                        <option value="User Story" selected>User Story</option>
-                                        <option value="Task">Task</option>
-                                        <option value="Bug">Bug</option>
-                                        <option value="Feature">Feature</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="months-back" class="form-label">Time Range</label>
-                                    <select id="months-back" class="form-select">
-                                        <option value="6">Last 6 months</option>
-                                        <option value="12" selected>Last 12 months</option>
-                                        <option value="18">Last 18 months</option>
-                                        <option value="24">Last 24 months</option>
-                                    </select>
-                                </div>
-                            </div>
-                            
-                            <div class="ado-actions mt-3">
-                                <button type="button" id="test-ado-btn" class="btn btn-outline-secondary me-2">
-                                    <i class="fas fa-plug"></i> Test Connection
-                                </button>
-                                <button type="button" id="fetch-ado-btn" class="btn btn-primary">
-                                    <i class="fas fa-download"></i> Fetch Data
-                                </button>
-                            </div>
-                        </div>
-                        <div id="ado-status" class="mt-3"></div>
-                    </div>
                 </div>
             </div>
             
@@ -289,13 +223,6 @@
                             <li><strong>Title:</strong> Brief description</li>
                             <li><strong>Description:</strong> Detailed explanation (optional)</li>
                             <li><strong>Impact:</strong> Business impact level (optional)</li>
-                        </ul>
-                        
-                        <h6 class="mt-3">Azure DevOps:</h6>
-                        <ul>
-                            <li>Requires organization access</li>
-                            <li>PAT with "Work Items (Read)" permission</li>
-                            <li>Automatically imports closed work items</li>
                         </ul>
                     </div>
                     
@@ -778,7 +705,6 @@
         
         // Clear any stored data
         window.csvDataFile = null;
-        window.adoDataFile = null;
         window.criteriaFile = null;
     }
 
@@ -1048,30 +974,8 @@
     }
 
     function setupDataSourceHandlers() {
-        // Data source radio buttons
-        const csvRadio = document.getElementById('csv-source');
-        const adoRadio = document.getElementById('ado-source');
-        
-        csvRadio.addEventListener('change', function() {
-            if (this.checked) {
-                document.getElementById('csv-config').style.display = 'block';
-                document.getElementById('ado-config').style.display = 'none';
-            }
-        });
-        
-        adoRadio.addEventListener('change', function() {
-            if (this.checked) {
-                document.getElementById('csv-config').style.display = 'none';
-                document.getElementById('ado-config').style.display = 'block';
-            }
-        });
-        
-        // CSV upload
+        // CSV upload - only data source now
         setupFileUpload('csv-upload-area', 'accomplishments-csv-file', 'csv-status', '/api/upload-accomplishments', 'accomplishments_csv');
-        
-        // ADO handlers
-        document.getElementById('test-ado-btn').addEventListener('click', testADOConnection);
-        document.getElementById('fetch-ado-btn').addEventListener('click', fetchADOData);
     }
 
     function setupFileUpload(areaId, fileInputId, statusId, endpoint, fieldName) {
@@ -1215,8 +1119,7 @@
         // Update summary values
         document.getElementById('summary-type').textContent = currentWorkflow === 'competency' ? 'Competency Assessment' : 'Annual Review';
         
-        const dataSource = document.querySelector('input[name="data-source"]:checked')?.value || 'csv';
-        document.getElementById('summary-data').textContent = dataSource === 'csv' ? 'CSV Upload' : 'Azure DevOps';
+        document.getElementById('summary-data').textContent = 'CSV Upload';
         
         const aiProvider = document.getElementById('llm-provider')?.value || 'none';
         document.getElementById('summary-ai').textContent = aiProvider === 'none' ? 'Automated Only' : aiProvider;
@@ -1529,76 +1432,11 @@
         updateClearButtonVisibility();
     }
 
-    // ADO Functions (keeping core functionality)
-    function testADOConnection() {
-        const org = document.getElementById('ado-org').value;
-        const project = document.getElementById('ado-project').value;
-        const token = document.getElementById('ado-token').value;
-        const status = document.getElementById('ado-status');
-        
-        if (!org || !project || !token) {
-            status.innerHTML = '<div class="alert alert-danger">Please fill in all ADO fields</div>';
-            return;
-        }
-        
-        status.innerHTML = '<div class="alert alert-info"><i class="fas fa-spinner fa-spin"></i> Testing connection...</div>';
-        
-        fetch('/api/test-ado-connection', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ ado_org: org, ado_project: project, ado_token: token })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                status.innerHTML = `<div class="alert alert-success"><i class="fas fa-check"></i> Connected successfully (User ID: ${data.user_id})</div>`;
-            } else {
-                status.innerHTML = `<div class="alert alert-danger">Connection failed: ${data.error}</div>`;
-            }
-        })
-        .catch(error => {
-            status.innerHTML = `<div class="alert alert-danger">Connection failed: ${error.message}</div>`;
-        });
-    }
-
-    function fetchADOData() {
-        const org = document.getElementById('ado-org').value;
-        const project = document.getElementById('ado-project').value;
-        const token = document.getElementById('ado-token').value;
-        const workItemType = document.getElementById('work-item-type').value;
-        const monthsBack = parseInt(document.getElementById('months-back').value);
-        const status = document.getElementById('ado-status');
-        
-        status.innerHTML = '<div class="alert alert-info"><i class="fas fa-spinner fa-spin"></i> Fetching data...</div>';
-        
-        fetch('/api/fetch-ado-data', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                ado_org: org, ado_project: project, ado_token: token,
-                work_item_type: workItemType, months_back: monthsBack
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                status.innerHTML = `<div class="alert alert-success"><i class="fas fa-check"></i> Fetched ${data.work_items_count} work items</div>`;
-                window.adoDataFile = data.csv_file;
-                enableNextButton('data');
-            } else {
-                status.innerHTML = `<div class="alert alert-danger">Fetch failed: ${data.error}</div>`;
-            }
-        })
-        .catch(error => {
-            status.innerHTML = `<div class="alert alert-danger">Fetch failed: ${error.message}</div>`;
-        });
-    }
 
     // Generate Review Function with Live Progress
     function generateReview() {
         const reviewType = currentWorkflow;
         const reviewYear = document.getElementById('review-year').value;
-        const dataSource = document.querySelector('input[name="data-source"]:checked').value;
         const outputFormat = document.querySelector('input[name="output-format"]:checked').value;
         const llmProvider = document.getElementById('llm-provider').value;
         const llmModel = document.getElementById('llm-model-input').value;
@@ -1607,18 +1445,16 @@
         const requestData = {
             review_type: reviewType,
             year: parseInt(reviewYear),
-            data_source: dataSource,
+            data_source: 'csv',
             output_format: outputFormat,
             llm_provider: llmProvider,
             llm_model: llmModel,
             api_key: apiKey
         };
         
-        // Add data file based on data source
-        if (dataSource === 'csv' && window.csvDataFile) {
+        // Add CSV data file
+        if (window.csvDataFile) {
             requestData.csv_file = window.csvDataFile;
-        } else if (dataSource === 'ado' && window.adoDataFile) {
-            requestData.csv_file = window.adoDataFile;
         }
         
         // Show progress and start tracking

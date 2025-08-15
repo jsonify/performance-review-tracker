@@ -5,7 +5,7 @@ Flask Web UI for Performance Review Tracker
 A simple, useful web interface for the Performance Review Tracker that provides:
 - JSON criteria upload (annual review + competency criteria)
 - Review type and year selection
-- CSV upload or ADO integration
+- CSV file upload
 - LLM provider and model selection
 - API key management
 - Progress tracking and results display
@@ -51,17 +51,6 @@ except ImportError:
     class LLMProvider:
         pass
 
-try:
-    from ado_user_story_client import ADOUserStoryClient
-except ImportError:
-    print("Warning: ado_user_story_client module not found. ADO integration disabled.", file=sys.stderr)
-    class ADOUserStoryClient:
-        def __init__(self, config):
-            pass
-        def get_my_user_id(self):
-            raise Exception("ADO client not available")
-        def export_user_stories(self):
-            raise Exception("ADO client not available")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -295,90 +284,8 @@ def upload_accomplishments():
         return jsonify({'error': f'Upload failed: {str(e)}'}), 500
 
 
-@app.route('/api/test-ado-connection', methods=['POST'])
-def test_ado_connection():
-    """Test Azure DevOps connection."""
-    try:
-        data = request.get_json()
-        
-        # Create temporary config for testing
-        config = {
-            'azure_devops': {
-                'organization': data.get('ado_org'),
-                'project': data.get('ado_project'),
-                'personal_access_token': data.get('ado_token')
-            }
-        }
-        
-        # Test connection
-        ado_client = ADOUserStoryClient(config)
-        user_id = ado_client.get_my_user_id()
-        
-        return jsonify({
-            'success': True,
-            'user_id': user_id,
-            'message': 'Connection successful'
-        })
-        
-    except Exception as e:
-        logger.error(f"ADO connection test failed: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 400
 
 
-@app.route('/api/fetch-ado-data', methods=['POST'])
-def fetch_ado_data():
-    """Fetch data from Azure DevOps."""
-    try:
-        data = request.get_json()
-        
-        # Create config for ADO client
-        config = {
-            'azure_devops': {
-                'organization': data.get('ado_org'),
-                'project': data.get('ado_project'),
-                'personal_access_token': data.get('ado_token'),
-                'work_item_type': data.get('work_item_type', 'User Story'),
-                'states': data.get('states', ['Closed', 'Resolved']),
-                'fields': [
-                    "System.Id",
-                    "System.Title", 
-                    "Microsoft.VSTS.Common.ClosedDate",
-                    "System.Description",
-                    "Microsoft.VSTS.Common.AcceptanceCriteria"
-                ]
-            },
-            'processing': {
-                'output_directory': app.config['UPLOAD_FOLDER'],
-                'date_range_months': data.get('months_back', 12)
-            }
-        }
-        
-        # Fetch data
-        ado_client = ADOUserStoryClient(config)
-        result = ado_client.export_user_stories()
-        
-        if result and 'csv_file' in result:
-            return jsonify({
-                'success': True,
-                'csv_file': result['csv_file'],
-                'work_items_count': result.get('work_items_count', 0),
-                'message': 'Data fetched successfully'
-            })
-        else:
-            return jsonify({
-                'success': False,
-                'error': 'No data retrieved from Azure DevOps'
-            }), 400
-            
-    except Exception as e:
-        logger.error(f"ADO data fetch failed: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 400
 
 
 @app.route('/api/get-progress/<job_id>')
@@ -479,26 +386,22 @@ def run_analysis():
             import subprocess
             import sys
             
+            # CSV file is required for all analysis
+            csv_file = data.get('csv_file')
+            if not csv_file:
+                clear_progress(job_id)
+                return jsonify({
+                    'success': False,
+                    'error': 'No CSV file provided. Please upload a CSV file first.'
+                }), 400
+            
             cmd_args = [
                 sys.executable, 'src/main.py',
-                '--source', data_source,
+                '--file', csv_file,
                 '--type', review_type,
                 '--year', str(year),
                 '--format', output_format
             ]
-            
-            # Add data file if CSV source
-            if data_source == 'csv':
-                csv_file = data.get('csv_file')
-                if csv_file:
-                    cmd_args.extend(['--file', csv_file])
-                else:
-                    # Error: CSV source requires a file
-                    clear_progress(job_id)
-                    return jsonify({
-                        'success': False,
-                        'error': 'CSV source selected but no CSV file provided. Please upload a CSV file first.'
-                    }), 400
             
             # Handle criteria file - copy uploaded criteria to expected location
             criteria_file = data.get('criteria_file')
@@ -516,21 +419,6 @@ def run_analysis():
             
             # Create complete config file (always needed)
             temp_config = {
-                'azure_devops': {
-                    'organization': 'n/a' if data_source == 'csv' else '',
-                    'project': 'n/a' if data_source == 'csv' else '',
-                    'personal_access_token': 'n/a' if data_source == 'csv' else '',
-                    'user_id': 'auto-detected',
-                    'work_item_type': 'User Story',
-                    'states': ['Closed', 'Resolved'],
-                    'fields': [
-                        'System.Id',
-                        'System.Title',
-                        'Microsoft.VSTS.Common.ClosedDate',
-                        'System.Description',
-                        'Microsoft.VSTS.Common.AcceptanceCriteria'
-                    ]
-                },
                 'llm_integration': {
                     'provider': llm_provider if llm_provider != 'none' else 'roo_code',
                     'model': llm_model or 'default',
@@ -543,9 +431,7 @@ def run_analysis():
                 },
                 'processing': {
                     'output_directory': app.config['RESULTS_FOLDER'],
-                    'backup_csv': True,
-                    'date_range_months': 12,
-                    'default_source': data_source
+                    'date_range_months': 12
                 }
             }
             

@@ -23,11 +23,10 @@ A comprehensive workplace productivity tool that helps professionals articulate 
 - **Professional Report Generation**: High-quality Markdown and DOCX reports with customizable templates
 - **Evidence-Based Ratings**: Detailed assessment with supporting accomplishments for each competency
 
-### 🔗 **Enterprise Integration**
-- **Azure DevOps Integration**: Production-ready integration with automatic work item import and real-time data processing
-- **Smart Data Handling**: Automatic column detection, missing data normalization, and hybrid data source support
+### 🔗 **Data Processing**
+- **Smart Data Handling**: Automatic column detection, missing data normalization, and flexible data processing
 - **Validation Framework**: Comprehensive quality checks with automatic data normalization and flexible validation
-- **Multiple Data Sources**: CSV upload, Azure DevOps API, or hybrid modes with fallback support
+- **CSV Upload Support**: Easy drag-and-drop CSV file upload with real-time validation
 
 ## 🚀 Quick Start
 
@@ -61,7 +60,6 @@ Then open your browser to: **`http://localhost:8888`**
 The web UI provides:
 - **Step-by-Step Wizard**: Guided workflow from criteria setup to final report
 - **Drag & Drop File Upload**: Easy CSV and JSON file handling
-- **Real-time Azure DevOps Testing**: Validate connections before fetching data
 - **Secure API Key Storage**: Encrypted storage with visual management
 - **Live Progress Tracking**: Real-time feedback during analysis
 - **Direct Download**: Professional reports ready for immediate use
@@ -78,9 +76,6 @@ For advanced users, automation, or CI/CD integration:
 
 # Generate from CSV file  
 python src/main.py --source csv --file data/accomplishments.csv --type competency --format markdown
-
-# Generate from Azure DevOps
-python src/main.py --source ado --type annual --year 2025 --format docx
 
 # Test configuration
 python src/main.py --test-config
@@ -100,7 +95,6 @@ Then open your browser to: `http://localhost:8888`
 The web UI provides:
 - **Intuitive Interface**: Step-by-step wizard for all functionality
 - **Drag & Drop**: Easy file uploads for criteria and CSV data
-- **Azure DevOps Integration**: Direct connection with connection testing
 - **LLM Configuration**: Support for all major AI providers with secure API key management
 - **Real-time Progress**: Live feedback during analysis
 - **Professional Output**: Direct download of Markdown and Word documents
@@ -123,7 +117,6 @@ python src/main.py --source csv --file data/accomplishments.csv --type competenc
 ### Option 1: Web UI Configuration (Recommended)
 
 The web interface handles all configuration through intuitive forms:
-- **Azure DevOps**: Enter credentials and test connection directly in the UI
 - **LLM Providers**: Select provider, model, and enter API keys with secure storage
 - **Review Settings**: Choose review type, year, and output format through dropdowns
 
@@ -133,13 +126,6 @@ For advanced users or automation, create a `config.json` file in the project roo
 
 ```json
 {
-    "azure_devops": {
-        "organization": "YourOrgName",
-        "project": "YourProjectName", 
-        "personal_access_token": "your_pat_token_here",
-        "work_item_type": "User Story",
-        "states": ["Closed", "Resolved"]
-    },
     "llm_integration": {
         "provider": "requestyai",
         "api_key": "your_requestyai_api_key_here",
@@ -152,15 +138,12 @@ For advanced users or automation, create a `config.json` file in the project roo
     },
     "processing": {
         "output_directory": "data",
-        "backup_csv": true,
-        "date_range_months": 12,
-        "default_source": "csv"
+        "date_range_months": 12
     }
 }
 ```
 
 **Configuration Sections:**
-- **azure_devops**: Required for ADO integration
 - **llm_integration**: Required for AI analysis. Use `"requestyai"` for the unified gateway
 - **processing**: Optional processing settings (defaults applied if missing)
 
@@ -181,9 +164,6 @@ python src/config_validation.py --create
 
 # Validate configuration and test connections
 python src/config_validation.py
-
-# Test Azure DevOps connection specifically
-python ado_user_story_client.py --config config.json --test-connection
 ```
 
 ## 📋 How To Use
@@ -199,9 +179,8 @@ python ado_user_story_client.py --config config.json --test-connection
 
 3. **Choose Review Type**: Select "Competency Assessment" or "Annual Review" and set the year
 
-4. **Select Data Source**:
-   - **CSV Upload**: Drag and drop your accomplishments CSV file
-   - **Azure DevOps**: Enter organization, project, and PAT token, then test connection and fetch data
+4. **Upload Data**:
+   - **CSV Upload**: Drag and drop your accomplishments CSV file with automatic validation
 
 5. **Configure AI**:
    - Select LLM provider (RequestyAI recommended for cost savings)
@@ -218,13 +197,8 @@ For automation or advanced workflows:
 # Quick start with existing data
 ./scripts/run_assessment.sh --fresh
 
-# Generate from specific sources
+# Generate from CSV files
 python src/main.py --source csv --file data/accomplishments.csv --type competency --format markdown
-python src/main.py --source ado --type annual --year 2025 --format docx
-python src/main.py --source hybrid --file data/backup.csv --type competency --format markdown
-```
-
-**Benefits**: Best of both worlds - automatic data retrieval with manual backup
 
 ### Analysis Options
 
@@ -246,23 +220,6 @@ Fast, reliable processing using keyword analysis and statistical scoring:
 
 Best for: Batch processing, consistent results, quick assessments without AI costs
 
-### Azure DevOps Standalone Usage
-
-You can also use the ADO integration directly for data exploration:
-
-```bash
-# Test your ADO connection
-python ado_user_story_client.py --config config.json --test-connection
-
-# Get your user ID (needed for filtering)
-python ado_user_story_client.py --config config.json --get-my-user-id
-
-# Export all your closed work items
-python ado_user_story_client.py --config config.json --filter-assigned-to-me --filter-state Closed
-
-# Diagnose available work items in your project
-python ado_user_story_client.py --config config.json --diagnose
-```
 
 ## Output & Reports
 
@@ -329,49 +286,6 @@ pytest --cov=src tests/
 
 ## Integration
 
-### Azure DevOps (Fully Functional)
-
-The Azure DevOps integration is production-ready and provides:
-
-- **Automatic Authentication**: Uses Personal Access Tokens for secure API access
-- **Work Item Filtering**: Retrieves closed/resolved work items assigned to you
-- **Real-time Data**: No manual CSV maintenance required
-- **Flexible Configuration**: Configurable work item types, states, and fields
-- **Connection Validation**: Built-in connection testing and diagnostics
-- **Rate Limiting**: Respects Azure DevOps API limits with intelligent throttling
-- **Caching**: Optional response caching for improved performance
-
-#### Setup Steps
-
-1. **Generate PAT**: Create a Personal Access Token in Azure DevOps with "Work Items (Read)" permission
-2. **Configure**: Add your settings to `config.json` (see Configuration section above)
-3. **Validate**: Run `python src/config_validation.py` to test connections
-4. **Use**: Run `python src/main.py --source ado --type competency --format markdown`
-
-#### Advanced Configuration Options
-
-```json
-{
-    "azure_devops": {
-        "organization": "YourOrg",
-        "project": "YourProject", 
-        "personal_access_token": "your_pat_here",
-        "user_id": "auto-detected",
-        "work_item_type": "User Story",
-        "states": ["Closed", "Resolved", "Done"],
-        "fields": [
-            "System.Id",
-            "System.Title",
-            "Microsoft.VSTS.Common.ClosedDate",
-            "System.Description",
-            "Microsoft.VSTS.Common.AcceptanceCriteria",
-            "Microsoft.VSTS.Scheduling.StoryPoints",
-            "System.Tags"
-        ]
-    }
-}
-```
-
 ### Planned Integrations
 - **Jira**: Issue and project tracking integration
 - **GitHub**: Pull request and contribution analysis  
@@ -386,10 +300,10 @@ The Azure DevOps integration is production-ready and provides:
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Web UI        │    │   Python Core   │    │   Data Sources  │
 │                 │    │                 │    │                 │
-│ • Drag & Drop   │◄──►│ • Main Engine   │◄──►│ • Azure DevOps  │
-│ • Form Entry    │    │ • LLM Client    │    │ • CSV Files     │
-│ • API Keys      │    │ • ADO Client    │    │ • JSON Config   │
-│ • Progress      │    │ • Validation    │    │ • Criteria      │
+│ • Drag & Drop   │◄──►│ • Main Engine   │◄──►│ • CSV Files     │
+│ • Form Entry    │    │ • LLM Client    │    │ • JSON Config   │
+│ • API Keys      │    │ • Validation    │    │ • Criteria      │
+│ • Progress      │    │ • Keywords      │    │ • Templates     │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
@@ -401,13 +315,12 @@ The Azure DevOps integration is production-ready and provides:
 - **ui/key_storage.py**: Encrypted API key management
 
 #### 🐍 **Python Processing Core**  
-- **src/main.py**: Multi-source orchestration with LLM integration
+- **src/main.py**: CSV processing orchestration with LLM integration
 - **src/llm_client.py**: Unified LLM provider interface (OpenAI, Anthropic, Google, etc.)
 - **src/competency_formatter.py**: Professional report generation with templates
 - **src/config_validation.py**: Configuration validation and connection testing
 
-#### 🔗 **Integration Layer**
-- **ado_user_story_client.py**: Production-ready Azure DevOps API client
+#### 🔗 **Processing Layer**
 - **src/competency_keywords.py**: Intelligent accomplishment-to-competency mapping
 
 #### 🛠️ **Automation Scripts**
@@ -420,7 +333,6 @@ The Azure DevOps integration is production-ready and provides:
 ┌─────────────────┐
 │   Data Input    │
 │ • CSV Upload    │
-│ • ADO API       │
 │ • Form Entry    │
 └─────────┬───────┘
           │
