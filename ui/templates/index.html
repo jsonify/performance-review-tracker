@@ -2470,12 +2470,25 @@
         
         const metadata = data.metadata || {};
         
-        // Calculate processing time
-        const processingTime = analysisStartTime ? 
-            Math.floor((new Date() - analysisStartTime) / 1000) : 0;
-        const minutes = Math.floor(processingTime / 60);
-        const seconds = processingTime % 60;
-        const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        // Calculate processing time - use backend time if available, fallback to frontend calculation
+        let processingTime = 0;
+        let timeString = '--:--';
+        
+        if (metadata.processing_time_seconds !== undefined) {
+            // Use accurate backend processing time
+            processingTime = metadata.processing_time_seconds;
+            const minutes = Math.floor(processingTime / 60);
+            const seconds = processingTime % 60;
+            timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            console.log('Using backend processing time:', processingTime, 'seconds');
+        } else if (analysisStartTime) {
+            // Fallback to frontend calculation
+            processingTime = Math.floor((new Date() - analysisStartTime) / 1000);
+            const minutes = Math.floor(processingTime / 60);
+            const seconds = processingTime % 60;
+            timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            console.log('Using frontend processing time fallback:', processingTime, 'seconds');
+        }
         
         console.log('Looking for results elements...');
         
@@ -2490,7 +2503,18 @@
         
         const providerElement = document.getElementById('final-ai-provider');
         console.log('providerElement:', providerElement);
-        if (providerElement) providerElement.textContent = metadata.llm_provider || 'Automated Only';
+        if (providerElement) {
+            const provider = metadata.llm_provider;
+            const model = metadata.llm_model;
+            
+            if (provider && model) {
+                providerElement.textContent = `${provider} (${model})`;
+            } else if (provider) {
+                providerElement.textContent = provider;
+            } else {
+                providerElement.textContent = 'Automated Only';
+            }
+        }
         
         const generatedElement = document.getElementById('final-generated-time');
         console.log('generatedElement:', generatedElement);
