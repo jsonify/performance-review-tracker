@@ -18,10 +18,9 @@
     ]
   },
   "llm_integration": {
-    "provider": "roo_code",
-    "api_key": "",
-    "model": "",
-    "fallback_to_roo": true,
+    "provider": "requestyai",
+    "api_key": "your_api_key_here",
+    "model": "openai/gpt-4o-mini",
     "options": {
       "temperature": 0.7,
       "max_tokens": 4000

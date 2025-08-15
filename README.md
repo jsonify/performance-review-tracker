@@ -130,7 +130,6 @@ For advanced users or automation, create a `config.json` file in the project roo
         "provider": "requestyai",
         "api_key": "your_requestyai_api_key_here",
         "model": "openai/gpt-4o-mini",
-        "fallback_to_roo": true,
         "options": {
             "temperature": 0.7,
             "max_tokens": 4000

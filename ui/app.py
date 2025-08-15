@@ -164,8 +164,7 @@ def get_common_models():
         'anthropic': ['claude-3-opus', 'claude-3-sonnet', 'claude-3-haiku'],
         'google': ['gemini-pro', 'gemini-pro-vision'],
         'azure_openai': ['gpt-4', 'gpt-35-turbo'],
-        'ollama': ['llama2', 'codellama', 'mistral'],
-        'roo_code': ['default']
+        'ollama': ['llama2', 'codellama', 'mistral']
     }
 
 
@@ -363,8 +362,7 @@ def run_analysis():
                 'llm_integration': {
                     'provider': llm_provider,
                     'model': llm_model or 'default',
-                    'api_key': api_key or '',
-                    'fallback_to_roo': True
+                    'api_key': api_key or ''
                 }
             }
             
@@ -420,10 +418,9 @@ def run_analysis():
             # Create complete config file (always needed)
             temp_config = {
                 'llm_integration': {
-                    'provider': llm_provider if llm_provider != 'none' else 'roo_code',
+                    'provider': llm_provider if llm_provider != 'none' else 'requestyai',
                     'model': llm_model or 'default',
                     'api_key': api_key or '',
-                    'fallback_to_roo': True,
                     'options': {
                         'temperature': 0.7,
                         'max_tokens': 32000

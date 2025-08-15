@@ -1,6 +1,6 @@
 # LLM Integration Guide
 
-This guide explains how to set up and use the new LLM integration feature that replaces the Roo Code VS Code extension.
+This guide explains how to set up and use the LLM integration feature for automated performance review analysis.
 
 ## Overview
 
@@ -44,7 +44,6 @@ The Performance Review Tracker now supports direct integration with multiple LLM
 - **Best for**: Privacy, no API costs
 - **Cost**: Free (requires local GPU/CPU resources)
 
-### 6. Roo Code (Fallback)
 - **Best for**: Existing users who want to maintain VS Code integration
 - **Note**: Original system maintained as fallback option
 
@@ -257,7 +256,6 @@ The system is designed with multiple fallback layers:
 
 1. **Primary**: Configured LLM provider
 2. **Secondary**: Manual analysis (same as before)
-3. **Tertiary**: Roo Code (if `fallback_to_roo: true`)
 
 ## Advanced Configuration
 
@@ -295,13 +293,13 @@ python src/main.py --config config-openai.json --type competency
 python src/main.py --config config-claude.json --type competency
 ```
 
-## Migration from Roo Code
+## Getting Started
 
-If you're currently using Roo Code:
+To use LLM integration:
 
-1. **Keep existing workflow**: Set `"provider": "roo_code"` to maintain current behavior
-2. **Gradual transition**: Set `"fallback_to_roo": true` to use LLM with Roo Code fallback
-3. **Full migration**: Choose an LLM provider and set `"fallback_to_roo": false`
+1. **Choose a provider**: Select from RequestyAI, OpenAI, Anthropic, Google, Azure OpenAI, or Ollama
+2. **Get API key**: Sign up with your chosen provider and obtain an API key
+3. **Configure**: Add your provider and API key to config.json
 
 The analysis format and output remain the same, so existing reports and templates continue to work.
 

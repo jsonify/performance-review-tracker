@@ -31,14 +31,15 @@
 ## AI Integration
 
 ### Current Implementation
-- **AI Assistant:** Roo Code (VS Code extension integration)
-- **Integration Method:** Subprocess calls to main.py with analysis modes
+- **AI Integration:** Direct LLM API integration with multiple providers
+- **Supported Providers:** OpenAI, Anthropic, Google, Azure OpenAI, Ollama, RequestyAI
+- **Integration Method:** Native API calls through llm_client module
 - **Analysis Types:** Competency assessment and annual review generation
 
-### Planned Enhancement
-- **Direct LLM API:** Considering migration to direct API integration
-- **Tool Options:** Evaluating Requesty or similar LLM API tools
-- **Integration Strategy:** Replace VS Code dependency with direct API calls
+### Provider Features
+- **RequestyAI Gateway:** Unified access to multiple models with cost optimization
+- **Fallback Strategy:** Graceful degradation to manual analysis if LLM fails
+- **Configuration:** Flexible provider and model selection via config.json
 
 ## Development Tools
 

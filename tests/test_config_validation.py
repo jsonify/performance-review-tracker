@@ -27,7 +27,8 @@ class TestConfigValidator(unittest.TestCase):
         # Valid test configuration
         self.valid_config = {
             "llm_integration": {
-                "provider": "roo_code"
+                "provider": "requestyai",
+                "api_key": "sk-test123456789"
             },
             "processing": {
                 "output_directory": "test_data",
@@ -55,7 +56,7 @@ class TestConfigValidator(unittest.TestCase):
         
         # Check that configuration was loaded
         self.assertIsInstance(config, dict)
-        self.assertEqual(config["llm_integration"]["provider"], "roo_code")
+        self.assertEqual(config["llm_integration"]["provider"], "requestyai")
         self.assertEqual(config["processing"]["output_directory"], "test_data")
     
     def test_load_missing_config_file(self):
@@ -138,7 +139,7 @@ class TestConfigValidator(unittest.TestCase):
         """Test that default values are applied for missing optional fields."""
         minimal_config = {
             "llm_integration": {
-                "provider": "roo_code"
+                "provider": "requestyai"
             }
         }
         self._create_config_file(minimal_config)
@@ -149,7 +150,6 @@ class TestConfigValidator(unittest.TestCase):
         # Check that defaults were applied
         self.assertEqual(config["processing"]["output_directory"], "data")
         self.assertEqual(config["processing"]["date_range_months"], 12)
-        self.assertEqual(config["llm_integration"]["fallback_to_roo"], True)
     
     def test_mask_sensitive_values(self):
         """Test that sensitive values are properly masked."""
@@ -172,16 +172,6 @@ class TestConfigValidator(unittest.TestCase):
             self.assertTrue("*" in masked_key)
             self.assertNotEqual(masked_key, "sk-test123456789")
     
-    def test_validate_llm_integration_roo_code(self):
-        """Test LLM integration validation for Roo Code provider."""
-        self._create_config_file(self.valid_config)
-        validator = ConfigValidator(self.temp_config_path)
-        validator.load_config()
-        
-        success, message = validator.validate_llm_integration()
-        
-        self.assertTrue(success)
-        self.assertIn("Roo Code integration configured", message)
     
     def test_validate_llm_integration_openai_with_key(self):
         """Test LLM integration validation for OpenAI with API key."""
@@ -224,7 +214,7 @@ class TestConfigValidator(unittest.TestCase):
         processing_config = validator.get_processing_config()
         
         self.assertEqual(ado_config["organization"], "test-org")
-        self.assertEqual(llm_config["provider"], "roo_code")
+        self.assertEqual(llm_config["provider"], "requestyai")
         self.assertIn("default_source", processing_config)
 
 
@@ -238,7 +228,7 @@ class TestLoadAndValidateConfig(unittest.TestCase):
         
         self.valid_config = {
             "llm_integration": {
-                "provider": "roo_code"
+                "provider": "requestyai"
             }
         }
     
@@ -260,7 +250,7 @@ class TestLoadAndValidateConfig(unittest.TestCase):
         config = load_and_validate_config(self.temp_config_path, test_connections=False)
         
         self.assertIsInstance(config, dict)
-        self.assertEqual(config["llm_integration"]["provider"], "roo_code")
+        self.assertEqual(config["llm_integration"]["provider"], "requestyai")
     
     def test_load_and_validate_config_missing_file(self):
         """Test handling of missing configuration file."""

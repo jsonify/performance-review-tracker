@@ -28,7 +28,7 @@ class ConfigValidator:
     REQUIRED_SCHEMA = {
         "llm_integration": {
             "required_fields": ["provider"],
-            "optional_fields": ["api_key", "model", "fallback_to_roo", "options"]
+            "optional_fields": ["api_key", "model", "options"]
         },
         "processing": {
             "required_fields": [],
@@ -41,13 +41,12 @@ class ConfigValidator:
     
     # Valid values for specific fields
     VALID_VALUES = {
-        "llm_integration.provider": ["requestyai", "openai", "anthropic", "google", "azure_openai", "ollama", "roo_code"]
+        "llm_integration.provider": ["requestyai", "openai", "anthropic", "google", "azure_openai", "ollama"]
     }
     
     # Default values for missing optional fields
     DEFAULT_VALUES = {
         "llm_integration": {
-            "fallback_to_roo": True,
             "options": {
                 "temperature": 0.7,
                 "max_tokens": 4000
@@ -129,7 +128,6 @@ class ConfigValidator:
                 "provider": "requestyai",
                 "api_key": "your_requestyai_api_key_here",
                 "model": "openai/gpt-4o-mini",
-                "fallback_to_roo": True,
                 "options": {
                     "temperature": 0.7,
                     "max_tokens": 4000
@@ -205,11 +203,7 @@ class ConfigValidator:
             llm_config = self.config_data.get("llm_integration", {})
             provider = llm_config.get("provider")
             
-            if provider == "roo_code":
-                # For Roo Code, we don't need API keys
-                return True, "✓ Roo Code integration configured (no API key required)"
-            
-            elif provider in ["requestyai", "openai", "anthropic", "google"]:
+            if provider in ["requestyai", "openai", "anthropic", "google"]:
                 api_key = llm_config.get("api_key")
                 if not api_key or api_key.strip() == "":
                     return False, f"✗ {provider} provider requires api_key configuration"
@@ -295,7 +289,6 @@ class ConfigValidator:
         print(f"  Provider: {llm_config.get('provider', 'Not set')}")
         print(f"  API Key: {llm_config.get('api_key', 'Not set')}")
         print(f"  Model: {llm_config.get('model', 'Not set')}")
-        print(f"  Fallback to Roo: {llm_config.get('fallback_to_roo', 'Not set')}")
         
         # Processing section
         processing_config = masked_config.get("processing", {})
