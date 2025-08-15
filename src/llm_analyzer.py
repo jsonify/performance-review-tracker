@@ -2,7 +2,7 @@
 """
 LLM Analysis Module for Performance Review System
 
-This module replaces the Roo Code integration with direct LLM API calls.
+This module provides direct LLM API integration for performance review analysis.
 It provides analysis of work accomplishments against performance criteria
 using various LLM providers.
 """
@@ -131,7 +131,7 @@ def load_criteria_with_uploads(review_type: str, config: Dict = None) -> List[Di
 
 def run_llm_analysis(data_file: str, review_type: str, config: Dict) -> str:
     """
-    Run LLM analysis on the processed data, replacing run_roo_code_analysis.
+    Run LLM analysis on the processed data.
     
     Args:
         data_file: Path to processed JSON data file
@@ -718,7 +718,7 @@ def validate_llm_config(config: Dict) -> List[str]:
     provider = llm_config.get("provider", "").lower()
     if not provider:
         issues.append("LLM provider not specified")
-    elif provider not in ["requestyai", "openai", "anthropic", "google", "azure_openai", "ollama", "roo_code"]:
+    elif provider not in ["requestyai", "openai", "anthropic", "google", "azure_openai", "ollama"]:
         issues.append(f"Unsupported LLM provider: {provider}")
     
     # Check provider-specific requirements
@@ -734,7 +734,7 @@ def validate_llm_config(config: Dict) -> List[str]:
     
     # Check model specification
     model = llm_config.get("model", "")
-    if not model and provider not in ["roo_code"]:
+    if not model:
         issues.append(f"Model not specified for {provider}")
     
     return issues

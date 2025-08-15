@@ -1,24 +1,8 @@
 {
-  "azure_devops": {
-    "organization": "your-org-name",
-    "project": "your-project-name",
-    "personal_access_token": "your-pat-token-here",
-    "user_id": "auto-detected",
-    "work_item_type": "User Story",
-    "states": ["Closed", "Resolved"],
-    "fields": [
-      "System.Id",
-      "System.Title",
-      "Microsoft.VSTS.Common.ClosedDate",
-      "System.Description",
-      "Microsoft.VSTS.Common.AcceptanceCriteria"
-    ]
-  },
   "llm_integration": {
     "provider": "openai",
     "api_key": "your-api-key-here",
     "model": "gpt-4o",
-    "fallback_to_roo": false,
     "options": {
       "temperature": 0.7,
       "max_tokens": 4000,
@@ -59,16 +43,10 @@
           "ollama_host": "http://localhost:11434"
         }
       },
-      "roo_code_fallback": {
-        "provider": "roo_code",
-        "fallback_to_roo": true
-      }
     }
   },
   "processing": {
     "output_directory": "data",
-    "backup_csv": true,
-    "date_range_months": 12,
-    "default_source": "csv"
+    "date_range_months": 12
   }
 }

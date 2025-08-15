@@ -3,7 +3,7 @@
 Main script for the Performance Review Tracking System.
 
 This script provides end-to-end automation for generating performance review reports,
-including data processing, Azure DevOps integration, LLM analysis, and report generation.
+including data processing, LLM analysis, and report generation.
 """
 
 import argparse
@@ -78,204 +78,12 @@ def load_data(file_path: str) -> pd.DataFrame:
     print("DEBUG: load_data - END") # DEBUG LOG
 
 
-def load_data_from_ado(config: Dict, date_range_months: int = 12) -> pd.DataFrame:
-    """
-    Load data from Azure DevOps using the configured client.
-    
-    Args:
-        config: Configuration dictionary containing Azure DevOps settings
-        date_range_months: Number of months to look back for work items
-        
-    Returns:
-        DataFrame with work items formatted for performance review processing
-        
-    Raises:
-        ImportError: If ADO client is not available
-        ValueError: If ADO configuration is invalid or connection fails
-    """
-    print("DEBUG: load_data_from_ado - START", date_range_months) # DEBUG LOG
-    
-    try:
-        # Import ADO client
-        import sys
-        sys.path.append('..')  # Add parent directory to path for ado_user_story_client
-        from ado_user_story_client import ADOUserStoryClient
-    except ImportError as e:
-        raise ImportError("ADO client not available. Please ensure ado_user_story_client.py is accessible.")
-    
-    # Get Azure DevOps configuration
-    ado_config = config.get("azure_devops", {})
-    if not ado_config:
-        raise ValueError("Azure DevOps configuration not found in config file")
-    
-    # Validate required ADO configuration
-    required_fields = ["organization", "project", "personal_access_token"]
-    for field in required_fields:
-        if not ado_config.get(field):
-            raise ValueError(f"Missing required Azure DevOps configuration: {field}")
-    
-    # Initialize ADO client
-    print("DEBUG: load_data_from_ado - Initializing ADO client") # DEBUG LOG
-    client = ADOUserStoryClient(
-        organization=ado_config["organization"],
-        project=ado_config["project"],
-        personal_access_token=ado_config["personal_access_token"]
-    )
-    
-    # Test connection
-    if not client.test_connection():
-        raise ValueError("Failed to connect to Azure DevOps. Please check your credentials.")
-    
-    # Get user ID
-    user_id = ado_config.get("user_id")
-    if not user_id or user_id == "auto-detected":
-        user_id = client.get_current_user_id()
-        if not user_id:
-            raise ValueError("Could not determine current user ID from Azure DevOps")
-    
-    # Get work items
-    work_item_type = ado_config.get("work_item_type", "User Story")
-    states = ado_config.get("states", ["Closed", "Resolved"])
-    fields = ado_config.get("fields", [
-        "System.Id",
-        "System.Title", 
-        "Microsoft.VSTS.Common.ClosedDate",
-        "System.Description",
-        "Microsoft.VSTS.Common.AcceptanceCriteria"
-    ])
-    
-    print(f"DEBUG: load_data_from_ado - Fetching work items for user: {user_id}") # DEBUG LOG
-    
-    all_work_items = []
-    
-    # Fetch work items for each configured state
-    for state in states:
-        work_items = client.get_work_items_by_criteria(
-            assigned_to_id=user_id,
-            state=state,
-            work_item_type=work_item_type,
-            fields=fields
-        )
-        all_work_items.extend(work_items)
-    
-    if not all_work_items:
-        print("DEBUG: load_data_from_ado - No work items found") # DEBUG LOG
-        # Return empty DataFrame with expected columns
-        empty_df = pd.DataFrame(columns=[
-            'Date', 'Title', 'Description', 'Acceptance Criteria', 
-            'Success Notes', 'Impact', 'Self Rating', 'Rating Justification'
-        ])
-        return empty_df
-    
-    print(f"DEBUG: load_data_from_ado - Found {len(all_work_items)} work items") # DEBUG LOG
-    
-    # Transform ADO work items to performance review format
-    performance_data = []
-    
-    for item in all_work_items:
-        fields_data = item.get('fields', {})
-        
-        # Map ADO fields to performance review structure
-        perf_item = {
-            'Date': _format_ado_date(fields_data.get('Microsoft.VSTS.Common.ClosedDate')),
-            'Title': fields_data.get('System.Title', ''),
-            'Description': _clean_html_content(fields_data.get('System.Description', '')),
-            'Acceptance Criteria': _clean_html_content(fields_data.get('Microsoft.VSTS.Common.AcceptanceCriteria', '')),
-            'Success Notes': f"Completed work item ID {item.get('id')} successfully",
-            'Impact': _calculate_impact_from_ado(fields_data),
-            'Self Rating': 2,  # Default to "Good"
-            'Rating Justification': f"Successfully completed {work_item_type.lower()} as assigned, meeting acceptance criteria"
-        }
-        
-        performance_data.append(perf_item)
-    
-    # Create DataFrame
-    df = pd.DataFrame(performance_data)
-    
-    # Filter by date range
-    if date_range_months > 0:
-        cutoff_date = datetime.now() - pd.DateOffset(months=date_range_months)
-        df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
-        df = df[df['Date'] >= cutoff_date].reset_index(drop=True)
-    
-    print(f"DEBUG: load_data_from_ado - Returning {len(df)} work items after date filtering") # DEBUG LOG
-    print("DEBUG: load_data_from_ado - END") # DEBUG LOG
-    return df
 
 
-def _format_ado_date(ado_date_str: Optional[str]) -> str:
-    """
-    Format Azure DevOps date string to YYYY-MM-DD format.
-    
-    Args:
-        ado_date_str: Date string from ADO (ISO format)
-        
-    Returns:
-        Formatted date string or current date if parsing fails
-    """
-    if not ado_date_str:
-        return datetime.now().strftime('%Y-%m-%d')
-    
-    try:
-        # ADO dates are typically in ISO format like "2025-06-15T14:30:00Z"
-        dt = datetime.fromisoformat(ado_date_str.replace('Z', '+00:00'))
-        return dt.strftime('%Y-%m-%d')
-    except:
-        return datetime.now().strftime('%Y-%m-%d')
 
 
-def _clean_html_content(html_content: Optional[str]) -> str:
-    """
-    Clean HTML content from ADO fields to plain text.
-    
-    Args:
-        html_content: HTML content from ADO
-        
-    Returns:
-        Cleaned plain text content
-    """
-    if not html_content:
-        return ""
-    
-    # Basic HTML tag removal (could be enhanced with BeautifulSoup if needed)
-    import re
-    # Remove HTML tags
-    text = re.sub(r'<[^>]+>', '', html_content)
-    # Replace common HTML entities
-    text = text.replace('&nbsp;', ' ').replace('&amp;', '&').replace('&lt;', '<').replace('&gt;', '>')
-    # Clean up whitespace
-    text = ' '.join(text.split())
-    return text
 
 
-def _calculate_impact_from_ado(fields_data: Dict) -> str:
-    """
-    Calculate impact level from ADO work item fields.
-    
-    Args:
-        fields_data: Dictionary of ADO work item fields
-        
-    Returns:
-        Impact level: "High", "Medium", or "Low"
-    """
-    # This is a simple heuristic - could be enhanced based on specific ADO fields
-    title = fields_data.get('System.Title', '').lower()
-    description = fields_data.get('System.Description', '').lower()
-    
-    # High impact indicators
-    high_impact_keywords = [
-        'critical', 'urgent', 'security', 'production', 'outage', 
-        'major', 'enterprise', 'system-wide', 'architecture'
-    ]
-    
-    # Check for high impact indicators
-    content = f"{title} {description}"
-    if any(keyword in content for keyword in high_impact_keywords):
-        return "High"
-    
-    # Medium impact is default for completed work items
-    # Low impact could be determined by specific criteria if needed
-    return "Medium"
 
 
 def filter_by_date_range(
@@ -412,7 +220,7 @@ def prepare_data_for_analysis(
     output_dir: str = 'data'
 ) -> str:
     """
-    Prepare data for Roo Code analysis.
+    Prepare data for analysis.
     """
     print("DEBUG: prepare_data_for_analysis - START", review_type, year, output_dir) # DEBUG LOG
     # Validate review type
@@ -449,7 +257,7 @@ def prepare_data_for_analysis(
     # Ensure the output directory exists
     os.makedirs(output_dir, exist_ok=True)
 
-    # Convert to JSON format for Roo Code
+    # Convert to JSON format for analysis
     output_path = os.path.join(output_dir, f"processed_{review_type.lower()}.json")
 
     # Convert dates to ISO format strings for JSON serialization
@@ -460,7 +268,7 @@ def prepare_data_for_analysis(
         # If somehow we don't have datetime objects, try a safe conversion
         data['Date'] = data['Date'].apply(lambda x: x.strftime('%Y-%m-%d') if hasattr(x, 'strftime') else str(x))
 
-    # Save to file for Roo Code to access
+    # Save to file for analysis access
     print(f"DEBUG: prepare_data_for_analysis - Saving processed data to: {output_path}") # DEBUG LOG
     try:
         with open(output_path, 'w', encoding='utf-8') as f:
@@ -492,7 +300,7 @@ def load_template(review_type):
 
 def load_analysis(file_path):
     """
-    Load the analysis generated by Roo Code.
+    Load the analysis generated by the analyzer.
     """
     print("DEBUG: load_analysis - START", file_path) # DEBUG LOG
     analysis_path = file_path.replace('processed_', 'analyzed_').replace('.json', '.md')
@@ -504,7 +312,7 @@ def load_analysis(file_path):
             "1. Open VS Code\n"
             "2. Switch to Performance Analyst mode\n"
             f"3. Use the command: @{file_path} Please analyze this data and generate a structured report\n"
-            "4. Save Roo Code's analysis to: " + analysis_path
+            "4. Save the analysis to: " + analysis_path
         )
 
     with open(analysis_path, 'r', encoding='utf-8') as f:
@@ -559,7 +367,7 @@ def markdown_to_docx(markdown_text, output_path):
 
 def generate_final_report(data_file, review_type, output_format='markdown', output_path=None):
     """
-    Generate final formatted report by combining Roo Code analysis with template.
+    Generate final formatted report by combining analysis with template.
     """
     print("DEBUG: generate_final_report - START", data_file, review_type, output_format, output_path) # DEBUG LOG
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -575,7 +383,7 @@ def generate_final_report(data_file, review_type, output_format='markdown', outp
         os.makedirs(output_dir, exist_ok=True)
 
     try:
-        # Load Roo Code's analysis
+        # Load analysis
         analyzed_content = load_analysis(data_file)
         print("DEBUG: generate_final_report - Loaded analysis content:\n", analyzed_content) # DEBUG LOG
 
@@ -638,7 +446,7 @@ def generate_final_report(data_file, review_type, output_format='markdown', outp
                 os.remove(md_path)
 
     except NotImplementedError as e:
-        # Pass through the Roo Code usage instructions
+        # Pass through the usage instructions
         raise NotImplementedError(str(e))
     except Exception as e:
         print(f"DEBUG: generate_final_report - ERROR: {str(e)}") # DEBUG LOG
@@ -648,81 +456,6 @@ def generate_final_report(data_file, review_type, output_format='markdown', outp
     return output_path
 
 
-def run_roo_code_analysis(data_file: str, review_type: str) -> str:
-    """
-    Run Roo Code analysis on the processed data.
-    """
-    print("DEBUG: run_roo_code_analysis - START", data_file, review_type) # DEBUG LOG
-    # Determine output path for the analysis
-    analysis_path = data_file.replace('processed_', 'analyzed_').replace('.json', '.md')
-
-    # Create a detailed prompt based on review type
-    if review_type.lower() == 'annual':
-        prompt = (f"@{data_file} Please analyze this data to generate an Annual Review report. "
-                 "Follow the exact format from the system prompt, with separate sections for each criterion: "
-                 "1. Communication, 2. Flexibility, 3. Initiative, 4. Member Service, "
-                 "5. Personal Credibility, 6. Quality and Quantity of Work, 7. Teamwork. "
-                 "For each criterion, include 'Self Rating' (1=Poor, 2=Good, 3=Excellent) with justification, "
-                 "'How I Met This Criterion', 'Areas for Improvement', 'Improvement Plan', "
-                 "and 'Summary' sections. Consider the employee's self-ratings and justifications "
-                 "when analyzing each criterion. Conclude with an Overall Summary.")
-    else:
-        prompt = (f"@{data_file} Please analyze this data to generate a Competency Assessment report. "
-                 "Follow the exact format from the system prompt, with separate sections for each criterion.")
-
-    # Prepare the Roo Code command
-    roo_command = [
-        'code', '--cli',  # Use VS Code CLI mode
-        '--execute-command', 'roo.sendMessage',  # Execute Roo Code command
-        '--args', prompt  # Detailed prompt
-    ]
-
-    try:
-        # Run Roo Code analysis
-        print("DEBUG: run_roo_code_analysis - Running Roo Code analysis subprocess...") # DEBUG LOG
-        result = subprocess.run(roo_command, capture_output=True, text=True, check=True) # Capture output here
-        print("DEBUG: run_roo_code_analysis - Roo Code analysis subprocess completed") # DEBUG LOG
-
-        # Log stdout and stderr
-        print("DEBUG: run_roo_code_analysis - Roo Code stdout:\n", result.stdout) # DEBUG LOG
-        print("DEBUG: run_roo_code_analysis - Roo Code stderr:\n", result.stderr) # DEBUG LOG
-
-
-        # Save Roo Code's output to the analysis file
-        print(f"DEBUG: run_roo_code_analysis - Saving analysis to: {analysis_path}") # DEBUG LOG
-        with open(analysis_path, 'w', encoding='utf-8') as f:
-            f.write(result.stdout)
-        print(f"DEBUG: run_roo_code_analysis - Saved analysis to: {analysis_path}") # DEBUG LOG
-
-        print(f"DEBUG: run_roo_code_analysis - Analysis completed and saved to {analysis_path}") # DEBUG LOG
-        
-        # Check if the analysis file is empty and generate manual analysis if needed
-        if os.path.getsize(analysis_path) == 0:
-            print("DEBUG: run_roo_code_analysis - AI analysis is empty, generating manual analysis...") # DEBUG LOG
-            manual_analysis = generate_manual_analysis(data_file, review_type, None, None)
-            with open(analysis_path, 'w') as f:
-                f.write(manual_analysis)
-            print(f"DEBUG: run_roo_code_analysis - Manual analysis saved to {analysis_path}") # DEBUG LOG
-        
-        print("DEBUG: run_roo_code_analysis - END", analysis_path) # DEBUG LOG
-        return analysis_path
-
-    except subprocess.CalledProcessError as e:
-        print(f"DEBUG: run_roo_code_analysis - Roo Code analysis failed (subprocess.CalledProcessError): {e.stderr}") # DEBUG LOG
-        print("DEBUG: run_roo_code_analysis - Falling back to manual analysis...") # DEBUG LOG
-        manual_analysis = generate_manual_analysis(data_file, review_type)
-        with open(analysis_path, 'w') as f:
-            f.write(manual_analysis)
-        print(f"DEBUG: run_roo_code_analysis - Manual fallback analysis saved to {analysis_path}") # DEBUG LOG
-        return analysis_path
-    except Exception as e:
-        print(f"DEBUG: run_roo_code_analysis - Error running Roo Code analysis: {str(e)}") # DEBUG LOG
-        print("DEBUG: run_roo_code_analysis - Falling back to manual analysis...") # DEBUG LOG
-        manual_analysis = generate_manual_analysis(data_file, review_type)
-        with open(analysis_path, 'w') as f:
-            f.write(manual_analysis)
-        print(f"DEBUG: run_roo_code_analysis - Manual fallback analysis saved to {analysis_path}") # DEBUG LOG
-        return analysis_path
 
 
 def generate_manual_analysis(data_file: str, review_type: str) -> str:
@@ -907,7 +640,7 @@ _Assessment based on {total_accomplishments} work items completed during {date_r
 
 def generate_review_with_config(
     config: Dict,
-    source: str = "auto",
+    source: str = "csv",
     input_file: Optional[str] = None,
     review_type: str = "competency",
     year: Optional[str] = None,
@@ -915,12 +648,12 @@ def generate_review_with_config(
     output_path: Optional[str] = None
 ) -> str:
     """
-    Generate a performance review report with configuration-based data source selection.
+    Generate a performance review report from CSV data source.
     
     Args:
         config: Configuration dictionary
-        source: Data source ("csv", "ado", "auto")
-        input_file: CSV file path (required if source is "csv")
+        source: Data source (must be "csv")
+        input_file: CSV file path (required)
         review_type: Type of review ("annual" or "competency")
         year: Year for annual review
         output_format: Output format ("markdown" or "docx")
@@ -931,50 +664,15 @@ def generate_review_with_config(
     """
     print("DEBUG: generate_review_with_config - START", source, input_file, review_type) # DEBUG LOG
     
-    # Determine data source
-    if source == "auto":
-        source = config.get("processing", {}).get("default_source", "csv")
-        print(f"DEBUG: Auto-selected data source: {source}")
-    
     try:
-        # Load data based on source
-        if source == "csv":
-            if not input_file:
-                raise ValueError("input_file is required when source is 'csv'")
-            print(f"DEBUG: Loading data from CSV file: {input_file}")
-            data = load_data(input_file)
+        # Load data from CSV file
+        if not input_file:
+            raise ValueError("input_file is required for CSV data source")
+        if source != "csv":
+            raise ValueError("Only CSV data source is supported")
             
-        elif source == "ado":
-            print("DEBUG: Loading data from Azure DevOps")
-            processing_config = config.get("processing", {})
-            date_range_months = processing_config.get("date_range_months", 12)
-            data = load_data_from_ado(config, date_range_months)
-            
-            # Optionally backup to CSV
-            if processing_config.get("backup_csv", True):
-                backup_path = _backup_ado_data_to_csv(data, config)
-                print(f"DEBUG: Backed up ADO data to CSV: {backup_path}")
-        
-        elif source == "hybrid":
-            # Try ADO first, fallback to CSV
-            try:
-                print("DEBUG: Attempting to load data from Azure DevOps (hybrid mode)")
-                processing_config = config.get("processing", {})
-                date_range_months = processing_config.get("date_range_months", 12)
-                data = load_data_from_ado(config, date_range_months)
-                print("DEBUG: Successfully loaded data from Azure DevOps")
-            except Exception as ado_error:
-                print(f"DEBUG: ADO loading failed, falling back to CSV: {ado_error}")
-                if not input_file:
-                    raise ValueError(
-                        f"Azure DevOps loading failed ({ado_error}) and no CSV fallback file provided. "
-                        "Please provide --file argument for CSV fallback."
-                    )
-                data = load_data(input_file)
-                print(f"DEBUG: Successfully loaded fallback data from CSV: {input_file}")
-        
-        else:
-            raise ValueError(f"Invalid source: {source}. Must be 'csv', 'ado', or 'hybrid'")
+        print(f"DEBUG: Loading data from CSV file: {input_file}")
+        data = load_data(input_file)
         
         # Continue with existing review generation logic
         return generate_review_from_data(
@@ -991,26 +689,6 @@ def generate_review_with_config(
         raise
 
 
-def _backup_ado_data_to_csv(data: pd.DataFrame, config: Dict) -> str:
-    """
-    Backup ADO data to CSV file for future reference.
-    
-    Args:
-        data: DataFrame with ADO data
-        config: Configuration dictionary
-        
-    Returns:
-        Path to backup CSV file
-    """
-    output_dir = config.get("processing", {}).get("output_directory", "data")
-    os.makedirs(output_dir, exist_ok=True)
-    
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    backup_path = os.path.join(output_dir, f"ado_backup_{timestamp}.csv")
-    
-    data.to_csv(backup_path, index=False)
-    print(f"DEBUG: ADO data backed up to: {backup_path}")
-    return backup_path
 
 
 def generate_review_from_data(
@@ -1130,21 +808,18 @@ def generate_review(
 def main():
     """Main function to orchestrate the review generation process."""
     parser = argparse.ArgumentParser(
-        description="Generate performance review reports with Azure DevOps integration",
+        description="Generate performance review reports from CSV data",
         formatter_class=argparse.RawTextHelpFormatter,
         epilog="""
 Examples:
-  Generate from CSV (traditional):
-    %(prog)s --file data/accomplishments.csv --type competency --source csv
+  Generate competency assessment:
+    %(prog)s --file data/accomplishments.csv --type competency
   
-  Generate from Azure DevOps:
-    %(prog)s --type competency --source ado --config config.json
-  
-  Generate with hybrid fallback:
-    %(prog)s --file data/accomplishments.csv --type annual --year 2025 --source hybrid
+  Generate annual review:
+    %(prog)s --file data/accomplishments.csv --type annual --year 2025
     
-  Generate annual review with configuration:
-    %(prog)s --type annual --year 2025 --format docx --config config.json
+  Generate with custom output format:
+    %(prog)s --file data/accomplishments.csv --type annual --year 2025 --format docx
         """
     )
 
@@ -1153,12 +828,6 @@ Examples:
         "--config",
         default="config.json",
         help="Path to configuration file (default: config.json)"
-    )
-    parser.add_argument(
-        "--source", 
-        choices=["csv", "ado", "hybrid", "auto"],
-        default="auto",
-        help="Data source: csv (file only), ado (Azure DevOps only), hybrid (ADO with CSV fallback), auto (from config)"
     )
     parser.add_argument(
         "--create-config",
@@ -1174,7 +843,8 @@ Examples:
     # Data arguments
     parser.add_argument(
         "--file",
-        help="Path to CSV/Excel data file (required for csv source, optional for hybrid fallback)"
+        required=True,
+        help="Path to CSV/Excel data file (required)"
     )
     
     # Review arguments
@@ -1230,17 +900,12 @@ Examples:
     if args.type == "annual" and not args.year:
         parser.error("--year is required for annual reviews")
     
-    # Validate source-specific requirements
-    if args.source == "csv" and not args.file:
-        parser.error("--file is required when --source is 'csv'")
 
     try:
         # Load and validate configuration
         print("Loading configuration...")
         try:
-            # Skip connection testing for CSV source to avoid ADO validation failures
-            test_connections = args.source not in ['csv']
-            config = load_and_validate_config(args.config, create_if_missing=False, test_connections=test_connections)
+            config = load_and_validate_config(args.config, create_if_missing=False, test_connections=False)
         except ConfigValidationError as e:
             print(f"Configuration error: {e}", file=sys.stderr)
             print("Hint: Use --create-config to create an example configuration file.", file=sys.stderr)
@@ -1256,10 +921,10 @@ Examples:
                 print(f"  - {issue}")
             print("Note: System will fall back to manual analysis if LLM fails.")
         
-        # Generate the review using new configuration-based method
+        # Generate the review using CSV data source
         report_path = generate_review_with_config(
             config=config,
-            source=args.source,
+            source="csv",
             input_file=args.file,
             review_type=args.type,
             year=args.year,

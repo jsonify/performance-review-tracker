@@ -7,6 +7,7 @@ A simple, intuitive web interface for the Performance Review Tracker system that
 The web UI provides a complete interface for:
 
 ### 📋 **Criteria Management**
+- **Template Downloads**: Download pre-formatted JSON templates for both Annual Review and Competency Assessment criteria
 - **Dual Input Methods**: Choose between JSON file upload OR user-friendly form entry
 - **Annual Review Criteria**: Upload JSON files or use intuitive forms with validation
 - **Competency Criteria**: Upload JSON files or enter competencies through guided forms
@@ -27,6 +28,7 @@ The web UI provides a complete interface for:
 - Configurable output format (Markdown or Word Document)
 
 ### 📊 **Data Sources** 
+- **CSV Template Download**: Download a properly formatted CSV template with example data
 - **CSV Upload**: Drag-and-drop CSV files with accomplishment data
 - **Azure DevOps Integration**: Direct connection to ADO with:
   - Connection testing and validation

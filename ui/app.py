@@ -5,7 +5,7 @@ Flask Web UI for Performance Review Tracker
 A simple, useful web interface for the Performance Review Tracker that provides:
 - JSON criteria upload (annual review + competency criteria)
 - Review type and year selection
-- CSV upload or ADO integration
+- CSV file upload
 - LLM provider and model selection
 - API key management
 - Progress tracking and results display
@@ -51,17 +51,6 @@ except ImportError:
     class LLMProvider:
         pass
 
-try:
-    from ado_user_story_client import ADOUserStoryClient
-except ImportError:
-    print("Warning: ado_user_story_client module not found. ADO integration disabled.", file=sys.stderr)
-    class ADOUserStoryClient:
-        def __init__(self, config):
-            pass
-        def get_my_user_id(self):
-            raise Exception("ADO client not available")
-        def export_user_stories(self):
-            raise Exception("ADO client not available")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -175,8 +164,7 @@ def get_common_models():
         'anthropic': ['claude-3-opus', 'claude-3-sonnet', 'claude-3-haiku'],
         'google': ['gemini-pro', 'gemini-pro-vision'],
         'azure_openai': ['gpt-4', 'gpt-35-turbo'],
-        'ollama': ['llama2', 'codellama', 'mistral'],
-        'roo_code': ['default']
+        'ollama': ['llama2', 'codellama', 'mistral']
     }
 
 
@@ -295,90 +283,77 @@ def upload_accomplishments():
         return jsonify({'error': f'Upload failed: {str(e)}'}), 500
 
 
-@app.route('/api/test-ado-connection', methods=['POST'])
-def test_ado_connection():
-    """Test Azure DevOps connection."""
+@app.route('/api/get-csv-data', methods=['POST'])
+def get_csv_data():
+    """Return CSV content as JSON array for editing."""
     try:
         data = request.get_json()
+        csv_path = data.get('csv_path')
         
-        # Create temporary config for testing
-        config = {
-            'azure_devops': {
-                'organization': data.get('ado_org'),
-                'project': data.get('ado_project'),
-                'personal_access_token': data.get('ado_token')
-            }
-        }
+        if not csv_path or not os.path.exists(csv_path):
+            return jsonify({'error': 'CSV file not found'}), 404
         
-        # Test connection
-        ado_client = ADOUserStoryClient(config)
-        user_id = ado_client.get_my_user_id()
+        # Read CSV file
+        df = pd.read_csv(csv_path)
+        
+        # Convert to list of dictionaries
+        csv_data = df.to_dict('records')
         
         return jsonify({
             'success': True,
-            'user_id': user_id,
-            'message': 'Connection successful'
+            'data': csv_data,
+            'rows': len(csv_data),
+            'columns': list(df.columns)
         })
         
     except Exception as e:
-        logger.error(f"ADO connection test failed: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 400
+        logger.error(f"Get CSV data error: {str(e)}")
+        return jsonify({'error': f'Failed to read CSV: {str(e)}'}), 500
 
 
-@app.route('/api/fetch-ado-data', methods=['POST'])
-def fetch_ado_data():
-    """Fetch data from Azure DevOps."""
+@app.route('/api/update-csv-data', methods=['POST'])
+def update_csv_data():
+    """Save edited data back to CSV file."""
     try:
         data = request.get_json()
+        csv_path = data.get('csv_path')
+        updated_data = data.get('data')
         
-        # Create config for ADO client
-        config = {
-            'azure_devops': {
-                'organization': data.get('ado_org'),
-                'project': data.get('ado_project'),
-                'personal_access_token': data.get('ado_token'),
-                'work_item_type': data.get('work_item_type', 'User Story'),
-                'states': data.get('states', ['Closed', 'Resolved']),
-                'fields': [
-                    "System.Id",
-                    "System.Title", 
-                    "Microsoft.VSTS.Common.ClosedDate",
-                    "System.Description",
-                    "Microsoft.VSTS.Common.AcceptanceCriteria"
-                ]
-            },
-            'processing': {
-                'output_directory': app.config['UPLOAD_FOLDER'],
-                'date_range_months': data.get('months_back', 12)
-            }
-        }
+        if not csv_path or not updated_data:
+            return jsonify({'error': 'CSV path and data are required'}), 400
         
-        # Fetch data
-        ado_client = ADOUserStoryClient(config)
-        result = ado_client.export_user_stories()
+        if not os.path.exists(csv_path):
+            return jsonify({'error': 'CSV file not found'}), 404
         
-        if result and 'csv_file' in result:
+        # Convert back to DataFrame
+        df = pd.DataFrame(updated_data)
+        
+        # Validate required columns
+        required_columns = ['Date', 'Title']
+        missing_columns = [col for col in required_columns if col not in df.columns]
+        
+        if missing_columns:
             return jsonify({
-                'success': True,
-                'csv_file': result['csv_file'],
-                'work_items_count': result.get('work_items_count', 0),
-                'message': 'Data fetched successfully'
-            })
-        else:
-            return jsonify({
-                'success': False,
-                'error': 'No data retrieved from Azure DevOps'
+                'error': f'Missing required columns: {", ".join(missing_columns)}'
             }), 400
-            
-    except Exception as e:
-        logger.error(f"ADO data fetch failed: {str(e)}")
+        
+        # Save updated CSV
+        df.to_csv(csv_path, index=False)
+        
         return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 400
+            'success': True,
+            'message': 'CSV data updated successfully',
+            'rows': len(df),
+            'path': csv_path
+        })
+        
+    except Exception as e:
+        logger.error(f"Update CSV data error: {str(e)}")
+        return jsonify({'error': f'Failed to update CSV: {str(e)}'}), 500
+
+
+
+
 
 
 @app.route('/api/get-progress/<job_id>')
@@ -401,6 +376,9 @@ def get_progress_api(job_id):
 @app.route('/api/run-analysis', methods=['POST'])
 def run_analysis():
     """Run performance review analysis."""
+    # Record start time for accurate processing duration
+    analysis_start_time = datetime.now()
+    
     try:
         data = request.get_json()
         
@@ -456,8 +434,7 @@ def run_analysis():
                 'llm_integration': {
                     'provider': llm_provider,
                     'model': llm_model or 'default',
-                    'api_key': api_key or '',
-                    'fallback_to_roo': True
+                    'api_key': api_key or ''
                 }
             }
             
@@ -471,7 +448,27 @@ def run_analysis():
         # Run actual analysis using your existing main.py functionality
         update_progress(job_id, 'running', 50, 'Processing data...', 'Analysis in progress')
         file_extension = 'md' if output_format.lower() == 'markdown' else output_format
-        result_file = f"performance_review_{review_type}_{year}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{file_extension}"
+        
+        # Create enhanced filename with AI provider and model info
+        def sanitize_filename_part(text):
+            """Sanitize text for safe filename usage."""
+            if not text:
+                return "none"
+            # Replace problematic characters with underscores
+            import re
+            return re.sub(r'[^\w\-.]', '_', str(text)).lower()
+        
+        # Build filename components
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        provider_part = sanitize_filename_part(llm_provider) if llm_provider and llm_provider != 'none' else 'automated'
+        model_part = sanitize_filename_part(llm_model) if llm_model and llm_provider != 'none' else ''
+        
+        # Construct filename with AI info
+        if model_part:
+            result_file = f"performance_review_{review_type}_{year}_{provider_part}_{model_part}_{timestamp}.{file_extension}"
+        else:
+            result_file = f"performance_review_{review_type}_{year}_{provider_part}_{timestamp}.{file_extension}"
+        
         result_path = os.path.join(app.config['RESULTS_FOLDER'], result_file)
         
         try:
@@ -479,26 +476,22 @@ def run_analysis():
             import subprocess
             import sys
             
+            # CSV file is required for all analysis
+            csv_file = data.get('csv_file')
+            if not csv_file:
+                clear_progress(job_id)
+                return jsonify({
+                    'success': False,
+                    'error': 'No CSV file provided. Please upload a CSV file first.'
+                }), 400
+            
             cmd_args = [
                 sys.executable, 'src/main.py',
-                '--source', data_source,
+                '--file', csv_file,
                 '--type', review_type,
                 '--year', str(year),
                 '--format', output_format
             ]
-            
-            # Add data file if CSV source
-            if data_source == 'csv':
-                csv_file = data.get('csv_file')
-                if csv_file:
-                    cmd_args.extend(['--file', csv_file])
-                else:
-                    # Error: CSV source requires a file
-                    clear_progress(job_id)
-                    return jsonify({
-                        'success': False,
-                        'error': 'CSV source selected but no CSV file provided. Please upload a CSV file first.'
-                    }), 400
             
             # Handle criteria file - copy uploaded criteria to expected location
             criteria_file = data.get('criteria_file')
@@ -516,26 +509,10 @@ def run_analysis():
             
             # Create complete config file (always needed)
             temp_config = {
-                'azure_devops': {
-                    'organization': 'n/a' if data_source == 'csv' else '',
-                    'project': 'n/a' if data_source == 'csv' else '',
-                    'personal_access_token': 'n/a' if data_source == 'csv' else '',
-                    'user_id': 'auto-detected',
-                    'work_item_type': 'User Story',
-                    'states': ['Closed', 'Resolved'],
-                    'fields': [
-                        'System.Id',
-                        'System.Title',
-                        'Microsoft.VSTS.Common.ClosedDate',
-                        'System.Description',
-                        'Microsoft.VSTS.Common.AcceptanceCriteria'
-                    ]
-                },
                 'llm_integration': {
-                    'provider': llm_provider if llm_provider != 'none' else 'roo_code',
+                    'provider': llm_provider if llm_provider != 'none' else 'requestyai',
                     'model': llm_model or 'default',
                     'api_key': api_key or '',
-                    'fallback_to_roo': True,
                     'options': {
                         'temperature': 0.7,
                         'max_tokens': 32000
@@ -543,9 +520,7 @@ def run_analysis():
                 },
                 'processing': {
                     'output_directory': app.config['RESULTS_FOLDER'],
-                    'backup_csv': True,
-                    'date_range_months': 12,
-                    'default_source': data_source
+                    'date_range_months': 12
                 }
             }
             
@@ -621,6 +596,11 @@ def run_analysis():
         
         # Analysis is already marked as complete above
         
+        # Calculate processing time
+        analysis_end_time = datetime.now()
+        processing_duration = analysis_end_time - analysis_start_time
+        processing_time_seconds = int(processing_duration.total_seconds())
+        
         # Read file size for metadata
         file_size = 0
         if os.path.exists(result_path):
@@ -643,7 +623,8 @@ def run_analysis():
                 'llm_provider': llm_provider if llm_provider != 'none' else None,
                 'llm_model': llm_model if llm_provider != 'none' else None,
                 'file_size': file_size,
-                'generated_at': datetime.now().isoformat()
+                'processing_time_seconds': processing_time_seconds,
+                'generated_at': analysis_end_time.isoformat()
             }
         })
         
@@ -700,6 +681,34 @@ def download_result(filename):
     except Exception as e:
         logger.error(f"Download failed: {str(e)}")
         return jsonify({'error': 'Download failed'}), 500
+
+
+@app.route('/api/download-template/<template_type>')
+def download_template(template_type):
+    """Download template files for data input."""
+    try:
+        templates_dir = os.path.join(os.path.dirname(__file__), 'downloadable_templates')
+        
+        template_files = {
+            'csv': 'accomplishments_template.csv',
+            'annual-criteria': 'annual_review_criteria_template.json',
+            'competency-criteria': 'competency_assessment_criteria_template.json'
+        }
+        
+        if template_type not in template_files:
+            return jsonify({'error': 'Invalid template type'}), 400
+        
+        filename = template_files[template_type]
+        file_path = os.path.join(templates_dir, filename)
+        
+        if not os.path.exists(file_path):
+            return jsonify({'error': 'Template file not found'}), 404
+        
+        return send_file(file_path, as_attachment=True, download_name=filename)
+        
+    except Exception as e:
+        logger.error(f"Template download failed: {str(e)}")
+        return jsonify({'error': 'Template download failed'}), 500
 
 
 @app.route('/api/store-api-key', methods=['POST'])

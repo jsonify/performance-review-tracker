@@ -3,7 +3,7 @@
 Configuration validation module for Performance Review Tracking System.
 
 This module provides utilities for loading, validating, and testing configuration
-settings including Azure DevOps authentication and LLM integration settings.
+settings for LLM integration.
 """
 
 import json
@@ -26,17 +26,13 @@ class ConfigValidator:
     
     # Required configuration structure
     REQUIRED_SCHEMA = {
-        "azure_devops": {
-            "required_fields": ["organization", "project", "personal_access_token"],
-            "optional_fields": ["user_id", "work_item_type", "states", "fields"]
-        },
         "llm_integration": {
             "required_fields": ["provider"],
-            "optional_fields": ["api_key", "model", "fallback_to_roo", "options"]
+            "optional_fields": ["api_key", "model", "options"]
         },
         "processing": {
             "required_fields": [],
-            "optional_fields": ["output_directory", "backup_csv", "date_range_months", "default_source"]
+            "optional_fields": ["output_directory", "date_range_months"]
         }
     }
     
@@ -45,25 +41,12 @@ class ConfigValidator:
     
     # Valid values for specific fields
     VALID_VALUES = {
-        "llm_integration.provider": ["requestyai", "openai", "anthropic", "google", "azure_openai", "ollama", "roo_code"],
-        "processing.default_source": ["csv", "ado", "hybrid"]
+        "llm_integration.provider": ["requestyai", "openai", "anthropic", "google", "azure_openai", "ollama"]
     }
     
     # Default values for missing optional fields
     DEFAULT_VALUES = {
-        "azure_devops": {
-            "work_item_type": "User Story",
-            "states": ["Closed", "Resolved"],
-            "fields": [
-                "System.Id",
-                "System.Title", 
-                "Microsoft.VSTS.Common.ClosedDate",
-                "System.Description",
-                "Microsoft.VSTS.Common.AcceptanceCriteria"
-            ]
-        },
         "llm_integration": {
-            "fallback_to_roo": True,
             "options": {
                 "temperature": 0.7,
                 "max_tokens": 4000
@@ -71,9 +54,7 @@ class ConfigValidator:
         },
         "processing": {
             "output_directory": "data",
-            "backup_csv": True,
-            "date_range_months": 12,
-            "default_source": "csv"
+            "date_range_months": 12
         }
     }
 
@@ -143,26 +124,10 @@ class ConfigValidator:
     def _create_example_config(self) -> None:
         """Create an example configuration file."""
         example_config = {
-            "azure_devops": {
-                "organization": "your-org-name",
-                "project": "your-project-name", 
-                "personal_access_token": "your-pat-token-here",
-                "user_id": "auto-detected",
-                "work_item_type": "User Story",
-                "states": ["Closed", "Resolved"],
-                "fields": [
-                    "System.Id",
-                    "System.Title",
-                    "Microsoft.VSTS.Common.ClosedDate", 
-                    "System.Description",
-                    "Microsoft.VSTS.Common.AcceptanceCriteria"
-                ]
-            },
             "llm_integration": {
                 "provider": "requestyai",
                 "api_key": "your_requestyai_api_key_here",
                 "model": "openai/gpt-4o-mini",
-                "fallback_to_roo": True,
                 "options": {
                     "temperature": 0.7,
                     "max_tokens": 4000
@@ -170,9 +135,7 @@ class ConfigValidator:
             },
             "processing": {
                 "output_directory": "data",
-                "backup_csv": True,
-                "date_range_months": 12,
-                "default_source": "csv"
+                "date_range_months": 12
             }
         }
         
@@ -228,63 +191,6 @@ class ConfigValidator:
                         f"Valid values are: {', '.join(valid_values)}"
                     )
     
-    def validate_azure_devops_connection(self) -> Tuple[bool, str]:
-        """
-        Test Azure DevOps connection and authentication.
-        
-        Returns:
-            Tuple of (success: bool, message: str)
-        """
-        try:
-            # Import ADO client here to avoid circular imports
-            import sys
-            import os
-            ado_client_path = os.path.join(os.path.dirname(__file__), '..', 'ado_user_story_client.py')
-            if os.path.exists(ado_client_path):
-                sys.path.append(os.path.dirname(ado_client_path))
-                from ado_user_story_client import ADOUserStoryClient
-            else:
-                # Try relative import for testing
-                try:
-                    from ado_user_story_client import ADOUserStoryClient
-                except ImportError:
-                    return False, "✗ ADO client module not found"
-            
-            ado_config = self.config_data.get("azure_devops", {})
-            
-            # Check required fields (skip if values are placeholders)
-            required_fields = ["organization", "project", "personal_access_token"]
-            for field in required_fields:
-                value = ado_config.get(field)
-                if not value or value == "n/a":
-                    return False, f"Azure DevOps configuration missing or has placeholder value for field: {field}"
-            
-            # Test connection
-            client = ADOUserStoryClient(
-                organization=ado_config["organization"],
-                project=ado_config["project"],
-                personal_access_token=ado_config["personal_access_token"]
-            )
-            
-            if client.test_connection():
-                # Get user ID if not already set
-                if not ado_config.get("user_id") or ado_config.get("user_id") == "auto-detected":
-                    user_id = client.get_current_user_id()
-                    if user_id:
-                        self.config_data["azure_devops"]["user_id"] = user_id
-                        self._save_config()
-                        return True, f"✓ Connection successful. User ID auto-detected: {user_id}"
-                    else:
-                        return True, "✓ Connection successful, but could not auto-detect user ID"
-                else:
-                    return True, "✓ Azure DevOps connection successful"
-            else:
-                return False, "✗ Azure DevOps connection failed. Check credentials and permissions."
-                
-        except ImportError:
-            return False, "✗ ADO client module not found"
-        except Exception as e:
-            return False, f"✗ Error testing Azure DevOps connection: {str(e)}"
     
     def validate_llm_integration(self) -> Tuple[bool, str]:
         """
@@ -297,11 +203,7 @@ class ConfigValidator:
             llm_config = self.config_data.get("llm_integration", {})
             provider = llm_config.get("provider")
             
-            if provider == "roo_code":
-                # For Roo Code, we don't need API keys
-                return True, "✓ Roo Code integration configured (no API key required)"
-            
-            elif provider in ["requestyai", "openai", "anthropic", "google"]:
+            if provider in ["requestyai", "openai", "anthropic", "google"]:
                 api_key = llm_config.get("api_key")
                 if not api_key or api_key.strip() == "":
                     return False, f"✗ {provider} provider requires api_key configuration"
@@ -336,9 +238,6 @@ class ConfigValidator:
         """Get the loaded configuration data."""
         return self.config_data
     
-    def get_azure_devops_config(self) -> Dict:
-        """Get Azure DevOps configuration section."""
-        return self.config_data.get("azure_devops", {})
     
     def get_llm_integration_config(self) -> Dict:
         """Get LLM integration configuration section."""
@@ -363,15 +262,6 @@ class ConfigValidator:
         
         masked_config = json.loads(json.dumps(config))  # Deep copy
         
-        # Mask Azure DevOps PAT
-        if "azure_devops" in masked_config and "personal_access_token" in masked_config["azure_devops"]:
-            token = masked_config["azure_devops"]["personal_access_token"]
-            if len(token) > 8:
-                masked_config["azure_devops"]["personal_access_token"] = (
-                    token[:4] + "*" * (len(token) - 8) + token[-4:]
-                )
-            else:
-                masked_config["azure_devops"]["personal_access_token"] = "*" * len(token)
         
         # Mask LLM API keys
         if "llm_integration" in masked_config and "api_key" in masked_config["llm_integration"]:
@@ -392,14 +282,6 @@ class ConfigValidator:
         print("\nConfiguration Summary:")
         print("=" * 50)
         
-        # Azure DevOps section
-        ado_config = masked_config.get("azure_devops", {})
-        print(f"Azure DevOps:")
-        print(f"  Organization: {ado_config.get('organization', 'Not set')}")
-        print(f"  Project: {ado_config.get('project', 'Not set')}")
-        print(f"  Token: {ado_config.get('personal_access_token', 'Not set')}")
-        print(f"  User ID: {ado_config.get('user_id', 'Not set')}")
-        print(f"  Work Item Type: {ado_config.get('work_item_type', 'Not set')}")
         
         # LLM Integration section  
         llm_config = masked_config.get("llm_integration", {})
@@ -407,28 +289,25 @@ class ConfigValidator:
         print(f"  Provider: {llm_config.get('provider', 'Not set')}")
         print(f"  API Key: {llm_config.get('api_key', 'Not set')}")
         print(f"  Model: {llm_config.get('model', 'Not set')}")
-        print(f"  Fallback to Roo: {llm_config.get('fallback_to_roo', 'Not set')}")
         
         # Processing section
         processing_config = masked_config.get("processing", {})
         print(f"Processing:")
         print(f"  Output Directory: {processing_config.get('output_directory', 'Not set')}")
-        print(f"  Backup CSV: {processing_config.get('backup_csv', 'Not set')}")
         print(f"  Date Range (months): {processing_config.get('date_range_months', 'Not set')}")
-        print(f"  Default Source: {processing_config.get('default_source', 'Not set')}")
         print("=" * 50)
 
 
 def load_and_validate_config(config_path: str = "config.json", 
                            create_if_missing: bool = False,
-                           test_connections: bool = True) -> Dict:
+                           test_connections: bool = False) -> Dict:
     """
     Convenience function to load and validate configuration.
     
     Args:
         config_path: Path to configuration file
         create_if_missing: Create example config if missing
-        test_connections: Test Azure DevOps connection
+        test_connections: Test LLM integration (optional)
         
     Returns:
         Validated configuration dictionary
@@ -440,17 +319,9 @@ def load_and_validate_config(config_path: str = "config.json",
     config = validator.load_config(create_if_missing)
     
     if test_connections:
-        # Test Azure DevOps connection
-        ado_success, ado_message = validator.validate_azure_devops_connection()
-        print(ado_message)
-        
         # Validate LLM integration
         llm_success, llm_message = validator.validate_llm_integration()
         print(llm_message)
-        
-        if not ado_success:
-            print("Warning: Azure DevOps connection validation failed. "
-                 "CSV mode will be used as fallback.", file=sys.stderr)
     
     return config
 
@@ -476,10 +347,6 @@ if __name__ == "__main__":
         
         if not args.no_test:
             print("\nTesting connections...")
-            
-            # Test Azure DevOps
-            ado_success, ado_message = validator.validate_azure_devops_connection()
-            print(ado_message)
             
             # Test LLM integration
             llm_success, llm_message = validator.validate_llm_integration()

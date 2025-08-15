@@ -31,14 +31,15 @@
 ## AI Integration
 
 ### Current Implementation
-- **AI Assistant:** Roo Code (VS Code extension integration)
-- **Integration Method:** Subprocess calls to main.py with analysis modes
+- **AI Integration:** Direct LLM API integration with multiple providers
+- **Supported Providers:** OpenAI, Anthropic, Google, Azure OpenAI, Ollama, RequestyAI
+- **Integration Method:** Native API calls through llm_client module
 - **Analysis Types:** Competency assessment and annual review generation
 
-### Planned Enhancement
-- **Direct LLM API:** Considering migration to direct API integration
-- **Tool Options:** Evaluating Requesty or similar LLM API tools
-- **Integration Strategy:** Replace VS Code dependency with direct API calls
+### Provider Features
+- **RequestyAI Gateway:** Unified access to multiple models with cost optimization
+- **Fallback Strategy:** Graceful degradation to manual analysis if LLM fails
+- **Configuration:** Flexible provider and model selection via config.json
 
 ## Development Tools
 
@@ -58,12 +59,6 @@
 ### Version Control Integration
 - **Platform:** Git-based version control
 - **Repository Structure:** Standard Python project layout with src/ organization
-
-### Azure DevOps Integration
-- **Service:** Azure DevOps REST API
-- **Authentication:** Personal Access Token (PAT)
-- **Data Source:** User stories and work items
-- **Implementation:** ado_user_story_client.py module
 
 ### File System
 - **Input Directory:** data/ for CSV accomplishment files
@@ -101,9 +96,9 @@
 ### Data Handling
 - **Input Validation:** Comprehensive CSV and data structure validation
 - **File Security:** Local file system operations with path validation
-- **API Security:** Secure token handling for Azure DevOps integration
+- **API Security:** Secure token handling for LLM API integrations
 
 ### Authentication
-- **Azure DevOps:** Personal Access Token with limited scope
+- **LLM APIs:** Secure API key management for AI providers
 - **Local Security:** File system permissions for data directories
 - **Configuration:** Secure storage of sensitive configuration data

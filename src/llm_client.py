@@ -12,7 +12,7 @@ Supports:
 - Azure OpenAI Service
 - Local LLM APIs (Ollama, etc.)
 
-Replaces the Roo Code VS Code extension integration with direct API calls.
+Provides direct API integration with multiple LLM providers.
 """
 
 import json
@@ -34,7 +34,6 @@ class LLMProvider(Enum):
     GOOGLE = "google"
     AZURE_OPENAI = "azure_openai"
     OLLAMA = "ollama"
-    ROOCODE = "roo_code"  # Fallback to existing system
 
 @dataclass
 class LLMResponse:
@@ -96,20 +95,12 @@ class LLMClient:
                 self._initialize_azure_openai_client()
             elif self.provider == LLMProvider.OLLAMA:
                 self._initialize_ollama_client()
-            elif self.provider == LLMProvider.ROOCODE:
-                # Keep existing Roo Code functionality as fallback
-                logger.info("Using Roo Code fallback - no client initialization needed")
-                return
             else:
                 raise LLMClientError(f"Unsupported provider: {self.provider}")
                 
         except ImportError as e:
             logger.warning(f"Could not import required library for {self.provider}: {e}")
-            if self.config.get("fallback_to_roo", False):
-                logger.info("Falling back to Roo Code integration")
-                self.provider = LLMProvider.ROOCODE
-            else:
-                raise LLMClientError(f"Provider {self.provider} not available and fallback disabled")
+            raise LLMClientError(f"Provider {self.provider} not available: {e}")
     
     def _initialize_openai_client(self):
         """Initialize OpenAI client."""
@@ -210,10 +201,7 @@ class LLMClient:
             prompt = self._create_analysis_prompt(accomplishments, criteria, review_type)
             
             # Call the appropriate provider
-            if self.provider == LLMProvider.ROOCODE:
-                return self._fallback_to_roo_code(accomplishments, review_type)
-            else:
-                response_content = self._call_llm_provider(prompt)
+            response_content = self._call_llm_provider(prompt)
             
             processing_time = time.time() - start_time
             
@@ -227,11 +215,6 @@ class LLMClient:
             
         except Exception as e:
             logger.error(f"LLM analysis failed: {e}")
-            
-            # Try fallback if enabled
-            if self.config.get("fallback_to_roo", False):
-                logger.info("Attempting Roo Code fallback...")
-                return self._fallback_to_roo_code(accomplishments, review_type)
             
             return LLMResponse(
                 content="",
@@ -495,54 +478,10 @@ Generate analysis covering ALL {len(criteria)} competencies with specific eviden
         )
         return response['message']['content']
     
-    def _fallback_to_roo_code(self, accomplishments: List[Dict], review_type: str) -> LLMResponse:
-        """Fallback to existing Roo Code integration."""
-        logger.info("Using Roo Code fallback for analysis")
-        
-        try:
-            # Use the manual analysis since Roo Code subprocess isn't set up for this context
-            try:
-                from .llm_analyzer import generate_manual_analysis
-            except ImportError:
-                from llm_analyzer import generate_manual_analysis
-            
-            # Create a temporary data file for the manual analysis function
-            import tempfile
-            import json
-            
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as temp_file:
-                json.dump(accomplishments, temp_file, indent=2)
-                temp_file_path = temp_file.name
-            
-            try:
-                manual_content = generate_manual_analysis(temp_file_path, review_type, None, None)
-                return LLMResponse(
-                    content=manual_content,
-                    provider="roo_code_fallback",
-                    model="manual_analysis",
-                    success=True
-                )
-            finally:
-                # Clean up temp file
-                import os
-                os.unlink(temp_file_path)
-                
-        except Exception as e:
-            logger.error(f"Roo Code fallback failed: {e}")
-            return LLMResponse(
-                content="Analysis fallback failed. Please check the configuration.",
-                provider="roo_code_fallback",
-                model="manual_analysis",
-                success=False,
-                error_message=str(e)
-            )
     
     def test_connection(self) -> bool:
         """Test the connection to the configured LLM provider."""
         try:
-            if self.provider == LLMProvider.ROOCODE:
-                return True  # Can't easily test Roo Code connection
-            
             # Simple test prompt
             test_prompt = "Hello! Please respond with 'Connection successful' to test the API."
             
@@ -592,8 +531,7 @@ Generate analysis covering ALL {len(criteria)} competencies with specific eviden
             LLMProvider.ANTHROPIC: ["claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022", "claude-3-opus-20240229"],
             LLMProvider.GOOGLE: ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-1.0-pro"],
             LLMProvider.AZURE_OPENAI: ["gpt-4o", "gpt-4-turbo", "gpt-35-turbo"],
-            LLMProvider.OLLAMA: ["llama3.2", "llama3.1", "mistral", "codellama"],
-            LLMProvider.ROOCODE: ["roo_code"]
+            LLMProvider.OLLAMA: ["llama3.2", "llama3.1", "mistral", "codellama"]
         }
         
         return model_lists.get(self.provider, [])

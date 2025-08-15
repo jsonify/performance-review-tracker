@@ -103,17 +103,17 @@ Need for standardized, comprehensive competency model that works across differen
 ## 2025-08-07: AI Integration Architecture
 
 **ID:** DEC-003
-**Status:** Under Review
+**Status:** Accepted
 **Category:** Technical
 **Stakeholders:** Technical Lead, Product Owner
 
 ### Decision
 
-Currently using Roo Code (VS Code extension) for AI integration, with evaluation pending for migration to direct LLM API integration (potentially using Requesty or similar tools).
+Implemented direct LLM API integration with multiple provider support including RequestyAI, OpenAI, Anthropic, Google, Azure OpenAI, and Ollama. Removed Roo Code VS Code extension dependency in favor of native API calls.
 
 ### Context
 
-Need for reliable, scalable AI integration that provides sophisticated analysis without creating excessive dependencies. Current Roo Code integration works but requires VS Code environment and manual subprocess coordination.
+Need for reliable, scalable AI integration that provides sophisticated analysis without creating excessive dependencies. Direct API integration eliminates VS Code dependency and provides better programmatic control and scalability.
 
 ### Alternatives Considered
 
@@ -121,8 +121,8 @@ Need for reliable, scalable AI integration that provides sophisticated analysis 
    - Pros: Working solution, familiar workflow, VS Code ecosystem
    - Cons: VS Code dependency, manual coordination, limited scalability
 
-2. **Direct LLM API Integration**
-   - Pros: No IDE dependency, programmatic control, better scalability
+2. **Direct LLM API Integration** (Selected)
+   - Pros: No IDE dependency, programmatic control, better scalability, multiple provider options
    - Cons: API costs, service dependencies, more complex implementation
 
 3. **Hybrid Approach with Optional AI**
@@ -131,56 +131,61 @@ Need for reliable, scalable AI integration that provides sophisticated analysis 
 
 ### Rationale
 
-Decision pending based on Phase 1 development requirements and user feedback. Current Roo Code integration provides functional baseline while API integration offers better long-term scalability.
+Direct API integration provides better reliability, scalability, and user experience. Multiple provider support through unified interface offers flexibility and cost optimization opportunities. RequestyAI gateway provides up to 40% cost savings while accessing multiple models.
 
 ### Consequences
 
 **Positive:**
-- Maintains working AI integration during evaluation period
-- Allows data-driven decision based on actual usage patterns
+- Eliminated VS Code dependency for broader accessibility
+- Improved scalability and reliability through direct API calls
+- Cost optimization through RequestyAI unified gateway
+- Better error handling and graceful fallbacks
+- Support for multiple LLM providers and models
 
 **Negative:**
-- Architecture uncertainty affects Phase 2 planning
-- Potential technical debt if migration required
+- API costs for LLM usage (mitigated by RequestyAI cost savings)
+- Increased complexity in provider management
+- Need for API key management and configuration
 
 ---
 
 ## 2025-08-07: Data Integration Strategy
 
 **ID:** DEC-004
-**Status:** Accepted
+**Status:** Superseded
 **Category:** Technical
 **Stakeholders:** Technical Lead, Product Owner
 
 ### Decision
 
-Implement Azure DevOps integration as primary enterprise data source while maintaining CSV import for flexibility. Expand to additional integrations (Jira, GitHub) in Phase 2.
+Focus on CSV-only data input with robust validation and processing capabilities. Remove Azure DevOps integration to simplify architecture and reduce complexity.
 
 ### Context
 
-Manual CSV data entry creates friction for regular users and limits enterprise adoption. Direct integration with development and project management tools provides seamless data collection and real-time accuracy.
+Based on user feedback and project requirements, the complexity of maintaining Azure DevOps integration outweighs the benefits. Users prefer the simplicity and reliability of CSV-based workflows, and the additional maintenance overhead of API integrations is not justified for the current use case.
 
 ### Alternatives Considered
 
-1. **CSV-Only Approach**
-   - Pros: Simple, no external dependencies, universal compatibility
-   - Cons: Manual effort, data staleness, limited enterprise appeal
-
-2. **API-First Integration Strategy**
+1. **Maintain Azure DevOps Integration**
    - Pros: Automated data collection, real-time accuracy, enterprise features
-   - Cons: Complex implementation, multiple integrations, authentication overhead
+   - Cons: Complex implementation, authentication overhead, limited user adoption
+
+2. **CSV-Only Approach** (Selected)
+   - Pros: Simple, no external dependencies, universal compatibility, reliable
+   - Cons: Manual data entry required
 
 ### Rationale
 
-Azure DevOps provides strong enterprise integration foundation while CSV maintains accessibility for smaller users. Phased approach allows validation of integration patterns before expanding to additional platforms.
+CSV format provides universal compatibility and simplicity. Users can export data from any system (Azure DevOps, Jira, GitHub, etc.) to CSV format, maintaining flexibility while eliminating integration complexity.
 
 ### Consequences
 
 **Positive:**
-- Eliminates manual data entry for Azure DevOps users
-- Establishes integration patterns for future platforms
-- Maintains accessibility for non-enterprise users
+- Simplified architecture and reduced maintenance overhead
+- Universal compatibility with any data source
+- Improved reliability and fewer points of failure
+- Easier deployment and configuration
 
 **Negative:**
-- Implementation complexity for authentication and API coordination
-- Platform-specific configuration requirements
+- Manual data export step required from source systems
+- No real-time data synchronization
