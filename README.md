@@ -2,243 +2,211 @@
 
 A comprehensive workplace productivity tool that helps professionals articulate their work accomplishments effectively for performance evaluations, career advancement, and salary negotiations through automated competency assessment and AI-assisted analysis.
 
-## Core Features
+## 🌟 Key Features
 
+### 🖥️ **Modern Web Interface**
+- **Intuitive Web UI**: Complete browser-based interface with step-by-step workflow
+- **Dual Input Methods**: Choose between JSON file upload OR user-friendly form entry for criteria
+- **Real-time Validation**: Smart form validation with helpful error messages and duplicate prevention
+- **Secure API Key Management**: Encrypted storage for LLM provider API keys with visual indicators
+- **Responsive Design**: Works seamlessly on desktop and mobile devices
+
+### 🧠 **Advanced AI Integration**
+- **Multiple LLM Providers**: OpenAI, Anthropic, Google, Azure OpenAI, Ollama, and RequestyAI unified gateway
+- **Smart Fallbacks**: Graceful degradation ensures reliable report generation
+- **Cost Optimization**: RequestyAI gateway provides up to 40% cost savings across providers
+- **Flexible Configuration**: Use environment variables or secure web form entry for API keys
+
+### 📊 **Comprehensive Analysis**
 - **Automated Competency Assessment**: Maps accomplishments to 13 professional competency areas using intelligent keyword analysis
-- **Dual Analysis Modes**: Choose between automated Python processing or AI-assisted deep analysis
-- **Multi-Format Output**: Professional Markdown and DOCX reports with customizable templates  
 - **Impact-Based Rating System**: 5-point scale (Learning → Developing → Practicing → Mastering → Leading) with evidence-based scoring
-- **Azure DevOps Integration**: Fully functional integration with automatic work item import and real-time data processing
-- **Validation Framework**: Comprehensive quality checks with automatic data normalization and flexible validation
+- **Professional Report Generation**: High-quality Markdown and DOCX reports with customizable templates
+- **Evidence-Based Ratings**: Detailed assessment with supporting accomplishments for each competency
+
+### 🔗 **Enterprise Integration**
+- **Azure DevOps Integration**: Production-ready integration with automatic work item import and real-time data processing
 - **Smart Data Handling**: Automatic column detection, missing data normalization, and hybrid data source support
+- **Validation Framework**: Comprehensive quality checks with automatic data normalization and flexible validation
+- **Multiple Data Sources**: CSV upload, Azure DevOps API, or hybrid modes with fallback support
 
-## Installation
+## 🚀 Quick Start
 
-1. Clone the repository
-2. Create a Python virtual environment:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-3. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+### 1. Installation
 
-## Usage Options
+Clone the repository and set up your environment:
+```bash
+git clone <repository-url>
+cd performance-review-tracker
 
-### 🌐 Web UI (Recommended)
-The easiest way to use the Performance Review Tracker is through the web interface:
+# Create and activate virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
+# Install core dependencies
+pip install -r requirements.txt
+
+# Install LLM provider dependencies (choose what you need)
+pip install -r requirements-llm.txt
+```
+
+### 2. Launch Web Interface (Recommended)
+
+Start the web interface for the easiest experience:
 ```bash
 ./scripts/run_ui.sh
 ```
 
-Then open your browser to: `http://localhost:8888`
+Then open your browser to: **`http://localhost:8888`**
 
 The web UI provides:
-- **Intuitive Interface**: Step-by-step wizard for all functionality
-- **Drag & Drop**: Easy file uploads for criteria and CSV data
-- **Azure DevOps Integration**: Direct connection with connection testing
-- **LLM Configuration**: Support for all major AI providers with secure API key management
-- **Real-time Progress**: Live feedback during analysis
-- **Professional Output**: Direct download of Markdown and Word documents
+- **Step-by-Step Wizard**: Guided workflow from criteria setup to final report
+- **Drag & Drop File Upload**: Easy CSV and JSON file handling
+- **Real-time Azure DevOps Testing**: Validate connections before fetching data
+- **Secure API Key Storage**: Encrypted storage with visual management
+- **Live Progress Tracking**: Real-time feedback during analysis
+- **Direct Download**: Professional reports ready for immediate use
 
-For detailed web UI documentation, see [ui/README.md](ui/README.md).
+**📖 For detailed web UI guide, see [ui/README.md](ui/README.md)**
 
 ### 💻 Command Line Interface
-For advanced users or automation, use the command line interface:
+
+For advanced users, automation, or CI/CD integration:
 
 ```bash
 # Quick start with existing data
 ./scripts/run_assessment.sh
 
-# Or use the main script directly
+# Generate from CSV file  
 python src/main.py --source csv --file data/accomplishments.csv --type competency --format markdown
+
+# Generate from Azure DevOps
+python src/main.py --source ado --type annual --year 2025 --format docx
+
+# Test configuration
+python src/main.py --test-config
 ```
 
-## Configuration
+## ⚙️ Configuration
 
-### Complete Configuration File
+### Option 1: Web UI Configuration (Recommended)
 
-Create a `config.json` file in the project root with the following structure:
+The web interface handles all configuration through intuitive forms:
+- **Azure DevOps**: Enter credentials and test connection directly in the UI
+- **LLM Providers**: Select provider, model, and enter API keys with secure storage
+- **Review Settings**: Choose review type, year, and output format through dropdowns
+
+### Option 2: JSON Configuration File
+
+For advanced users or automation, create a `config.json` file in the project root:
 
 ```json
 {
     "azure_devops": {
         "organization": "YourOrgName",
-        "project": "YourProjectName",
+        "project": "YourProjectName", 
         "personal_access_token": "your_pat_token_here",
-        "user_id": "auto-detected",
         "work_item_type": "User Story",
-        "states": ["Closed", "Resolved"],
-        "fields": [
-            "System.Id",
-            "System.Title",
-            "Microsoft.VSTS.Common.ClosedDate",
-            "System.Description",
-            "Microsoft.VSTS.Common.AcceptanceCriteria"
-        ]
+        "states": ["Closed", "Resolved"]
     },
     "llm_integration": {
         "provider": "requestyai",
-        "api_key": "your_requestyai_api_key_here",
+        "api_key": "your_api_key_here",
         "model": "openai/gpt-4o-mini",
-        "fallback_to_roo": true,
-        "options": {
-            "temperature": 0.7,
-            "max_tokens": 4000
-        }
-    },
-    "processing": {
-        "output_directory": "data",
-        "backup_csv": true,
-        "date_range_months": 12,
-        "default_source": "csv"
+        "fallback_to_roo": true
     }
 }
 ```
 
-**Configuration Sections:**
-- **azure_devops**: Required for ADO integration
-- **llm_integration**: Required for AI analysis. Use `"requestyai"` for the unified gateway
-- **processing**: Optional processing settings (defaults applied if missing)
+### LLM Provider Options
 
-**RequestyAI Configuration:**
-To use RequestyAI as your unified LLM provider:
-1. Sign up at [app.requesty.ai](https://app.requesty.ai) and get your API key
-2. Set `"provider": "requestyai"` in your config
-3. Choose from any supported model: `openai/gpt-4o`, `anthropic/claude-3-5-sonnet-20241022`, `google/gemini-1.5-pro`, etc.
-4. Use a single API key to access all providers and models
+#### 🌟 RequestyAI (Recommended)
+Unified gateway with access to all major providers:
+- **Benefits**: 40% cost savings, 99.99% uptime, single API key
+- **Models**: GPT-4o, Claude 3.5 Sonnet, Gemini 1.5 Pro, and more
+- **Setup**: Sign up at [app.requesty.ai](https://app.requesty.ai)
 
-### Quick Configuration Setup
+#### Individual Providers
+Direct integration available for:
+- **OpenAI**: GPT-3.5, GPT-4, GPT-4o
+- **Anthropic**: Claude 3.5 Sonnet, Claude 3 Opus
+- **Google**: Gemini 1.5 Pro, Gemini 1.0 Pro
+- **Azure OpenAI**: Enterprise-grade OpenAI models
+- **Ollama**: Local LLM hosting
 
-The fastest way to get started:
+### Quick Setup Commands
 
 ```bash
-# Generate example config.json file
+# Generate example config file
 python src/config_validation.py --create
 
-# Edit the generated config.json with your actual settings
-# Then validate your configuration and test connections
+# Validate configuration and test connections
 python src/config_validation.py
 
-# Test configuration through main script
-python src/main.py --test-config
+# Test Azure DevOps connection specifically
+python ado_user_story_client.py --config config.json --test-connection
 ```
 
-### Configuration Validation
+## 📋 How To Use
 
-Additional validation commands:
+### Web Interface Workflow (Recommended)
+
+1. **Start the Web UI**: Run `./scripts/run_ui.sh` and open `http://localhost:8888`
+
+2. **Configure Criteria** (Optional - skip to use defaults):
+   - **Upload JSON Files**: Drag and drop criteria files for annual review or competency assessment
+   - **Use Forms**: Fill out user-friendly forms to define criteria with real-time validation
+   - **Mix & Match**: Upload for one type, use forms for another
+
+3. **Choose Review Type**: Select "Competency Assessment" or "Annual Review" and set the year
+
+4. **Select Data Source**:
+   - **CSV Upload**: Drag and drop your accomplishments CSV file
+   - **Azure DevOps**: Enter organization, project, and PAT token, then test connection and fetch data
+
+5. **Configure AI**:
+   - Select LLM provider (RequestyAI recommended for cost savings)
+   - Choose model appropriate for your needs
+   - Enter API key (securely stored with encryption)
+
+6. **Generate & Download**: Click generate, monitor real-time progress, and download your professional report
+
+### Command Line Usage
+
+For automation or advanced workflows:
 
 ```bash
-# Validate config and test connections (default behavior)
-python src/config_validation.py
-
-# Show config summary without testing connections
-python src/config_validation.py --summary --no-test
-```
-
-## Usage
-
-### Quick Start
-
-Generate a competency assessment with test data:
-```bash
+# Quick start with existing data
 ./scripts/run_assessment.sh --fresh
-```
 
-Or use existing data:
-```bash
-./scripts/run_assessment.sh
-```
-
-### Data Format
-
-Prepare your accomplishments in CSV format with these columns:
-- **Date**: When the accomplishment occurred (Required)
-- **Title**: Brief description of the accomplishment (Required)
-- **Description**: Detailed explanation of what was done (Optional - auto-filled if missing)
-- **Acceptance Criteria**: Success criteria or requirements met (Optional - auto-filled if missing)
-- **Success Notes**: Additional context about the success (Optional - auto-filled if missing)
-- **Impact**: Business impact level (High/Medium/Low) (Optional - defaults to "Medium")
-- **Self Rating**: Self-assessment (1-3 scale) (Optional - defaults to 2 "Good")
-- **Rating Justification**: Reasoning for self-rating (Optional - auto-generated if missing)
-
-**Note**: The system automatically handles missing columns by adding them with sensible defaults, making it flexible for various CSV formats.
-
-### Data Source Options
-
-#### Option 1: Azure DevOps Integration (Recommended)
-Automatically import your work items from Azure DevOps:
-
-```bash
-# Generate competency assessment from ADO data
-python src/main.py --source ado --type competency --format markdown
-
-# Generate annual review from ADO data
-python src/main.py --source ado --type annual --year 2025 --format docx
-```
-
-**Benefits**: Zero data entry, real-time accuracy, comprehensive work history
-
-#### Option 2: CSV File Import
-Use manually prepared CSV data:
-
-```bash
-# Generate from CSV file
+# Generate from specific sources
 python src/main.py --source csv --file data/accomplishments.csv --type competency --format markdown
-```
-
-**Benefits**: Full control over data, works without external integrations, automatic data normalization for incomplete files
-
-#### Option 3: Hybrid Mode
-Try Azure DevOps first, fallback to CSV if ADO fails:
-
-```bash
-# Hybrid mode with fallback
+python src/main.py --source ado --type annual --year 2025 --format docx
 python src/main.py --source hybrid --file data/backup.csv --type competency --format markdown
 ```
 
-**Benefits**: Best of both worlds - automatic data retrieval with manual backup
+### Data Requirements
 
-### Analysis Options
+#### CSV Format (Flexible)
+The system auto-normalizes missing columns, but ideal format includes:
+- **Date**: When the accomplishment occurred (Required)
+- **Title**: Brief description (Required)  
+- **Description**: Detailed explanation (Optional - auto-filled)
+- **Impact**: Business impact level - High/Medium/Low (Optional - defaults to "Medium")
+- **Self Rating**: 1-3 scale (Optional - defaults to 2)
+- **Rating Justification**: Reasoning (Optional - auto-generated)
 
-#### 1. RequestyAI Unified Gateway (Recommended) 🌟
-Access to multiple LLM providers through a single API key and unified interface:
+#### Azure DevOps Integration
+- **Requirements**: Organization name, project name, Personal Access Token with "Work Items (Read)" permission
+- **Benefits**: Zero manual data entry, real-time accuracy, comprehensive work history
+- **Automatic Processing**: Work items are automatically converted to accomplishments format
 
-- **Providers**: OpenAI, Anthropic, Google, Meta, Mistral, Cohere
-- **Benefits**: Cost optimization (up to 40% savings), intelligent routing, 99.99% uptime SLA
-- **Models**: All major models including GPT-4o, Claude 3.5 Sonnet, Gemini 1.5 Pro
-- **Best for**: Production use, cost-conscious users, maximum reliability
+### Analysis Engine
 
-#### 2. Individual Provider Integration
-Direct integration with specific providers (OpenAI, Anthropic, Google, etc.):
-
-Best for: Users with existing API relationships, specific model requirements
-
-#### 3. Automated Python System (No AI)
-Fast, reliable processing using keyword analysis and statistical scoring:
-
-Best for: Batch processing, consistent results, quick assessments without AI costs
-
-### Azure DevOps Standalone Usage
-
-You can also use the ADO integration directly for data exploration:
-
-```bash
-# Test your ADO connection
-python ado_user_story_client.py --config config.json --test-connection
-
-# Get your user ID (needed for filtering)
-python ado_user_story_client.py --config config.json --get-my-user-id
-
-# Export all your closed work items
-python ado_user_story_client.py --config config.json --filter-assigned-to-me --filter-state Closed
-
-# Diagnose available work items in your project
-python ado_user_story_client.py --config config.json --diagnose
-```
+#### 🧠 AI-Powered Analysis
+- **Intelligent Insights**: Nuanced analysis with sophisticated language and strategic recommendations
+- **Cost Effective**: Varies by provider ($0.01-0.10 per analysis depending on model)
+- **Multiple Providers**: RequestyAI (all models), OpenAI, Anthropic, Google, Azure OpenAI, Ollama
+- **Smart Fallbacks**: Graceful degradation ensures reports are always generated
 
 ## Output & Reports
 
@@ -354,46 +322,90 @@ The Azure DevOps integration is production-ready and provides:
 - **GitLab**: Merge request and pipeline integration
 - **Direct LLM APIs**: Enhanced AI analysis capabilities
 
-## Project Architecture
+## 🏗️ Architecture
+
+### Modern Web-First Design
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Web UI        │    │   Python Core   │    │   Data Sources  │
+│                 │    │                 │    │                 │
+│ • Drag & Drop   │◄──►│ • Main Engine   │◄──►│ • Azure DevOps  │
+│ • Form Entry    │    │ • LLM Client    │    │ • CSV Files     │
+│ • API Keys      │    │ • ADO Client    │    │ • JSON Config   │
+│ • Progress      │    │ • Validation    │    │ • Criteria      │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
 
 ### Core Components
-- **src/main.py**: Primary orchestration and entry point with multi-source data handling
-- **src/competency_formatter.py**: Report generation and template system
-- **src/competency_keywords.py**: Keyword-based competency mapping
-- **src/config_validation.py**: Configuration validation and connection testing framework
-- **ado_user_story_client.py**: Azure DevOps integration client with comprehensive API support
-- **scripts/run_assessment.sh**: Automated workflow scripts
 
-### Data Flow
-```
-Data Source (ADO/CSV/Hybrid) → Data Normalization → Data Validation → 
-Competency Mapping → Rating Calculation → Template Application → Report Output
-```
+#### 🌐 **Web Interface Layer**
+- **ui/app.py**: Flask web server with REST API endpoints
+- **ui/templates/**: Modern Bootstrap-based responsive UI
+- **ui/key_storage.py**: Encrypted API key management
 
-**Azure DevOps Flow**:
-```
-ADO API → Work Item Retrieval → Field Mapping → Data Transformation → 
-Automatic Normalization → Standard Processing Pipeline → Report Generation
-```
+#### 🐍 **Python Processing Core**  
+- **src/main.py**: Multi-source orchestration with LLM integration
+- **src/llm_client.py**: Unified LLM provider interface (OpenAI, Anthropic, Google, etc.)
+- **src/competency_formatter.py**: Professional report generation with templates
+- **src/config_validation.py**: Configuration validation and connection testing
 
-**Enhanced Processing Pipeline**:
+#### 🔗 **Integration Layer**
+- **ado_user_story_client.py**: Production-ready Azure DevOps API client
+- **src/competency_keywords.py**: Intelligent accomplishment-to-competency mapping
+
+#### 🛠️ **Automation Scripts**
+- **scripts/run_ui.sh**: Web interface startup with environment setup
+- **scripts/run_assessment.sh**: Command-line assessment generation
+
+### Data Processing Flow
+
 ```
-Raw Data → Missing Column Detection → Default Value Assignment → 
-Validation → Analysis → Template Rendering → Multi-Format Output
+┌─────────────────┐
+│   Data Input    │
+│ • CSV Upload    │
+│ • ADO API       │
+│ • Form Entry    │
+└─────────┬───────┘
+          │
+          ▼
+┌─────────────────┐
+│ Normalization   │
+│ • Column Detect │
+│ • Missing Data  │
+│ • Format Clean  │
+└─────────┬───────┘
+          │
+          ▼
+┌─────────────────┐    ┌─────────────────┐
+│   Analysis      │◄──►│ LLM Integration │
+│ • Keyword Map   │    │ • Multi-Provider│
+│ • Impact Score  │    │ • Smart Fallback│
+│ • Evidence      │    │ • Cost Optimize │
+└─────────┬───────┘    └─────────────────┘
+          │
+          ▼
+┌─────────────────┐
+│ Report Generate │
+│ • Markdown      │
+│ • DOCX Export   │
+│ • Professional │
+└─────────────────┘
 ```
 
 ### Directory Structure
 ```
 performance-review-tracker/
-├── .agent-os/              # Agent OS product documentation
-├── src/                    # Core Python modules  
-├── scripts/                # Automation scripts
-├── data/                   # Input CSV files and processed data
-├── output/                 # Generated reports
-├── templates/              # Report templates
-├── criteria/               # Evaluation criteria definitions
-├── tests/                  # Test suite
-└── docs/                   # Documentation and guides
+├── ui/                     # 🌐 Web interface and templates
+├── src/                    # 🐍 Core Python processing modules
+├── scripts/                # 🛠️ Automation and startup scripts
+├── data/                   # 📊 Sample data and outputs
+├── templates/              # 📄 Report templates
+├── criteria/               # 📋 Evaluation frameworks
+├── tests/                  # 🧪 Test suite
+├── requirements.txt        # 📦 Core dependencies
+├── requirements-llm.txt    # 🧠 LLM provider dependencies
+└── config.json.example     # ⚙️ Configuration template
 ```
 
 ## Contributing
