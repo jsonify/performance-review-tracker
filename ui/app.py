@@ -283,6 +283,75 @@ def upload_accomplishments():
         return jsonify({'error': f'Upload failed: {str(e)}'}), 500
 
 
+@app.route('/api/get-csv-data', methods=['POST'])
+def get_csv_data():
+    """Return CSV content as JSON array for editing."""
+    try:
+        data = request.get_json()
+        csv_path = data.get('csv_path')
+        
+        if not csv_path or not os.path.exists(csv_path):
+            return jsonify({'error': 'CSV file not found'}), 404
+        
+        # Read CSV file
+        df = pd.read_csv(csv_path)
+        
+        # Convert to list of dictionaries
+        csv_data = df.to_dict('records')
+        
+        return jsonify({
+            'success': True,
+            'data': csv_data,
+            'rows': len(csv_data),
+            'columns': list(df.columns)
+        })
+        
+    except Exception as e:
+        logger.error(f"Get CSV data error: {str(e)}")
+        return jsonify({'error': f'Failed to read CSV: {str(e)}'}), 500
+
+
+@app.route('/api/update-csv-data', methods=['POST'])
+def update_csv_data():
+    """Save edited data back to CSV file."""
+    try:
+        data = request.get_json()
+        csv_path = data.get('csv_path')
+        updated_data = data.get('data')
+        
+        if not csv_path or not updated_data:
+            return jsonify({'error': 'CSV path and data are required'}), 400
+        
+        if not os.path.exists(csv_path):
+            return jsonify({'error': 'CSV file not found'}), 404
+        
+        # Convert back to DataFrame
+        df = pd.DataFrame(updated_data)
+        
+        # Validate required columns
+        required_columns = ['Date', 'Title']
+        missing_columns = [col for col in required_columns if col not in df.columns]
+        
+        if missing_columns:
+            return jsonify({
+                'error': f'Missing required columns: {", ".join(missing_columns)}'
+            }), 400
+        
+        # Save updated CSV
+        df.to_csv(csv_path, index=False)
+        
+        return jsonify({
+            'success': True,
+            'message': 'CSV data updated successfully',
+            'rows': len(df),
+            'path': csv_path
+        })
+        
+    except Exception as e:
+        logger.error(f"Update CSV data error: {str(e)}")
+        return jsonify({'error': f'Failed to update CSV: {str(e)}'}), 500
+
+
 
 
 
@@ -583,6 +652,34 @@ def download_result(filename):
     except Exception as e:
         logger.error(f"Download failed: {str(e)}")
         return jsonify({'error': 'Download failed'}), 500
+
+
+@app.route('/api/download-template/<template_type>')
+def download_template(template_type):
+    """Download template files for data input."""
+    try:
+        templates_dir = os.path.join(os.path.dirname(__file__), 'downloadable_templates')
+        
+        template_files = {
+            'csv': 'accomplishments_template.csv',
+            'annual-criteria': 'annual_review_criteria_template.json',
+            'competency-criteria': 'competency_assessment_criteria_template.json'
+        }
+        
+        if template_type not in template_files:
+            return jsonify({'error': 'Invalid template type'}), 400
+        
+        filename = template_files[template_type]
+        file_path = os.path.join(templates_dir, filename)
+        
+        if not os.path.exists(file_path):
+            return jsonify({'error': 'Template file not found'}), 404
+        
+        return send_file(file_path, as_attachment=True, download_name=filename)
+        
+    except Exception as e:
+        logger.error(f"Template download failed: {str(e)}")
+        return jsonify({'error': 'Template download failed'}), 500
 
 
 @app.route('/api/store-api-key', methods=['POST'])

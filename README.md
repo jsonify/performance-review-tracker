@@ -172,6 +172,7 @@ python src/config_validation.py
 1. **Start the Web UI**: Run `./scripts/run_ui.sh` and open `http://localhost:8888`
 
 2. **Configure Criteria** (Optional - skip to use defaults):
+   - **Download Templates**: Use the "Annual Review Template" or "Competency Template" buttons to download JSON templates
    - **Upload JSON Files**: Drag and drop criteria files for annual review or competency assessment
    - **Use Forms**: Fill out user-friendly forms to define criteria with real-time validation
    - **Mix & Match**: Upload for one type, use forms for another
@@ -179,6 +180,7 @@ python src/config_validation.py
 3. **Choose Review Type**: Select "Competency Assessment" or "Annual Review" and set the year
 
 4. **Upload Data**:
+   - **Download Template**: Click "Download CSV Template" to get a sample file with proper formatting
    - **CSV Upload**: Drag and drop your accomplishments CSV file with automatic validation
 
 5. **Configure AI**:

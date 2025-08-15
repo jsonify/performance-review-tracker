@@ -1,0 +1,134 @@
+{
+  "criteria": [
+    {
+      "name": "Programming/Software Development",
+      "expectations": [
+        "Writes clean, maintainable, and well-documented code",
+        "Applies appropriate design patterns and best practices",
+        "Debugs and troubleshoots technical issues effectively",
+        "Stays current with relevant technologies and frameworks",
+        "Contributes to code reviews and maintains quality standards"
+      ]
+    },
+    {
+      "name": "Solution Architecture",
+      "expectations": [
+        "Designs scalable and maintainable system architectures",
+        "Makes informed technology choices based on requirements",
+        "Documents architectural decisions and rationale",
+        "Considers security, performance, and reliability in designs",
+        "Collaborates with stakeholders on technical solutions"
+      ]
+    },
+    {
+      "name": "Systems Design",
+      "expectations": [
+        "Designs systems that scale effectively with growth",
+        "Considers integration points and dependencies",
+        "Plans for monitoring, logging, and observability",
+        "Addresses performance bottlenecks proactively",
+        "Ensures system reliability and fault tolerance"
+      ]
+    },
+    {
+      "name": "Project Management",
+      "expectations": [
+        "Plans and organizes work effectively",
+        "Manages timelines and delivers on commitments",
+        "Communicates progress and risks clearly",
+        "Coordinates with team members and stakeholders",
+        "Adapts plans based on changing requirements"
+      ]
+    },
+    {
+      "name": "Requirements Definition",
+      "expectations": [
+        "Gathers and analyzes business requirements",
+        "Translates requirements into technical specifications",
+        "Asks clarifying questions and validates understanding",
+        "Documents requirements clearly and completely",
+        "Manages scope changes and requirement evolution"
+      ]
+    },
+    {
+      "name": "Testing",
+      "expectations": [
+        "Writes comprehensive unit and integration tests",
+        "Develops effective testing strategies",
+        "Automates testing processes where appropriate",
+        "Identifies edge cases and boundary conditions",
+        "Ensures quality through systematic testing approaches"
+      ]
+    },
+    {
+      "name": "Problem Management",
+      "expectations": [
+        "Identifies root causes of issues systematically",
+        "Develops effective solutions to complex problems",
+        "Escalates issues appropriately when needed",
+        "Documents solutions for future reference",
+        "Prevents recurring issues through process improvements"
+      ]
+    },
+    {
+      "name": "Innovation",
+      "expectations": [
+        "Proposes creative solutions to business challenges",
+        "Experiments with new technologies and approaches",
+        "Shares knowledge and insights with the team",
+        "Drives process improvements and efficiencies",
+        "Stays current with industry trends and best practices"
+      ]
+    },
+    {
+      "name": "Release/Deployment",
+      "expectations": [
+        "Manages deployment processes effectively",
+        "Ensures smooth production releases",
+        "Implements CI/CD pipelines and automation",
+        "Monitors system health post-deployment",
+        "Handles rollbacks and emergency responses"
+      ]
+    },
+    {
+      "name": "Accountability",
+      "expectations": [
+        "Takes responsibility for own actions and decisions",
+        "Meets commitments consistently",
+        "Admits mistakes and learns from them",
+        "Follows through on responsibilities",
+        "Takes ownership of project outcomes"
+      ]
+    },
+    {
+      "name": "Influence",
+      "expectations": [
+        "Mentors junior team members effectively",
+        "Influences technical decisions positively",
+        "Builds consensus around important initiatives",
+        "Communicates ideas clearly to stakeholders",
+        "Leads by example in professional conduct"
+      ]
+    },
+    {
+      "name": "Agility",
+      "expectations": [
+        "Adapts quickly to changing requirements",
+        "Embraces change positively",
+        "Maintains effectiveness during uncertainty",
+        "Adjusts strategies based on new information",
+        "Helps others navigate change"
+      ]
+    },
+    {
+      "name": "Inclusion",
+      "expectations": [
+        "Values diverse perspectives and experiences",
+        "Creates an inclusive environment for all team members",
+        "Ensures equitable participation in discussions",
+        "Promotes diverse viewpoints in decision-making",
+        "Supports inclusive practices in team activities"
+      ]
+    }
+  ]
+}
