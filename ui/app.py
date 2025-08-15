@@ -376,6 +376,9 @@ def get_progress_api(job_id):
 @app.route('/api/run-analysis', methods=['POST'])
 def run_analysis():
     """Run performance review analysis."""
+    # Record start time for accurate processing duration
+    analysis_start_time = datetime.now()
+    
     try:
         data = request.get_json()
         
@@ -445,7 +448,27 @@ def run_analysis():
         # Run actual analysis using your existing main.py functionality
         update_progress(job_id, 'running', 50, 'Processing data...', 'Analysis in progress')
         file_extension = 'md' if output_format.lower() == 'markdown' else output_format
-        result_file = f"performance_review_{review_type}_{year}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{file_extension}"
+        
+        # Create enhanced filename with AI provider and model info
+        def sanitize_filename_part(text):
+            """Sanitize text for safe filename usage."""
+            if not text:
+                return "none"
+            # Replace problematic characters with underscores
+            import re
+            return re.sub(r'[^\w\-.]', '_', str(text)).lower()
+        
+        # Build filename components
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        provider_part = sanitize_filename_part(llm_provider) if llm_provider and llm_provider != 'none' else 'automated'
+        model_part = sanitize_filename_part(llm_model) if llm_model and llm_provider != 'none' else ''
+        
+        # Construct filename with AI info
+        if model_part:
+            result_file = f"performance_review_{review_type}_{year}_{provider_part}_{model_part}_{timestamp}.{file_extension}"
+        else:
+            result_file = f"performance_review_{review_type}_{year}_{provider_part}_{timestamp}.{file_extension}"
+        
         result_path = os.path.join(app.config['RESULTS_FOLDER'], result_file)
         
         try:
@@ -573,6 +596,11 @@ def run_analysis():
         
         # Analysis is already marked as complete above
         
+        # Calculate processing time
+        analysis_end_time = datetime.now()
+        processing_duration = analysis_end_time - analysis_start_time
+        processing_time_seconds = int(processing_duration.total_seconds())
+        
         # Read file size for metadata
         file_size = 0
         if os.path.exists(result_path):
@@ -595,7 +623,8 @@ def run_analysis():
                 'llm_provider': llm_provider if llm_provider != 'none' else None,
                 'llm_model': llm_model if llm_provider != 'none' else None,
                 'file_size': file_size,
-                'generated_at': datetime.now().isoformat()
+                'processing_time_seconds': processing_time_seconds,
+                'generated_at': analysis_end_time.isoformat()
             }
         })
         
