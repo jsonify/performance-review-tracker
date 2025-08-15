@@ -594,6 +594,43 @@
             height: fit-content;
         }
         
+        .info-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+        
+        .step-actions {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            align-items: stretch;
+            height: fit-content;
+        }
+        
+        .step-actions .btn {
+            flex: 1;
+            min-width: 120px;
+        }
+        
+        @media (min-width: 768px) {
+            .step-actions {
+                flex-direction: row;
+                align-items: center;
+                justify-content: flex-end;
+            }
+            
+            .step-actions .btn {
+                flex: none;
+            }
+        }
+        
         .step-header h4 {
             color: #495057;
             margin-bottom: 0.5rem;
@@ -718,8 +755,8 @@
         /* Enhanced Upload Areas */
         .upload-area {
             border: 2px dashed #dee2e6;
-            border-radius: 12px;
-            padding: 3rem 2rem;
+            border-radius: 8px;
+            padding: 1.5rem 1rem;
             text-align: center;
             transition: all 0.3s ease;
             cursor: pointer;
@@ -729,7 +766,7 @@
         .upload-area:hover, .upload-area.dragover {
             border-color: #0d6efd;
             background-color: rgba(13, 110, 253, 0.05);
-            transform: scale(1.02);
+            transform: scale(1.01);
         }
         
         .upload-area h5 {
@@ -741,6 +778,169 @@
         .upload-area p {
             color: #6c757d;
             margin-bottom: 0.5rem;
+        }
+        
+        /* Upload Status and Clear Button Styling */
+        .upload-status-container {
+            position: relative;
+        }
+        
+        .upload-clear-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+        }
+        
+        .upload-clear-btn {
+            background: #dc3545;
+            border: 1px solid #dc3545;
+            color: white;
+            border-radius: 4px;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: none;
+            white-space: nowrap;
+        }
+        
+        .upload-clear-btn:hover {
+            background: #c82333;
+            border-color: #c82333;
+            transform: scale(1.05);
+        }
+        
+        .upload-clear-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .upload-clear-btn.show {
+            display: inline-block;
+        }
+        
+        .upload-status-message {
+            flex: 1;
+        }
+        
+        /* Editable Table Styling */
+        .accomplishments-table {
+            font-size: 0.9rem;
+        }
+        
+        .accomplishments-table th {
+            position: sticky;
+            top: 0;
+            background: #f8f9fa;
+            z-index: 10;
+            border-bottom: 2px solid #dee2e6;
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .accomplishments-table .sticky-col {
+            position: sticky;
+            right: 0;
+            background: #f8f9fa;
+            z-index: 11;
+        }
+        
+        .accomplishments-table tbody tr {
+            transition: background-color 0.2s ease;
+        }
+        
+        .accomplishments-table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .editable-cell {
+            cursor: pointer;
+            position: relative;
+            padding: 0.5rem;
+            min-height: 2.5rem;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+        }
+        
+        .editable-cell:hover {
+            background-color: #e3f2fd;
+            border-color: #2196f3;
+        }
+        
+        .editable-cell.editing {
+            background-color: #fff3e0;
+            border-color: #ff9800;
+            box-shadow: inset 0 0 0 2px rgba(255, 152, 0, 0.3);
+        }
+        
+        .editable-cell input,
+        .editable-cell select,
+        .editable-cell textarea {
+            border: none;
+            background: transparent;
+            width: 100%;
+            padding: 0;
+            font-size: inherit;
+            font-family: inherit;
+            resize: none;
+            outline: none;
+        }
+        
+        .editable-cell textarea {
+            min-height: 2rem;
+            overflow-y: auto;
+        }
+        
+        .table-compact .expandable-col {
+            display: none;
+        }
+        
+        .table-actions {
+            display: flex;
+            gap: 0.25rem;
+            justify-content: center;
+        }
+        
+        .table-actions .btn {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            line-height: 1;
+        }
+        
+        .cell-validation-error {
+            border-color: #dc3545 !important;
+            background-color: #f8d7da !important;
+        }
+        
+        .cell-save-indicator {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            color: #28a745;
+            font-size: 0.75rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .cell-save-indicator.show {
+            opacity: 1;
+        }
+        
+        /* Mobile responsive table */
+        @media (max-width: 768px) {
+            .accomplishments-table {
+                font-size: 0.8rem;
+            }
+            
+            .accomplishments-table th,
+            .accomplishments-table td {
+                padding: 0.5rem 0.25rem;
+            }
+            
+            .table-actions .btn {
+                padding: 0.2rem 0.4rem;
+                font-size: 0.7rem;
+            }
         }
         
         /* Progress Content Styling */

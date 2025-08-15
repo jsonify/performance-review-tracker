@@ -1,0 +1,54 @@
+{
+  "criteria": [
+    {
+      "name": "Communication",
+      "expectations": [
+        "Gives members full attention",
+        "Limits interruptions while others are communicating",
+        "Appropriately responds to direction, coaching, or criticism",
+        "Expresses ideas clearly and in an organized way",
+        "Communicates in a positive, timely, and effective manner"
+      ]
+    },
+    {
+      "name": "Flexibility",
+      "expectations": [
+        "Adapts to changing priorities",
+        "Adjusts work methods to meet new needs",
+        "Open to new approaches",
+        "Maintains effectiveness during changes",
+        "Willing to learn and apply new methods"
+      ]
+    },
+    {
+      "name": "Initiative",
+      "expectations": [
+        "Self-directed in completing tasks",
+        "Proactive in finding solutions",
+        "Takes on additional responsibilities",
+        "Identifies and addresses issues before they escalate",
+        "Seeks opportunities for improvement"
+      ]
+    },
+    {
+      "name": "Quality of Work",
+      "expectations": [
+        "Maintains high standards of accuracy",
+        "Delivers work that meets or exceeds expectations",
+        "Pays attention to detail",
+        "Reviews work for completeness and correctness",
+        "Continuously seeks to improve work quality"
+      ]
+    },
+    {
+      "name": "Teamwork",
+      "expectations": [
+        "Collaborates effectively with team members",
+        "Supports colleagues and shares knowledge",
+        "Contributes positively to team dynamics",
+        "Builds constructive relationships",
+        "Resolves conflicts professionally"
+      ]
+    }
+  ]
+}
