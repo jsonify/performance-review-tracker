@@ -86,7 +86,39 @@ python src/main.py --source ado --type annual --year 2025 --format docx
 python src/main.py --test-config
 ```
 
-## ⚙️ Configuration
+## Usage Options
+
+### 🌐 Web UI (Recommended)
+The easiest way to use the Performance Review Tracker is through the web interface:
+
+```bash
+./scripts/run_ui.sh
+```
+
+Then open your browser to: `http://localhost:8888`
+
+The web UI provides:
+- **Intuitive Interface**: Step-by-step wizard for all functionality
+- **Drag & Drop**: Easy file uploads for criteria and CSV data
+- **Azure DevOps Integration**: Direct connection with connection testing
+- **LLM Configuration**: Support for all major AI providers with secure API key management
+- **Real-time Progress**: Live feedback during analysis
+- **Professional Output**: Direct download of Markdown and Word documents
+
+For detailed web UI documentation, see [ui/README.md](ui/README.md).
+
+### 💻 Command Line Interface
+For advanced users or automation, use the command line interface:
+
+```bash
+# Quick start with existing data
+./scripts/run_assessment.sh
+
+# Or use the main script directly
+python src/main.py --source csv --file data/accomplishments.csv --type competency --format markdown
+```
+
+## Configuration
 
 ### Option 1: Web UI Configuration (Recommended)
 
@@ -110,30 +142,38 @@ For advanced users or automation, create a `config.json` file in the project roo
     },
     "llm_integration": {
         "provider": "requestyai",
-        "api_key": "your_api_key_here",
+        "api_key": "your_requestyai_api_key_here",
         "model": "openai/gpt-4o-mini",
-        "fallback_to_roo": true
+        "fallback_to_roo": true,
+        "options": {
+            "temperature": 0.7,
+            "max_tokens": 4000
+        }
+    },
+    "processing": {
+        "output_directory": "data",
+        "backup_csv": true,
+        "date_range_months": 12,
+        "default_source": "csv"
     }
 }
 ```
 
-### LLM Provider Options
+**Configuration Sections:**
+- **azure_devops**: Required for ADO integration
+- **llm_integration**: Required for AI analysis. Use `"requestyai"` for the unified gateway
+- **processing**: Optional processing settings (defaults applied if missing)
 
-#### 🌟 RequestyAI (Recommended)
-Unified gateway with access to all major providers:
-- **Benefits**: 40% cost savings, 99.99% uptime, single API key
-- **Models**: GPT-4o, Claude 3.5 Sonnet, Gemini 1.5 Pro, and more
-- **Setup**: Sign up at [app.requesty.ai](https://app.requesty.ai)
+**RequestyAI Configuration:**
+To use RequestyAI as your unified LLM provider:
+1. Sign up at [app.requesty.ai](https://app.requesty.ai) and get your API key
+2. Set `"provider": "requestyai"` in your config
+3. Choose from any supported model: `openai/gpt-4o`, `anthropic/claude-3-5-sonnet-20241022`, `google/gemini-1.5-pro`, etc.
+4. Use a single API key to access all providers and models
 
-#### Individual Providers
-Direct integration available for:
-- **OpenAI**: GPT-3.5, GPT-4, GPT-4o
-- **Anthropic**: Claude 3.5 Sonnet, Claude 3 Opus
-- **Google**: Gemini 1.5 Pro, Gemini 1.0 Pro
-- **Azure OpenAI**: Enterprise-grade OpenAI models
-- **Ollama**: Local LLM hosting
+### Quick Configuration Setup
 
-### Quick Setup Commands
+The fastest way to get started:
 
 ```bash
 # Generate example config file
@@ -184,29 +224,45 @@ python src/main.py --source ado --type annual --year 2025 --format docx
 python src/main.py --source hybrid --file data/backup.csv --type competency --format markdown
 ```
 
-### Data Requirements
+**Benefits**: Best of both worlds - automatic data retrieval with manual backup
 
-#### CSV Format (Flexible)
-The system auto-normalizes missing columns, but ideal format includes:
-- **Date**: When the accomplishment occurred (Required)
-- **Title**: Brief description (Required)  
-- **Description**: Detailed explanation (Optional - auto-filled)
-- **Impact**: Business impact level - High/Medium/Low (Optional - defaults to "Medium")
-- **Self Rating**: 1-3 scale (Optional - defaults to 2)
-- **Rating Justification**: Reasoning (Optional - auto-generated)
+### Analysis Options
 
-#### Azure DevOps Integration
-- **Requirements**: Organization name, project name, Personal Access Token with "Work Items (Read)" permission
-- **Benefits**: Zero manual data entry, real-time accuracy, comprehensive work history
-- **Automatic Processing**: Work items are automatically converted to accomplishments format
+#### 1. RequestyAI Unified Gateway (Recommended) 🌟
+Access to multiple LLM providers through a single API key and unified interface:
 
-### Analysis Engine
+- **Providers**: OpenAI, Anthropic, Google, Meta, Mistral, Cohere
+- **Benefits**: Cost optimization (up to 40% savings), intelligent routing, 99.99% uptime SLA
+- **Models**: All major models including GPT-4o, Claude 3.5 Sonnet, Gemini 1.5 Pro
+- **Best for**: Production use, cost-conscious users, maximum reliability
 
-#### 🧠 AI-Powered Analysis
-- **Intelligent Insights**: Nuanced analysis with sophisticated language and strategic recommendations
-- **Cost Effective**: Varies by provider ($0.01-0.10 per analysis depending on model)
-- **Multiple Providers**: RequestyAI (all models), OpenAI, Anthropic, Google, Azure OpenAI, Ollama
-- **Smart Fallbacks**: Graceful degradation ensures reports are always generated
+#### 2. Individual Provider Integration
+Direct integration with specific providers (OpenAI, Anthropic, Google, etc.):
+
+Best for: Users with existing API relationships, specific model requirements
+
+#### 3. Automated Python System (No AI)
+Fast, reliable processing using keyword analysis and statistical scoring:
+
+Best for: Batch processing, consistent results, quick assessments without AI costs
+
+### Azure DevOps Standalone Usage
+
+You can also use the ADO integration directly for data exploration:
+
+```bash
+# Test your ADO connection
+python ado_user_story_client.py --config config.json --test-connection
+
+# Get your user ID (needed for filtering)
+python ado_user_story_client.py --config config.json --get-my-user-id
+
+# Export all your closed work items
+python ado_user_story_client.py --config config.json --filter-assigned-to-me --filter-state Closed
+
+# Diagnose available work items in your project
+python ado_user_story_client.py --config config.json --diagnose
+```
 
 ## Output & Reports
 
