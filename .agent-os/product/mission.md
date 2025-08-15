@@ -94,6 +94,6 @@ Unlike basic reporting tools, we generate both markdown and professional DOCX do
 
 ### Integration Features
 
-- **Azure DevOps Integration:** Pulls user stories and work items directly from development workflows (planned)
+- **Universal CSV Support:** Accepts data exports from any system (Azure DevOps, Jira, GitHub, etc.) through CSV format
 - **Multi-Format Export:** Supports Markdown and DOCX output with customizable professional templates
 - **Validation Framework:** Ensures report completeness and quality through comprehensive validation checks

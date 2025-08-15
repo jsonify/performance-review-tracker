@@ -148,39 +148,40 @@ Decision pending based on Phase 1 development requirements and user feedback. Cu
 ## 2025-08-07: Data Integration Strategy
 
 **ID:** DEC-004
-**Status:** Accepted
+**Status:** Superseded
 **Category:** Technical
 **Stakeholders:** Technical Lead, Product Owner
 
 ### Decision
 
-Implement Azure DevOps integration as primary enterprise data source while maintaining CSV import for flexibility. Expand to additional integrations (Jira, GitHub) in Phase 2.
+Focus on CSV-only data input with robust validation and processing capabilities. Remove Azure DevOps integration to simplify architecture and reduce complexity.
 
 ### Context
 
-Manual CSV data entry creates friction for regular users and limits enterprise adoption. Direct integration with development and project management tools provides seamless data collection and real-time accuracy.
+Based on user feedback and project requirements, the complexity of maintaining Azure DevOps integration outweighs the benefits. Users prefer the simplicity and reliability of CSV-based workflows, and the additional maintenance overhead of API integrations is not justified for the current use case.
 
 ### Alternatives Considered
 
-1. **CSV-Only Approach**
-   - Pros: Simple, no external dependencies, universal compatibility
-   - Cons: Manual effort, data staleness, limited enterprise appeal
-
-2. **API-First Integration Strategy**
+1. **Maintain Azure DevOps Integration**
    - Pros: Automated data collection, real-time accuracy, enterprise features
-   - Cons: Complex implementation, multiple integrations, authentication overhead
+   - Cons: Complex implementation, authentication overhead, limited user adoption
+
+2. **CSV-Only Approach** (Selected)
+   - Pros: Simple, no external dependencies, universal compatibility, reliable
+   - Cons: Manual data entry required
 
 ### Rationale
 
-Azure DevOps provides strong enterprise integration foundation while CSV maintains accessibility for smaller users. Phased approach allows validation of integration patterns before expanding to additional platforms.
+CSV format provides universal compatibility and simplicity. Users can export data from any system (Azure DevOps, Jira, GitHub, etc.) to CSV format, maintaining flexibility while eliminating integration complexity.
 
 ### Consequences
 
 **Positive:**
-- Eliminates manual data entry for Azure DevOps users
-- Establishes integration patterns for future platforms
-- Maintains accessibility for non-enterprise users
+- Simplified architecture and reduced maintenance overhead
+- Universal compatibility with any data source
+- Improved reliability and fewer points of failure
+- Easier deployment and configuration
 
 **Negative:**
-- Implementation complexity for authentication and API coordination
-- Platform-specific configuration requirements
+- Manual data export step required from source systems
+- No real-time data synchronization

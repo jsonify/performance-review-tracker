@@ -59,12 +59,6 @@
 - **Platform:** Git-based version control
 - **Repository Structure:** Standard Python project layout with src/ organization
 
-### Azure DevOps Integration
-- **Service:** Azure DevOps REST API
-- **Authentication:** Personal Access Token (PAT)
-- **Data Source:** User stories and work items
-- **Implementation:** ado_user_story_client.py module
-
 ### File System
 - **Input Directory:** data/ for CSV accomplishment files
 - **Output Directory:** output/ for generated reports
@@ -101,9 +95,9 @@
 ### Data Handling
 - **Input Validation:** Comprehensive CSV and data structure validation
 - **File Security:** Local file system operations with path validation
-- **API Security:** Secure token handling for Azure DevOps integration
+- **API Security:** Secure token handling for LLM API integrations
 
 ### Authentication
-- **Azure DevOps:** Personal Access Token with limited scope
+- **LLM APIs:** Secure API key management for AI providers
 - **Local Security:** File system permissions for data directories
 - **Configuration:** Secure storage of sensitive configuration data
