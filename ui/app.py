@@ -146,7 +146,12 @@ def get_year_options():
 def get_llm_providers():
     """Get available LLM providers."""
     return [
-        {'id': 'requestyai', 'name': 'RequestyAI (Unified Gateway - All Models)', 'recommended': True}
+        {'id': 'requestyai', 'name': 'RequestyAI (Unified Gateway - All Models)', 'recommended': True},
+        {'id': 'openai', 'name': 'OpenAI (GPT-4, GPT-4o)', 'recommended': False},
+        {'id': 'anthropic', 'name': 'Anthropic (Claude 3.5 Sonnet)', 'recommended': False},
+        {'id': 'google', 'name': 'Google (Gemini 1.5 Pro)', 'recommended': False},
+        {'id': 'azure_openai', 'name': 'Azure OpenAI', 'recommended': False},
+        {'id': 'ollama', 'name': 'Ollama (Local Models)', 'recommended': False}
     ]
 
 
@@ -154,17 +159,50 @@ def get_common_models():
     """Get common model options by provider."""
     return {
         'requestyai': [
-            # Available Models
-            'google/gemini-2.5-pro',
+            # OpenAI models via RequestyAI
+            'openai/gpt-4o',
+            'openai/gpt-4o-mini',
+            'openai/gpt-4-turbo', 
+            'openai/o1-preview',
+            'openai/o1-mini',
+            # Anthropic models via RequestyAI
+            'anthropic/claude-3-5-sonnet-20241022',
+            'anthropic/claude-3-5-haiku-20241022',
+            'anthropic/claude-3-opus-20240229',
+            # Google models via RequestyAI
+            'google/gemini-1.5-pro',
+            'google/gemini-1.5-flash',
+            # Specialized models
             'coding/claude-4-sonnet',
-            'deepinfra/deepseek-ai/DeepSeek-R1',
-            'openai/gpt-5'
+            'deepseek/deepseek-coder'
         ],
-        'openai': ['gpt-4', 'gpt-4-turbo', 'gpt-3.5-turbo'],
-        'anthropic': ['claude-3-opus', 'claude-3-sonnet', 'claude-3-haiku'],
-        'google': ['gemini-pro', 'gemini-pro-vision'],
-        'azure_openai': ['gpt-4', 'gpt-35-turbo'],
-        'ollama': ['llama2', 'codellama', 'mistral']
+        'openai': [
+            'gpt-4o',
+            'gpt-4o-mini',
+            'gpt-4-turbo',
+            'gpt-3.5-turbo'
+        ],
+        'anthropic': [
+            'claude-3-5-sonnet-20241022',
+            'claude-3-5-haiku-20241022',
+            'claude-3-opus-20240229'
+        ],
+        'google': [
+            'gemini-1.5-pro',
+            'gemini-1.5-flash',
+            'gemini-1.0-pro'
+        ],
+        'azure_openai': [
+            'gpt-4o',
+            'gpt-4-turbo',
+            'gpt-35-turbo'
+        ],
+        'ollama': [
+            'llama3.2',
+            'llama3.1',
+            'mistral',
+            'codellama'
+        ]
     }
 
 

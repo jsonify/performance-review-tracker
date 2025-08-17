@@ -2,6 +2,69 @@
 
 {% block title %}Performance Review Tracker - Dashboard{% endblock %}
 
+{% block extra_head %}
+<style>
+    /* Provider-aware model selection styles */
+    .model-display {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.375rem 0.75rem;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        min-height: 38px;
+    }
+    
+    .selected-model-info {
+        flex-grow: 1;
+    }
+    
+    .selected-model {
+        font-weight: 500;
+        color: #212529;
+        display: block;
+    }
+    
+    .model-description {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 2px;
+        display: block;
+    }
+    
+    .change-model-btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+        margin-left: 0.5rem;
+        text-decoration: none;
+    }
+    
+    .change-model-btn:hover {
+        text-decoration: underline;
+    }
+    
+    /* Auto-selected label styling */
+    label[for="llm-model"] {
+        font-weight: 500;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .model-display {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+        
+        .change-model-btn {
+            margin-left: 0;
+            align-self: flex-end;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="main-header">
     <h1><i class="fas fa-chart-line"></i> Performance Review Tracker</h1>
@@ -728,6 +791,30 @@
     let currentWorkflow = null;
     let currentStep = 'criteria';
     let stepData = {};
+    
+    // Provider-aware model selection configuration
+    const flexibleProviders = ['requestyai', 'ollama']; // Providers that need model selection
+    const standardizedProviders = ['openai', 'anthropic', 'google', 'azure_openai']; // Providers with optimal defaults
+    
+    // Optimal models for standardized providers
+    const optimalModels = {
+        'openai': {
+            model: 'gpt-4o',
+            description: 'Latest OpenAI model with advanced reasoning'
+        },
+        'anthropic': {
+            model: 'claude-3-5-sonnet-20241022',
+            description: 'Most capable Claude model for analysis'
+        },
+        'google': {
+            model: 'gemini-1.5-pro',
+            description: 'Advanced Gemini model with large context'
+        },
+        'azure_openai': {
+            model: 'gpt-4o',
+            description: 'Latest GPT model via Azure OpenAI'
+        }
+    };
     
     // Global variables for progress tracking
     let currentJobId = null;
@@ -2056,6 +2143,91 @@
         });
     }
 
+    // Provider-aware model selection
+    function updateModelSelection(provider) {
+        const modelInputGroup = document.querySelector('.model-input-group');
+        const modelInput = document.getElementById('llm-model-input');
+        const modelLabel = document.querySelector('label[for="llm-model"]');
+        
+        if (!modelInputGroup || !modelInput || !modelLabel) {
+            console.error('Model selection elements not found');
+            return;
+        }
+        
+        if (flexibleProviders.includes(provider)) {
+            // Show full model selection interface for flexible providers
+            modelInputGroup.style.display = 'block';
+            modelLabel.textContent = 'Model';
+            
+            // Set default model from provider list
+            if (modelInput.value === '' && modelsByProvider[provider]) {
+                modelInput.value = modelsByProvider[provider][0];
+            }
+            
+        } else if (standardizedProviders.includes(provider)) {
+            // Show simplified interface for standardized providers
+            const optimal = optimalModels[provider];
+            if (optimal) {
+                // Replace the input group with a display element that includes a hidden input
+                modelInputGroup.innerHTML = `
+                    <div class="model-display">
+                        <div class="selected-model-info">
+                            <span class="selected-model">${optimal.model}</span>
+                            <small class="model-description text-muted">${optimal.description}</small>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-link change-model-btn" onclick="showModelOptions('${provider}')">
+                            Change
+                        </button>
+                    </div>
+                    <input type="hidden" id="llm-model-input" value="${optimal.model}">
+                `;
+                modelLabel.textContent = 'Model (Auto-Selected)';
+            }
+            
+        } else if (provider === 'none' || !provider) {
+            // Clear everything for 'none' provider
+            modelInputGroup.style.display = 'none';
+            modelInput.value = '';
+        }
+    }
+    
+    function showModelOptions(provider) {
+        const modelInputGroup = document.querySelector('.model-input-group');
+        const modelInput = document.getElementById('llm-model-input');
+        const modelLabel = document.querySelector('label[for="llm-model"]');
+        
+        // Restore the original input interface
+        modelInputGroup.innerHTML = `
+            <input type="text" id="llm-model-input" class="form-control" placeholder="Select or enter model">
+            <div class="model-controls">
+                <button type="button" id="clear-model-btn" class="btn btn-sm btn-outline-secondary" title="Clear">
+                    <i class="fas fa-times"></i>
+                </button>
+                <div class="dropdown">
+                    <button type="button" id="model-dropdown-btn" class="btn btn-sm btn-outline-primary dropdown-toggle" title="Browse models" data-bs-toggle="dropdown">
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" id="model-dropdown-menu">
+                        <!-- Models will be populated based on provider -->
+                    </ul>
+                </div>
+            </div>
+        `;
+        
+        // Restore the new input reference and set current value
+        const newModelInput = document.getElementById('llm-model-input');
+        if (modelInput && modelInput.value) {
+            newModelInput.value = modelInput.value;
+        } else if (modelsByProvider[provider]) {
+            newModelInput.value = modelsByProvider[provider][0];
+        }
+        
+        modelLabel.textContent = 'Model';
+        
+        // Reattach event handlers for the new input
+        setupModelControls();
+    }
+
     // Enhanced LLM Provider Setup with Model Dropdown
     function setupLLMProviderChange() {
         const providerSelect = document.getElementById('llm-provider');
@@ -2064,14 +2236,8 @@
         providerSelect.addEventListener('change', function() {
             const provider = this.value;
             
-            // Only clear model if switching to/from 'none'
-            if (provider === 'none') {
-                modelInput.value = '';
-            } else if (modelInput.value === '' && modelsByProvider[provider]) {
-                // Set default model only if input is empty
-                const defaultModel = modelsByProvider[provider][0];
-                modelInput.value = defaultModel;
-            }
+            // Use the new provider-aware model selection
+            updateModelSelection(provider);
             
             checkStoredKey(provider);
         });
@@ -2083,10 +2249,14 @@
         
         // Initialize
         const initialProvider = providerSelect.value;
-        if (initialProvider !== 'none' && modelsByProvider[initialProvider] && modelInput.value === '') {
-            modelInput.value = modelsByProvider[initialProvider][0];
-        }
+        updateModelSelection(initialProvider);
         checkStoredKey(initialProvider);
+    }
+
+    // Setup all model controls (used when recreating model input)
+    function setupModelControls() {
+        setupModelDropdown();
+        setupModelClear();
     }
 
     // Setup Model Dropdown Selection
